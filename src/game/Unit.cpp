@@ -2077,10 +2077,11 @@ void Unit::AttackerStateUpdate(Unit* pVictim, WeaponAttackType attType, bool ext
     // melee attack spell casted at main hand attack only
     if (attType == BASE_ATTACK && m_currentSpells[CURRENT_MELEE_SPELL])
     {
+        bool abortautoattack = (m_currentSpells[CURRENT_MELEE_SPELL]->CheckPower() != SPELL_FAILED_NO_POWER);
         m_currentSpells[CURRENT_MELEE_SPELL]->cast();
 
         // not recent extra attack only at any non extra attack (melee spell case)
-        if (!extra && extraAttacks)
+        if (!extra && extraAttacks && abortautoattack)
         {
             while (m_extraAttacks)
             {
@@ -2088,8 +2089,8 @@ void Unit::AttackerStateUpdate(Unit* pVictim, WeaponAttackType attType, bool ext
                 if (m_extraAttacks > 0)
                     --m_extraAttacks;
             }
+            return;
         }
-        return;
     }
 
     CalcDamageInfo damageInfo;
