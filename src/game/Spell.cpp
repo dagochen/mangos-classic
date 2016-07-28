@@ -5024,6 +5024,11 @@ SpellCastResult Spell::CheckCast(bool strict)
                 if (m_caster->GetTypeId() != TYPEID_PLAYER || m_CastItem)
                     break;
 
+                // Viper Sting - This spell can no longer be used on warrior and rogue targets. In addition, while it can be used on a druid target at any time 
+                // it will only drain mana when the druid is in caster form (Patch 1.4)
+                if (expectedTarget->getClass() == CLASS_DRUID && m_spellInfo->SpellFamilyFlags & 0x0000000000010000)
+                    break;
+
                 if (expectedTarget->GetPowerType() != POWER_MANA)
                     return SPELL_FAILED_BAD_TARGETS;
 
