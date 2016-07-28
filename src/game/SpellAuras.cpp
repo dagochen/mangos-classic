@@ -4284,6 +4284,10 @@ void Aura::PeriodicTick()
             if (!pCaster)
                 return;
 
+            // AoE Auras should not damage players if target has PvP enabled and caster not
+            if (target->GetTypeId() == TYPEID_PLAYER && GetCaster()->GetTypeId() == TYPEID_PLAYER && target->IsPvP() && !GetCaster()->IsPvP() && !((Player*)GetCaster())->IsInDuelWith((Player*)target) && !IsPositiveSpell(GetSpellProto()) && IsAreaOfEffectSpell(GetSpellProto()))
+                return;
+
             if (spellProto->Effect[GetEffIndex()] == SPELL_EFFECT_PERSISTENT_AREA_AURA &&
                     pCaster->SpellHitResult(target, spellProto, false) != SPELL_MISS_NONE)
                 return;

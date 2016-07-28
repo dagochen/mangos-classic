@@ -588,6 +588,10 @@ void Spell::FillTargetMap()
                 Player* targetOwner = (*itr)->GetCharmerOrOwnerPlayerOrPlayerItself();
                 if (targetOwner && targetOwner != me && targetOwner->IsPvP() && !me->IsInDuelWith(targetOwner))
                 {
+                    if (IsAreaOfEffectSpell(m_spellInfo) && targetOwner->GetTeam() != me->GetTeam())
+                    {
+                        continue;
+                    }
                     me->UpdatePvP(true);
                     me->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_ENTER_PVP_COMBAT);
                     break;
@@ -740,7 +744,9 @@ void Spell::AddUnitTarget(Unit* pVictim, SpellEffectIndex effIndex)
             return;
         }
     }
-
+    if (pVictim->IsPvP() && !GetCaster()->IsPvP() && pVictim->GetTypeId() == TYPEID_PLAYER && GetCaster()->GetTypeId() == TYPEID_PLAYER 
+        && !((Player*)GetCaster())->IsInDuelWith((Player*)pVictim) && !IsPositiveSpell(m_spellInfo) && IsAreaOfEffectSpell(m_spellInfo))
+         return;
     // This is new target calculate data for him
 
     // Get spell hit result on target
