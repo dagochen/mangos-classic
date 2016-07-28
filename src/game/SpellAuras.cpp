@@ -1222,8 +1222,10 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
             }
 
             if (finalSpellId)
+            {
                 caster->CastSpell(target, finalSpellId, true, nullptr, this);
-
+                target->GetMotionMaster()->MoveFollow(caster, 5.0f, 90);
+            }
             return;
         }
 

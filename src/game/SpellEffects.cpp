@@ -695,6 +695,15 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     unitTarget->CastSpell(unitTarget, urand(0, 1) ? 19394 : 11756, true);
                     return;
                 }
+                case 19614: // Hunter Tame (Casted on Hunter on Quest finish)
+                {
+                    if (Unit* tamedUnit = unitTarget->GetCharm())
+                    {
+                        tamedUnit->RemoveAura(tamedUnit->GetAura(SPELL_AURA_MOD_CHARM, SPELLFAMILY_HUNTER, 0x0000000000000800));
+                        ((Creature*)tamedUnit)->ForcedDespawn(100);
+                    }
+                    return;
+                }
                 case 19411:                                 // Lava Bomb
                 case 20474:                                 // Lava Bomb
                 {
