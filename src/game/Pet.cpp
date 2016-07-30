@@ -333,8 +333,11 @@ void Pet::SavePetToDB(PetSaveMode mode)
     // current/stable/not_in_slot
     if (mode >= PET_SAVE_AS_CURRENT)
     {
+        // Hunter Pets always save as current if dismissed or unsummoned due to range/etc.
+        if (getPetType() == HUNTER_PET && mode == PET_SAVE_REAGENTS)
+            mode = PET_SAVE_AS_CURRENT;
         // reagents must be returned before save call
-        if (mode == PET_SAVE_REAGENTS)
+        else if (mode == PET_SAVE_REAGENTS)
             mode = PET_SAVE_NOT_IN_SLOT;
         // not save pet as current if another pet temporary unsummoned
         else if (mode == PET_SAVE_AS_CURRENT && pOwner->GetTemporaryUnsummonedPetNumber() &&
