@@ -627,21 +627,36 @@ void AuctionHouseObject::BuildListAuctionItems(WorldPacket& data, Player* player
 
             std::string name = proto->Name1;
             sObjectMgr.GetItemLocaleStrings(proto->ItemId, loc_idx, &name);
+            
+            std::string suffix;
+            std::string suffix_loc0;
+            std::string suffix_loc1;
+            std::string suffix_loc2;
+            std::string suffix_loc3;
+            std::string suffix_loc4;
+            std::string suffix_loc5;
+            std::string suffix_loc6;
+            std::string suffix_loc7;
 
             ItemRandomPropertiesEntry const* random_id = sItemRandomPropertiesStore.LookupEntry(Aentry->itemRandomPropertyId);
-            std::string suffix = random_id->internalName;
-            std::string suffix_loc0 = random_id->nameSuffix[0];
-            std::string suffix_loc1 = random_id->nameSuffix[1];
-            std::string suffix_loc2 = random_id->nameSuffix[2];
-            std::string suffix_loc3 = random_id->nameSuffix[3];
-            std::string suffix_loc4 = random_id->nameSuffix[4];
-            std::string suffix_loc5 = random_id->nameSuffix[5];
-            std::string suffix_loc6 = random_id->nameSuffix[6];
-            std::string suffix_loc7 = random_id->nameSuffix[7];
-            
-            if (!wsearchedname.empty() && !Utf8FitTo(name, wsearchedname) && !Utf8FitTo(suffix, wsearchedname) && 
+            if (random_id)
+            {
+                suffix = random_id->internalName;
+                suffix_loc0 = random_id->nameSuffix[0];
+                suffix_loc1 = random_id->nameSuffix[1];
+                suffix_loc2 = random_id->nameSuffix[2];
+                suffix_loc3 = random_id->nameSuffix[3];
+                suffix_loc4 = random_id->nameSuffix[4];
+                suffix_loc5 = random_id->nameSuffix[5];
+                suffix_loc6 = random_id->nameSuffix[6];
+                suffix_loc7 = random_id->nameSuffix[7];
+            }
+
+            if (random_id && !wsearchedname.empty() && !Utf8FitTo(name, wsearchedname) && !Utf8FitTo(suffix, wsearchedname) &&
                 !Utf8FitTo(suffix_loc0, wsearchedname) && !Utf8FitTo(suffix_loc1, wsearchedname) && !Utf8FitTo(suffix_loc2, wsearchedname) && !Utf8FitTo(suffix_loc3, wsearchedname)
                 && !Utf8FitTo(suffix_loc4, wsearchedname) && !Utf8FitTo(suffix_loc5, wsearchedname) && !Utf8FitTo(suffix_loc6, wsearchedname) && !Utf8FitTo(suffix_loc7, wsearchedname))
+                continue;
+            else if (!random_id && !wsearchedname.empty() && !Utf8FitTo(name, wsearchedname))
                 continue;
                 
             if (count < 50 && totalcount >= listfrom)
