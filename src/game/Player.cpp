@@ -151,15 +151,40 @@ void PlayerTaxi::LoadTaxiMask(const char* data)
     }
 }
 
-void PlayerTaxi::AppendTaximaskTo(ByteBuffer& data, bool all)
+void PlayerTaxi::AppendTaximaskTo(ByteBuffer& data, bool all, uint8 race, uint32 mapid )
 {
     if (all)
     {
-        for (uint8 i = 0; i < TaxiMaskSize; ++i)
-            data << uint32(sTaxiNodesMask[i]);              // all existing nodes
+        if (mapid == 1 && race == 7) // Gnome
+        {
+            data << uint32(3456106498);
+            data << uint32(2148073809);
+            data << uint32(49409);
+            data << uint32(0);
+            data << uint32(0);
+            data << uint32(0);
+            data << uint32(0);
+            data << uint32(0);
+        }
+        else if (mapid == 1 && race == 8) // Troll
+        {
+            data << uint32(828375040);
+            data << uint32(307268256);
+            data << uint32(53392);
+            data << uint32(0);
+            data << uint32(0);
+            data << uint32(0);
+            data << uint32(0);
+            data << uint32(0);
+        }
+        else
+        {
+            for (uint8 i = 0; i < TaxiMaskSize; ++i)
+                data << uint32(sTaxiNodesMask[i]);              // all existing nodes
+        }
     }
     else
-    {
+    {   
         for (uint8 i = 0; i < TaxiMaskSize; ++i)
             data << uint32(m_taximask[i]);                  // known nodes
     }

@@ -724,7 +724,7 @@ class MANGOS_DLL_SPEC PlayerTaxi
             else
                 return false;
         }
-        void AppendTaximaskTo(ByteBuffer& data, bool all);
+        void AppendTaximaskTo(ByteBuffer& data, bool all, uint8 race, uint32 mapid);
 
         // Destinations
         bool LoadTaxiDestinationsFromString(const std::string& values, Team team);
