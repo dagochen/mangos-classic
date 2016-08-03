@@ -2964,6 +2964,8 @@ void Spell::update(uint32 difftime)
     {
         case SPELL_STATE_PREPARING:
         {
+            GetCaster()->MonsterWhisper(std::to_string(m_timer).c_str(), GetCaster(), true);
+
             if (m_timer)
             {
                 if (difftime >= m_timer)
