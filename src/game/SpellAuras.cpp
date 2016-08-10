@@ -625,6 +625,21 @@ bool Aura::CanProcFrom(SpellEntry const* spell, uint32 EventProcEx, uint32 procE
     // Check EffectClassMask (in pre-3.x stored in spell_affect in fact)
     ClassFamilyMask mask = sSpellMgr.GetSpellAffectMask(GetId(), GetEffIndex());
 
+    if (m_spellAuraHolder && spell && m_spellAuraHolder->GetSpellProto() &&
+        m_spellAuraHolder->GetSpellProto()->Id == 23688 && (procEx & (PROC_EX_NORMAL_HIT | PROC_EX_CRITICAL_HIT)))
+    {
+        if (spell->manaCost == 0)
+            return false;
+
+        if (Aura* aura = m_spellAuraHolder->GetTarget()->GetAura(SPELL_AURA_ADD_PCT_MODIFIER, SPELLFAMILY_GENERIC, 0, m_spellAuraHolder->GetTarget()->GetObjectGuid()))
+        {
+            if (aura->GetModifier()->m_miscvalue == SPELLMOD_COST && aura->GetModifier()->m_amount <= -100)
+                return false;
+        }
+        return true;
+    }
+      
+
     // if no class mask defined, or spell_proc_event has SpellFamilyName=0 - allow proc
     if (!useClassMask || !mask)
     {
