@@ -4036,3 +4036,253 @@ void SpellMgr::LoadFacingCasterFlags()
     sLog.outString();
     sLog.outString(">> Loaded %u facing caster flags", count);
 }
+
+void SpellMgr::LoadDbcDataCorrections()
+{
+    SpellEntry* spellInfo = NULL;
+    for (uint32 i = 0; i < sSpellStore.GetNumRows(); ++i)
+    {
+        spellInfo = (SpellEntry*)sSpellStore.LookupEntry(i);
+        if (!spellInfo)
+            continue;
+
+        switch (spellInfo->Id)
+        {
+
+        case 24198:
+        case 23930:
+        case 17670:
+            sLog.outString(">> This is ID %u and spellvisual %u", spellInfo->Id, spellInfo->SpellVisual);
+            break;
+        case 19428:
+            spellInfo->EffectImplicitTargetA[0] = TARGET_CURRENT_ENEMY_COORDINATES;
+            spellInfo->EffectImplicitTargetB[0] = TARGET_ALL_ENEMY_IN_AREA_INSTANT;
+            break;
+            // Instant Poison
+        case 11340:
+            spellInfo->procCharges += 15;
+        case 11339:
+            spellInfo->procCharges += 15;
+        case 11338:
+            spellInfo->procCharges += 15;
+        case 8688:
+            spellInfo->procCharges += 15;
+        case 8686:
+            spellInfo->procCharges += 15;
+        case 8679:
+            spellInfo->procCharges += 40;
+            break;
+
+            // Deadly Poison
+        case 25351:
+            spellInfo->procCharges += 15;
+        case 11356:
+            spellInfo->procCharges += 15;
+        case 11355:
+            spellInfo->procCharges += 15;
+        case 2824:
+            spellInfo->procCharges += 15;
+        case 2823:
+            spellInfo->procCharges += 60;
+            break;
+
+
+            // Wound Poison
+        case 13227:
+            spellInfo->procCharges += 15;
+        case 13226:
+            spellInfo->procCharges += 15;
+        case 13225:
+            spellInfo->procCharges += 15;
+        case 13219:
+            spellInfo->procCharges += 60;
+            break;
+
+            // Mind Numbing Poison
+        case 11399:
+            spellInfo->procCharges += 25;
+        case 8693:
+            spellInfo->procCharges += 25;
+        case 5761:
+            spellInfo->procCharges += 50;
+            break;
+
+
+
+
+        case 22888: // Onybuff
+
+            spellInfo->EffectRadiusIndex[0] = 28;
+            spellInfo->EffectRadiusIndex[1] = 28;
+            spellInfo->EffectRadiusIndex[2] = 28;
+
+            break;
+
+        case 20662: // Execute
+            spellInfo->AttributesEx3 |= SPELL_ATTR_EX3_CANT_MISS;
+            spellInfo->Attributes |= SPELL_ATTR_UNAFFECTED_BY_INVULNERABILITY;
+            break;
+        case 20647: // Execute (always send trigger spell for visual effect)
+            spellInfo->SpellVisual = 1;
+            spellInfo->AttributesEx |= SPELL_ATTR_EX_DRAIN_ALL_POWER;
+            break;
+        case 26635: // Troll Racial
+            spellInfo->EffectDieSides[0] = 1;
+            break;
+        case 7922:  // Charge Stun
+        case 20253: // Intercept Stun R1
+        case 20614: // Intercept Stun R2
+        case 20615: // Intercept Stun R3
+        case 19675: // Feral Charge Effect
+            spellInfo->speed = 160;
+            break;
+        case 25190: // Stinger Charge (NPC Charge)
+            spellInfo->speed = 80;
+            break;
+        case 13419: // Enchant Cloak - Minor Agility
+            spellInfo->EquippedItemClass = 4;
+            spellInfo->EquippedItemSubClassMask = 31;
+            break;
+        case 17941: // Shadow Trance
+        case 22008: // Netherwind Focus
+            spellInfo->procCharges = 1;
+            break;
+        case 26013:
+        case 25599:
+            spellInfo->AttributesEx |= SPELL_ATTR_EX_UNAFFECTED_BY_SCHOOL_IMMUNE;
+            break;
+        ////case 23269: // Holy Blast
+        ////    spellInfo->AttributesEx |= SPELL_ATTR_EX_NO_THREAT;
+        ////    spellInfo->AttributesEx |= SPELL_ATTR_EX_NO_INITIAL_AGGRO;
+        //    break;
+        case 28200: // Ascendance (Talisman of Ascendance trinket)
+            spellInfo->procCharges = 6;
+            break;
+        case 17794: // Improved Shadow Bolt
+        case 17797:
+        case 17798:
+        case 17799:
+        case 17800:
+            spellInfo->procCharges = 5;
+            break;
+        case 17441:
+            spellInfo->EffectRadiusIndex[1] = 7;
+            spellInfo->Effect[0] = 0;
+            break;
+        case 8122: // Psychic Scream
+        case 8124:
+        case 10888:
+        case 10890:
+            spellInfo->Attributes |= SPELL_ATTR_UNK30;
+            break;
+        case 19593: // Buru Egg visual spell
+            spellInfo->DurationIndex = 30;
+            break;
+        case 23577: // Expose Weakness Hunter T2 8/8 can be single per caster
+            spellInfo->AttributesEx3 |= SPELL_ATTR_EX3_UNK7;
+            spellInfo->AttributesEx3 |= SPELL_ATTR_EX3_CANT_MISS;
+            break;
+        case 14171: // Serrated Blades Rank 1
+            spellInfo->EffectRealPointsPerLevel[1] = -2.6666666667f;
+            break;
+        case 14172: // Serrated Blades Rank 2
+            spellInfo->EffectRealPointsPerLevel[1] = -5.3333333334f;
+            break;
+        case 14173: // Serrated Blades Rank 3
+            spellInfo->EffectRealPointsPerLevel[1] = -8.f;
+            break;
+        case 13493: // Gnomish Death Ray Dot
+            spellInfo->EffectMechanic[0] = MECHANIC_BLEED;
+            break;
+        case 26025: // Impale (AQ 40 Trash)
+            spellInfo->EffectMechanic[1] = MECHANIC_BLEED;
+            break;
+        case 5143:  //arcane missiles R1
+        case 5144:  //arcane missiles R2
+        case 5145:  //arcane missiles R3
+        case 8416:  //arcane missiles R4
+        case 8417:  //arcane missiles R5
+        case 10211: //arcane missiles R6
+        case 10212: //arcane missiles R7
+        case 25345: //arcane missiles R8
+            spellInfo->Attributes |= SPELL_ATTR_UNAFFECTED_BY_INVULNERABILITY;
+            spellInfo->AttributesEx3 |= SPELL_ATTR_EX3_NO_INITIAL_AGGRO | SPELL_ATTR_EX3_UNK7;
+            break;
+        case 6789: // Death Coil
+        case 17925:
+        case 17926:
+        case 28412:
+        //case 24910: // Smarris - Corruption of the Earth
+        //    spellInfo->AttributesEx2 |= SPELL_ATTR_EX2_CANT_CRIT;
+        //    spellInfo->AttributesEx4 |= SPELL_ATTR_EX4_BINARY;
+        //    break;
+        case 20424: // Seal of Command - Delay by 0.5 seconds
+            spellInfo->speed = 10000.f;
+            break;
+        //case 116: // Frostbolt
+        //case 205:
+        //case 837:
+        //case 7322:
+        //case 8406:
+        //case 8407:
+        //case 8408:
+        //case 10179:
+        //case 10180:
+        //case 10181:
+        //case 25304:
+        //case 15407: // Mind Flay
+        //case 17311:
+        //case 17312:
+        //case 17313:
+        //case 17314:
+        //case 18807:
+        //    spellInfo->AttributesEx4 |= SPELL_ATTR_EX4_BINARY;
+        //    break;
+        case 25790: // Vengeance
+            spellInfo->EffectImplicitTargetB[0] = TARGET_ALL_FRIENDLY_UNITS_AROUND_CASTER;
+            spellInfo->EffectImplicitTargetB[1] = TARGET_ALL_FRIENDLY_UNITS_AROUND_CASTER;
+            spellInfo->EffectImplicitTargetB[2] = TARGET_ALL_FRIENDLY_UNITS_AROUND_CASTER;
+            break;
+        case 24131:                                         // Wyvern Sting (Rank 1)
+        case 24134:                                         // Wyvern Sting (Rank 2)
+        case 24135:                                         // Wyvern Sting (Rank 3)
+            spellInfo->AttributesEx |= SPELL_ATTR_EX_UNAFFECTED_BY_SCHOOL_IMMUNE;
+            spellInfo->AttributesEx3 |= SPELL_ATTR_EX3_CANT_MISS;
+            break;
+        }
+
+        for (int32 effectNumber = 0; effectNumber < MAX_EFFECT_INDEX; ++effectNumber)
+        {
+            if (spellInfo->Effect[effectNumber] == SPELL_EFFECT_CHARGE && spellInfo->speed == 0)
+                spellInfo->speed = 80;
+
+            if (spellInfo->Effect[effectNumber] == SPELL_EFFECT_APPLY_AURA && spellInfo->EffectApplyAuraName[effectNumber] == SPELL_AURA_PERIODIC_DAMAGE)
+            {
+                switch (spellInfo->SpellFamilyName)
+                {
+                case SPELLFAMILY_DRUID:
+                case SPELLFAMILY_HUNTER:
+                case SPELLFAMILY_PRIEST:
+              /*  case SPELLFAMILY_SHAMAN:
+                    spellInfo->AttributesEx4 |= SPELL_ATTR_EX4_BINARY;
+                    break;*/
+                //case SPELLFAMILY_WARLOCK:
+                //    // Bugfix for Hellfire
+                //    if (!(spellInfo->SpellFamilyFlags & 0x00000040))
+                //        spellInfo->AttributesEx4 |= SPELL_ATTR_EX4_BINARY;
+                //    break;
+                //case SPELLFAMILY_MAGE:
+                //    // Fireball and Pyroblast are non-binaray spells
+                //    if (!(spellInfo->SpellFamilyFlags & 0x40000000))
+                //        spellInfo->AttributesEx4 |= SPELL_ATTR_EX4_BINARY;
+                //    break;
+                default:
+                    break;
+                }
+            }
+        }
+    }
+
+    sLog.outString(">> Loading spell dbc data corrections.");
+    sLog.outString();
+}

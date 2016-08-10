@@ -1077,6 +1077,7 @@ class SpellMgr
 
         // Loading data at server startup
         void LoadSpellChains();
+        void LoadDbcDataCorrections();
         void LoadSpellLearnSkills();
         void LoadSpellLearnSpells();
         void LoadSpellScriptTarget();
