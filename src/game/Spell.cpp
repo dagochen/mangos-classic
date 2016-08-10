@@ -6036,6 +6036,7 @@ bool Spell::CheckTarget(Unit* target, SpellEffectIndex eff)
     // Check targets for LOS visibility (except spells without range limitations )
     switch (m_spellInfo->Effect[eff])
     {
+       
         case SPELL_EFFECT_SUMMON_PLAYER:                    // from anywhere
             break;
         case SPELL_EFFECT_DUMMY:
@@ -6070,6 +6071,16 @@ bool Spell::CheckTarget(Unit* target, SpellEffectIndex eff)
                         return false;
             break;
     }
+
+     
+    // Players can not dispel non-pvp-flagged players from enemy team
+    if (m_spellInfo->Effect[eff] == SPELL_EFFECT_DISPEL  && target && target->GetTypeId() == TYPEID_PLAYER && !((Player*)target)->IsPvP() && m_caster && m_caster->GetTypeId() == TYPEID_PLAYER && ((Player*)target)->GetTeam() != ((Player*)m_caster)->GetTeam())
+        return false;
+
+    // Players can not cast on players while they are in duel
+    if (target && target->GetTypeId() == TYPEID_PLAYER && ((Player*)target)->GetUInt32Value(PLAYER_DUEL_TEAM) > 0 && m_caster && m_caster->GetTypeId() == TYPEID_PLAYER && !((Player*)m_caster)->IsInDuelWith(((Player*)target)))
+        return false;
+    
 
     if (target->GetTypeId() != TYPEID_PLAYER && m_spellInfo->HasAttribute(SPELL_ATTR_EX3_TARGET_ONLY_PLAYER)
             && m_spellInfo->EffectImplicitTargetA[eff] != TARGET_SCRIPT && m_spellInfo->EffectImplicitTargetA[eff] != TARGET_SELF)
