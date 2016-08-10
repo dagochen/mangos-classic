@@ -1136,6 +1136,9 @@ void World::SetInitialWorldSettings()
     sLog.outString("Loading GM tickets...");
     sTicketMgr.LoadGMTickets();
 
+    sLog.outString("Loading Spell Corections...");
+    sSpellMgr.LoadDbcDataCorrections();
+
     ///- Load and initialize DBScripts Engine
     sLog.outString("Loading DB-Scripts Engine...");
     sScriptMgr.LoadQuestStartScripts();                     // must be after load Creature/Gameobject(Template/Data) and QuestTemplate
