@@ -969,7 +969,7 @@ void World::SetInitialWorldSettings()
 
     sLog.outString("Loading Gameobject Data...");
     sObjectMgr.LoadGameObjects();
-
+    
     sLog.outString("Loading CreatureLinking Data...");      // must be after Creatures
     sCreatureLinkingMgr.LoadFromDB();
 
@@ -1138,6 +1138,9 @@ void World::SetInitialWorldSettings()
 
     sLog.outString("Loading Spell Corections...");
     sSpellMgr.LoadDbcDataCorrections();
+
+    sLog.outString("Writing Gameobject Text File...");
+    sObjectMgr.WriteGameObjectTextFile();
 
     ///- Load and initialize DBScripts Engine
     sLog.outString("Loading DB-Scripts Engine...");

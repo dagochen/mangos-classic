@@ -45,6 +45,9 @@
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
 
+#include <iostream>
+#include <fstream>
+
 #include "ItemEnchantmentMgr.h"
 #include "LootMgr.h"
 
@@ -1126,6 +1129,45 @@ void ObjectMgr::RemoveCreatureFromGrid(uint32 guid, CreatureData const* data)
     CellObjectGuids& cell_guids = mMapObjectGuids[data->mapid][cell_id];
     cell_guids.creatures.erase(guid);
 }
+
+void ObjectMgr::WriteGameObjectTextFile()
+{
+    bool stop = false;
+    if (stop)
+        return;
+
+    std::ofstream myfile;
+    myfile.open("gameobjects.txt");
+
+    myfile << "Pool; Guid; ID; Name; XPos ; YPos; ZPos; ZoneID; Zone; AreaID; Area \n";
+
+    for (uint32 i = 1; i <= 900066; i++)
+    {
+        if (mGameObjectDataMap.find(i) == mGameObjectDataMap.end())
+            continue;
+
+        GameObjectData& go = mGameObjectDataMap.at(i);
+        
+        const GameObjectInfo* info = GetGameObjectInfo(go.id);
+
+        if (info->type != GAMEOBJECT_TYPE_CHEST)
+            continue;
+
+        uint16 pool_template_id = sPoolMgr.IsPartOfAPool<GameObject>(i);
+
+        uint32 zone_id = sTerrainMgr.GetZoneId(go.mapid, go.posX, go.posY, go.posZ);
+        uint32 area_id = sTerrainMgr.GetAreaId(go.mapid, go.posX, go.posY, go.posZ);
+        
+        AreaTableEntry const* zoneEntry = GetAreaEntryByAreaID(zone_id);
+        AreaTableEntry const* areaEntry = GetAreaEntryByAreaID(area_id);
+
+        myfile << pool_template_id << ";" << i << ";" << go.id << ";" << info->name << ";" << go.posX << ";" << go.posY << ";" << go.posZ << ";" << zone_id << ";" << zoneEntry->area_name[3] << ";" << area_id << ";" << areaEntry->area_name[3] << "\n";
+        
+    }
+    myfile.close();
+
+}
+
 
 void ObjectMgr::LoadGameObjects()
 {

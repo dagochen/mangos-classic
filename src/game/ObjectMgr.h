@@ -673,6 +673,8 @@ class ObjectMgr
 
         void LoadGossipMenus();
 
+        void WriteGameObjectTextFile();
+
         void LoadVendorTemplates();
         void LoadVendors() { LoadVendors("npc_vendor", false); }
         void LoadTrainerTemplates();
