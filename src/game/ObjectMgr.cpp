@@ -1136,15 +1136,21 @@ void ObjectMgr::WriteGameObjectTextFile()
     if (stop)
         return;
 
+    uint32 count = 0;
+    uint32 i = 0;
     std::ofstream myfile;
     myfile.open("gameobjects.txt");
 
     myfile << "Pool; Guid; ID; Name; XPos ; YPos; ZPos; ZoneID; Zone; AreaID; Area \n";
 
-    for (uint32 i = 1; i <= 900066; i++)
+    while(count < mGameObjectDataMap.size())
     {
+        i++;
+
         if (mGameObjectDataMap.find(i) == mGameObjectDataMap.end())
             continue;
+
+        count++;
 
         GameObjectData& go = mGameObjectDataMap.at(i);
         
@@ -1162,6 +1168,7 @@ void ObjectMgr::WriteGameObjectTextFile()
         AreaTableEntry const* areaEntry = GetAreaEntryByAreaID(area_id);
 
         myfile << pool_template_id << ";" << i << ";" << go.id << ";" << info->name << ";" << go.posX << ";" << go.posY << ";" << go.posZ << ";" << zone_id << ";" << zoneEntry->area_name[3] << ";" << area_id << ";" << areaEntry->area_name[3] << "\n";
+       
         
     }
     myfile.close();
