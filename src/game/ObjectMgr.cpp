@@ -1132,7 +1132,7 @@ void ObjectMgr::RemoveCreatureFromGrid(uint32 guid, CreatureData const* data)
 
 void ObjectMgr::WriteGameObjectTextFile()
 {
-    bool stop = false;
+    bool stop = true;
     if (stop)
         return;
 
@@ -1141,7 +1141,7 @@ void ObjectMgr::WriteGameObjectTextFile()
     std::ofstream myfile;
     myfile.open("gameobjects.txt");
 
-    myfile << "Pool; Guid; ID; Name; XPos ; YPos; ZPos; ZoneID; Zone; AreaID; Area \n";
+    myfile << "Pool; Guid; ID; Name; desc; max_limit; MapID; XPos ; YPos; ZPos; ZoneID; Zone; AreaID; Area \n";
 
     while(count < mGameObjectDataMap.size())
     {
@@ -1161,14 +1161,21 @@ void ObjectMgr::WriteGameObjectTextFile()
 
         uint16 pool_template_id = sPoolMgr.IsPartOfAPool<GameObject>(i);
 
+        std::string description = sPoolMgr.GetPoolTemplate(pool_template_id).description;
+        uint16 pool_max_limit = sPoolMgr.GetPoolTemplate(pool_template_id).MaxLimit;
+
+
         uint32 zone_id = sTerrainMgr.GetZoneId(go.mapid, go.posX, go.posY, go.posZ);
         uint32 area_id = sTerrainMgr.GetAreaId(go.mapid, go.posX, go.posY, go.posZ);
         
         AreaTableEntry const* zoneEntry = GetAreaEntryByAreaID(zone_id);
         AreaTableEntry const* areaEntry = GetAreaEntryByAreaID(area_id);
 
-        myfile << pool_template_id << ";" << i << ";" << go.id << ";" << info->name << ";" << go.posX << ";" << go.posY << ";" << go.posZ << ";" << zone_id << ";" << zoneEntry->area_name[3] << ";" << area_id << ";" << areaEntry->area_name[3] << "\n";
-       
+        if (zoneEntry && areaEntry)
+            myfile << pool_template_id << ";" << i << ";" << go.id << ";" << info->name << ";" << description << ";" << pool_max_limit << ";" << go.mapid << "; " << go.posX << ";" << go.posY << ";" << go.posZ << ";" << zone_id << ";" << zoneEntry->area_name[3] << ";" << area_id << ";" << areaEntry->area_name[3] << "\n";
+        else
+            myfile << pool_template_id << ";" << i << ";" << go.id << ";" << info->name << ";" << description << ";" << pool_max_limit << ";" << go.mapid << ";" << go.posX << ";" << go.posY << ";" << go.posZ << "\n"; // << ";" << zone_id << ";" << zoneEntry->area_name[3] << ";" << area_id << ";" << areaEntry->area_name[3] << "\n";
+        
         
     }
     myfile.close();
