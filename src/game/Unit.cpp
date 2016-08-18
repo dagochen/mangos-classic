@@ -332,6 +332,21 @@ void Unit::Update(uint32 update_diff, uint32 p_time)
         setAttackTimer(OFF_ATTACK, (update_diff >= base_att ? 0 : base_att - update_diff));
     }
 
+    if (GetTypeId() == TYPEID_PLAYER)
+    {
+        if (m_currentSpells[CURRENT_AUTOREPEAT_SPELL])
+        {
+            std::stringstream werte;
+
+            //put arbitrary formatted data into the stream
+            werte << "Autoattack: " << m_attackTimer[RANGED_ATTACK];
+
+            //convert the stream buffer into a string
+            std::string ausgabe = werte.str();
+            this->MonsterWhisper(ausgabe.c_str(), this, true);
+        }
+    }
+
     // update abilities available only for fraction of time
     UpdateReactives(update_diff);
 

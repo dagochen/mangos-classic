@@ -2964,7 +2964,17 @@ void Spell::update(uint32 difftime)
     {
         case SPELL_STATE_PREPARING:
         {
-            GetCaster()->MonsterWhisper(std::to_string(m_timer).c_str(), GetCaster(), true);
+            if (GetCaster()->GetTypeId() == TYPEID_PLAYER)
+            {
+                std::stringstream werte;
+
+                //put arbitrary formatted data into the stream
+                werte << "Castzeit: " << m_timer;
+
+                //convert the stream buffer into a string
+                std::string ausgabe = werte.str();
+                GetCaster()->MonsterWhisper(ausgabe.c_str(), GetCaster(), true);
+            }
 
             if (m_timer)
             {
