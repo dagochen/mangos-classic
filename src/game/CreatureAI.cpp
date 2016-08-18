@@ -157,7 +157,13 @@ void CreatureAI::HandleMovementOnAttackStart(Unit* victim)
 {
     MotionMaster* creatureMotion = m_creature->GetMotionMaster();
     if (m_isCombatMovement)
-        creatureMotion->MoveChase(victim, m_attackDistance, m_attackAngle);
+    {
+        if (m_creature->GetCreatureType() != CREATURE_TYPE_CRITTER)
+            creatureMotion->MoveChase(victim, m_attackDistance, m_attackAngle);
+        else
+            creatureMotion->MoveFleeing(victim, 0);
+
+    }
     // TODO - adapt this to only stop OOC-MMGens when MotionMaster rewrite is finished
     else if (creatureMotion->GetCurrentMovementGeneratorType() == WAYPOINT_MOTION_TYPE || creatureMotion->GetCurrentMovementGeneratorType() == RANDOM_MOTION_TYPE)
     {
