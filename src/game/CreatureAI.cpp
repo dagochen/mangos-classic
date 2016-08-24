@@ -158,10 +158,10 @@ void CreatureAI::HandleMovementOnAttackStart(Unit* victim)
     MotionMaster* creatureMotion = m_creature->GetMotionMaster();
     if (m_isCombatMovement)
     {
-        if (m_creature->GetCreatureType() != CREATURE_TYPE_CRITTER)
-            creatureMotion->MoveChase(victim, m_attackDistance, m_attackAngle);
-        else
+        if (m_creature->IsNonDungeonCritter())
             creatureMotion->MoveFleeing(victim, 0);
+        else
+            creatureMotion->MoveChase(victim, m_attackDistance, m_attackAngle);
 
     }
     // TODO - adapt this to only stop OOC-MMGens when MotionMaster rewrite is finished

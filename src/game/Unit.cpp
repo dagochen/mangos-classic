@@ -8574,7 +8574,7 @@ void Unit::SetConfused(bool apply, ObjectGuid casterGuid, uint32 spellID)
         {
             // restore appropriate movement generator
             if (getVictim())
-                if (GetCreatureType() == CREATURE_TYPE_CRITTER)
+                if (IsNonDungeonCritter())
                     GetMotionMaster()->MoveFleeing(getVictim(),0);
                 else
                     GetMotionMaster()->MoveChase(getVictim());

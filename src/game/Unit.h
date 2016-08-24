@@ -41,6 +41,7 @@
 #include "DBCStructure.h"
 #include "WorldPacket.h"
 #include "Timer.h"
+#include "Map.h"
 
 #include <list>
 
@@ -1296,6 +1297,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         bool IsSitState() const;
         bool IsStandState() const;
         void SetStandState(uint8 state);
+        bool IsNonDungeonCritter() const { return GetCreatureType() == CREATURE_TYPE_CRITTER && !GetMap()->IsDungeon(); }
 
         bool IsMounted() const { return !!GetMountID(); }
         uint32 GetMountID() const { return GetUInt32Value(UNIT_FIELD_MOUNTDISPLAYID); }
