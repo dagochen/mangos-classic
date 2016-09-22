@@ -1495,6 +1495,35 @@ void WorldObject::AddObjectToRemoveList()
     GetMap()->AddObjectToRemoveList(this);
 }
 
+
+GameObject* WorldObject::SummonGameObject(uint32 id, float x, float y, float z, float ang,  uint32 despwtime)
+{
+    GameObjectInfo const* cinfo = ObjectMgr::GetGameObjectInfo(id);
+    if (!cinfo)
+    {
+        sLog.outErrorDb("WorldObject::SummonGameObject: GameObject (Entry: %u) not existed for summoner: %s. ", id, GetGuidStr().c_str());
+        return nullptr;
+    }
+
+ 
+
+    GameObject* pGameObject = new GameObject();
+
+  
+    if (!pGameObject->Create(GetMap()->GenerateLocalLowGuid(HIGHGUID_GAMEOBJECT), id, GetMap(), x, y, z, ang, 0, 0, 0, 0))
+    {
+        delete pGameObject;
+        return nullptr;
+    }
+    // Active state set before added to map
+    pGameObject->SetActiveObjectState(true);
+
+    GetMap()->Add(pGameObject);
+
+    // return the creature therewith the summoner has access to it
+    return pGameObject;
+}
+
 Creature* WorldObject::SummonCreature(uint32 id, float x, float y, float z, float ang, TempSummonType spwtype, uint32 despwtime, bool asActiveObject, bool setRun)
 {
     CreatureInfo const* cinfo = ObjectMgr::GetCreatureTemplate(id);

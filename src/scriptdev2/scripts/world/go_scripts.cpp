@@ -63,6 +63,27 @@ bool GOUse_go_andorhal_tower(Player* pPlayer, GameObject* pGo)
     return true;
 }
 
+
+/*######
+## go_applebob
+######*/
+
+bool GOUse_go_apple_bob(Player* pPlayer, GameObject* pGO)
+{
+    if (pPlayer && pGO)
+    {
+        uint32 count = pPlayer->GetItemCount(20516, true);
+        if (count < 5)
+        {
+            if (Item* pItem = pPlayer->StoreNewItemInInventorySlot(20516, 5 - count))
+                pPlayer->SendNewItem(pItem, 1, true, false);
+        }
+    }
+    return true;
+}
+
+
+
 void AddSC_go_scripts()
 {
     Script* pNewScript;
@@ -70,5 +91,10 @@ void AddSC_go_scripts()
     pNewScript = new Script;
     pNewScript->Name = "go_andorhal_tower";
     pNewScript->pGOUse =          &GOUse_go_andorhal_tower;
+    pNewScript->RegisterSelf();
+
+    pNewScript = new Script;
+    pNewScript->Name = "go_apple_bob";
+    pNewScript->pGOUse = &GOUse_go_apple_bob;
     pNewScript->RegisterSelf();
 }
