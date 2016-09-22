@@ -1823,6 +1823,11 @@ class MANGOS_DLL_SPEC Player : public Unit
             return GetBattleGroundQueueIndex(bgQueueTypeId) < PLAYER_MAX_BATTLEGROUND_QUEUES;
         }
 
+        bool IsInvitedForAnyBG() const
+        {
+            return IsInvitedForBattleGroundQueueType(BATTLEGROUND_QUEUE_AB) || IsInvitedForBattleGroundQueueType(BATTLEGROUND_QUEUE_AV) || IsInvitedForBattleGroundQueueType(BATTLEGROUND_QUEUE_WS);
+        }
+
         void SetBattleGroundId(uint32 val, BattleGroundTypeId bgTypeId)
         {
             m_bgData.bgInstanceID = val;

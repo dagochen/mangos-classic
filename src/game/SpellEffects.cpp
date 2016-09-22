@@ -3912,11 +3912,18 @@ void Spell::EffectStuck(SpellEffectIndex /*eff_idx*/)
     pTarget->TeleportToHomebind(unitTarget == m_caster ? TELE_TO_SPELL : 0);
 
     // Stuck spell trigger Hearthstone cooldown
+    
     SpellEntry const* spellInfo = sSpellStore.LookupEntry(8690);
     if (!spellInfo)
         return;
-    Spell spell(pTarget, spellInfo, true);
-    spell.SendSpellCooldown();
+    if (!pTarget->HasSpellCooldown(spellInfo->Id))
+    {
+        Spell spell(pTarget, spellInfo, true);
+        spell.SendSpellCooldown();
+    }
+    else
+        pTarget->RepopAtGraveyard();
+   
 }
 
 void Spell::EffectSummonPlayer(SpellEffectIndex /*eff_idx*/)

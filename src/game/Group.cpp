@@ -925,7 +925,7 @@ uint32 Group::CanJoinBattleGroundQueue(BattleGroundTypeId bgTypeId, BattleGround
         if (member->GetBattleGroundBracketIdFromLevel(bgTypeId) != bracket_id)
             return BG_JOIN_ERR_MIXED_LEVELS;
         // don't let join if someone from the group is already in that bg queue
-        if (member->InBattleGroundQueueForBattleGroundQueueType(bgQueueTypeId))
+        if (member->InBattleGroundQueueForBattleGroundQueueType(bgQueueTypeId) || member->IsInvitedForAnyBG())
             return BG_JOIN_ERR_GROUP_MEMBER_ALREADY_IN_QUEUE;
         // check for deserter debuff
         if (!member->CanJoinToBattleground())

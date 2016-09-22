@@ -100,7 +100,7 @@ void WorldSession::HandleBattlemasterJoinOpcode(WorldPacket& recv_data)
     BattleGroundQueueTypeId bgQueueTypeId = BattleGroundMgr::BGQueueTypeId(bgTypeId);
 
     // ignore if player is already in BG
-    if (_player->InBattleGround())
+    if (_player->InBattleGround() || _player->IsInvitedForAnyBG())
         return;
 
     Creature* unit = GetPlayer()->GetMap()->GetCreature(guid);
@@ -418,6 +418,11 @@ void WorldSession::HandleBattleFieldPortOpcode(WorldPacket& recv_data)
             sBattleGroundMgr.ScheduleQueueUpdate(bgQueueTypeId, bgTypeId, _player->GetBattleGroundBracketIdFromLevel(bgTypeId));
             SendPacket(&data);
             DEBUG_LOG("Battleground: player %s (%u) left queue for bgtype %u, queue type %u.", _player->GetName(), _player->GetGUIDLow(), bg->GetTypeID(), bgQueueTypeId);
+
+
+            _player->CastSpell(_player, 26013, true);
+            
+
             break;
         default:
             sLog.outError("Battleground port: unknown action %u", action);

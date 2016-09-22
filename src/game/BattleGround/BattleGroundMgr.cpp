@@ -403,6 +403,43 @@ bool BattleGroundQueue::InviteGroupToBG(GroupQueueInfo* ginfo, BattleGround* bg,
             BGQueueRemoveEvent* removeEvent = new BGQueueRemoveEvent(plr->GetObjectGuid(), ginfo->IsInvitedToBGInstanceGUID, bgTypeId, bgQueueTypeId, ginfo->RemoveInviteTime);
             plr->m_Events.AddEvent(removeEvent, plr->m_Events.CalculateTime(INVITE_ACCEPT_WAIT_TIME));
 
+            for (uint8 i = 1; i < MAX_BATTLEGROUND_TYPE_ID; i++)
+            {
+                BattleGroundQueueTypeId queueID;
+                BattleGroundTypeId bgID;
+                switch (i)
+                {
+                    case 1:
+                        bgID = BATTLEGROUND_AV;
+                        queueID = BATTLEGROUND_QUEUE_AV;
+                        break;
+                    case 2:
+                        bgID = BATTLEGROUND_WS;
+                        queueID = BATTLEGROUND_QUEUE_WS;
+                        break;
+                    case 3:
+                        bgID = BATTLEGROUND_AB;
+                        queueID = BATTLEGROUND_QUEUE_AB;
+                        break;
+                }
+
+                WorldPacket queueLeavedata;
+                BattleGroundQueue& bgQueue = sBattleGroundMgr.m_BattleGroundQueues[queueID];
+                uint32 queueSlot = plr->GetBattleGroundQueueIndex(queueID);
+
+                if (bgTypeId == bgID)
+                    continue;
+
+                plr->RemoveBattleGroundQueueId(queueID);  // must be called this way, because if you move this call to queue->removeplayer, it causes bugs
+                sBattleGroundMgr.BuildBattleGroundStatusPacket(&queueLeavedata, nullptr, queueSlot, STATUS_NONE, 0, 0);
+                bgQueue.RemovePlayer(plr->GetObjectGuid(), true);
+                // player left queue, we should update it
+                sBattleGroundMgr.ScheduleQueueUpdate(queueID, bgID, plr->GetBattleGroundBracketIdFromLevel(bgID));
+                plr->GetSession()->SendPacket(&queueLeavedata);
+                DEBUG_LOG("Battleground: player %s (%u) left queue for bgtype %u, queue type %u.", plr->GetName(), plr->GetGUIDLow(), bg->GetTypeID(), queueID);
+            }
+
+
             WorldPacket data;
 
             uint32 queueSlot = plr->GetBattleGroundQueueIndex(bgQueueTypeId);
@@ -686,6 +723,7 @@ void BattleGroundQueue::Update(BattleGroundTypeId bgTypeId, BattleGroundBracketI
             for (uint8 i = 0; i < PVP_TEAM_COUNT; ++i)
                 for (GroupsQueueType::const_iterator citr = m_SelectionPools[TEAM_INDEX_ALLIANCE + i].SelectedGroups.begin(); citr != m_SelectionPools[TEAM_INDEX_ALLIANCE + i].SelectedGroups.end(); ++citr)
                     InviteGroupToBG((*citr), bg2, (*citr)->GroupTeam);
+                    
             // start bg
             bg2->StartBattleGround();
             // clear structures
