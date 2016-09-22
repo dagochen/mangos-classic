@@ -4397,6 +4397,61 @@ bool ChatHandler::HandleListAurasCommand(char* /*args*/)
     return true;
 }
 
+bool ChatHandler::HandleListCombatCommand(char* /*args*/)
+{
+    std::ostringstream out;
+    Unit* unit = getSelectedUnit();
+    if (!unit)
+    {
+        SendSysMessage(LANG_SELECT_CHAR_OR_CREATURE);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (unit->GetTypeId() == TYPEID_PLAYER)
+    {
+        HostileRefManager &list = unit->getHostileRefManager();
+        if (list.getSize() == 0)
+        {
+            out << "Keine Ziele auf der Threatlist";
+            PSendSysMessage(out.str().c_str());
+            return true;
+        }
+        HostileReference* ref = list.getFirst();
+        while (ref)
+        {
+            HostileReference* nextRef = ref->next();
+            std::ostringstream out;
+            out << "Name: " << ref->getSource()->getOwner()->GetName() << " GUID: " << ref->getSource()->getOwner()->GetGUIDLow();
+            PSendSysMessage(out.str().c_str());
+            ref = nextRef;
+        }
+    }
+    else
+    {
+        const ThreatList list = unit->getThreatManager().getThreatList();;
+
+        if (list.size() == 0)
+        {
+            out << "Keine Ziele auf der Threatlist";
+            PSendSysMessage(out.str().c_str());
+            return true;
+        }
+
+        for (ThreatList::const_iterator i = list.begin(); i != list.end(); ++i)
+        {
+            if (Unit* u = unit->GetMap()->GetUnit(i._Ptr->_Myval->getUnitGuid()))
+            {
+                std::ostringstream out;
+                out << "Name: " << u->GetName() << " GUID: " << u->GetGUIDLow();
+                PSendSysMessage(out.str().c_str());
+            }
+        }
+    }
+
+    return true;
+}
+
 bool ChatHandler::HandleListTalentsCommand(char* /*args*/)
 {
     Player* player = getSelectedPlayer();
