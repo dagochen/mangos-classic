@@ -427,7 +427,7 @@ bool BattleGroundQueue::InviteGroupToBG(GroupQueueInfo* ginfo, BattleGround* bg,
                 BattleGroundQueue& bgQueue = sBattleGroundMgr.m_BattleGroundQueues[queueID];
                 uint32 queueSlot = plr->GetBattleGroundQueueIndex(queueID);
 
-                if (bgTypeId == bgID)
+                if (bgTypeId == bgID || bgID == BATTLEGROUND_AV)
                     continue;
 
                 plr->RemoveBattleGroundQueueId(queueID);  // must be called this way, because if you move this call to queue->removeplayer, it causes bugs
