@@ -134,12 +134,19 @@ uint32 GetSpellCastTime(SpellEntry const* spellInfo, Spell const* spell)
         if (spell->IsRangedSpell() && !spell->IsAutoRepeat())
         {
             float bonus = 1.0f;
+            float malus = 1.0f;
             Unit::AuraList const& hasteAuren = spell->GetCaster()->GetAurasByType(SPELL_AURA_MOD_RANGED_HASTE);
             for (Unit::AuraList::const_iterator itr = hasteAuren.begin(); itr != hasteAuren.end(); ++itr)
             {
-                bonus *= ((100.0f +(*itr)->GetModifier()->m_amount) / 100.0f);
+                float amount = (*itr)->GetModifier()->m_amount;
+                if (amount > 0)
+                    bonus *= ((100.0f + amount) / 100.0f);
+                else
+                    malus *= ((100.0f - amount) / 100.0f);
             }
+            bonus = bonus < 0.5f ? 0.5f : bonus;
             castTime = int32(castTime * (1.0f / bonus));
+            castTime = int32(castTime * malus);
         }
         else if (!spellInfo->HasAttribute(SPELL_ATTR_UNK4) && !spellInfo->HasAttribute(SPELL_ATTR_TRADESPELL))
             castTime = int32(castTime * spell->GetCaster()->GetFloatValue(UNIT_MOD_CAST_SPEED));
