@@ -346,22 +346,32 @@ void WorldSession::LogoutPlayer(bool save)
 
             // build set of player who attack _player or who have pet attacking of _player
             std::set<Player*> aset;
+            uint32 count = 0;
             for (Unit::AttackerSet::const_iterator itr = _player->getAttackers().begin(); itr != _player->getAttackers().end(); ++itr)
             {
                 Unit* owner = (*itr)->GetOwner();           // including player controlled case
                 if (owner)
                 {
                     if (owner->GetTypeId() == TYPEID_PLAYER)
+                    {
                         aset.insert(static_cast<Player*>(owner));
+                        count++;
+                    }
+
                 }
                 else if ((*itr)->GetTypeId() == TYPEID_PLAYER)
+                {
                     aset.insert(static_cast<Player*>(*itr));
+                    count++;
+                }
             }
 
             _player->SetPvPDeath(!aset.empty());
             _player->KillPlayer();
             _player->BuildPlayerRepop();
             _player->RepopAtGraveyard();
+            if (!_player->InBattleGround() && count < _player->getAttackers().size())
+                _player->DurabilityLossAll(0.10f, false);
 
             // give honor to all attackers from set like group case
             for (std::set<Player*>::const_iterator itr = aset.begin(); itr != aset.end(); ++itr)
