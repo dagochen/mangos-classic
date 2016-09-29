@@ -445,7 +445,7 @@ void PoolGroup<GameObject>::Spawn1Object(MapPersistentState& mapState, PoolObjec
                         // if new spawn replaces a just despawned object, not instantly spawn but set respawn timer
                         if (!instantly)
                         {
-                            pGameobject->SetRespawnTime(pGameobject->GetRespawnDelay());
+                            pGameobject->SetRespawnTime(pGameobject->GetRespawnDelay() * frand(0.5f,1.5f));
                             if (sWorld.getConfig(CONFIG_BOOL_SAVE_RESPAWN_TIME_IMMEDIATELY))
                                 pGameobject->SaveRespawnTime();
                         }
