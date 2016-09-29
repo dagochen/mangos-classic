@@ -104,6 +104,12 @@ CreatureAI* GetAI_mob_yenniku(Creature* _Creature)
     return new mob_yennikuAI(_Creature);
 }
 
+
+/*
+Yojamba Isle (ZG Stuff)
+*/
+
+
 enum
 {
     SPELL_CREATE_HEART_OF_HAKKAR_RIFT = 24202,
@@ -124,9 +130,9 @@ enum
 
     NPC_TARGET_DUMMY = 15069,
     NPC_SERVANT = 15080,
-    GO_HEART_OF_HAKKAR = 180402
+    GO_HEART_OF_HAKKAR = 180402,
+    QUEST_HEART_OF_HAKKAR = 8183,
 };
-
 
 const float dummy_position[4] = { -11818.9f, 1343.2f, 7.9f, 4.35f };
 const float heart_position[4] = { -11818.9f, 1342.5f, 9.9f, 4.35f };
@@ -150,17 +156,17 @@ struct mob_molthor : public ScriptedAI
     bool mJustStepped = true;
     uint32 mEventTimer = 0;
 
-    Player* target;
-    Creature* targetDummy;
-    GameObject* heart;
+    ObjectGuid target;
+    ObjectGuid targetDummy;
+    ObjectGuid heart;
 
     std::vector<Creature*> servants;
 
     void Reset() override
     {
-        target = nullptr;
-        targetDummy = nullptr;
-        heart = nullptr;
+        target = ObjectGuid();
+        targetDummy = ObjectGuid();
+        heart = ObjectGuid();
         m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
         m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
 
@@ -180,15 +186,16 @@ struct mob_molthor : public ScriptedAI
 
     void StartQuestEvent(Player* plr)
     {
-
-        target = plr;
+        target = plr->GetObjectGuid();
         mJustStepped = false;
         m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
         m_creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
         m_creature->m_movementInfo.RemoveMovementFlag(MOVEFLAG_WALK_MODE);
 
-        targetDummy = m_creature->SummonCreature(NPC_TARGET_DUMMY, dummy_position[0], dummy_position[1], dummy_position[2], dummy_position[3], TEMPSUMMON_MANUAL_DESPAWN, 0);
-        heart = plr->SummonGameObject(GO_HEART_OF_HAKKAR, heart_position[0], heart_position[1], heart_position[2], heart_position[3], 90000);
+        if (Creature* pSummon = m_creature->SummonCreature(NPC_TARGET_DUMMY, dummy_position[0], dummy_position[1], dummy_position[2], dummy_position[3], TEMPSUMMON_TIMED_DESPAWN, 120000))
+            targetDummy = pSummon->GetObjectGuid();
+        if (GameObject* pSummon = m_creature->SummonGameObject(GO_HEART_OF_HAKKAR, heart_position[0], heart_position[1], heart_position[2], heart_position[3], 120000))
+            heart = pSummon->GetObjectGuid();
 
         if (!targetDummy)
         {
@@ -197,7 +204,6 @@ struct mob_molthor : public ScriptedAI
             Reset();
             return;
         }
-
     }
 
     void SpellHitTarget(Unit* pTarget, const SpellEntry* pSpell)
@@ -266,18 +272,16 @@ struct mob_molthor : public ScriptedAI
         }
         else if (mEventStep == 6)
         {
-
-            m_creature->CastSpell(targetDummy, SPELL_HEART_OF_HAKKAR_MOLTHOR_CHUCKS_THE_HEART, true);
+            if (Unit* pTarget = m_creature->GetMap()->GetUnit(targetDummy))
+                m_creature->CastSpell(pTarget, SPELL_HEART_OF_HAKKAR_MOLTHOR_CHUCKS_THE_HEART, true);
 
             ++mEventStep;
             mEventTimer = 5000;
         }
-
-
         else if (mEventStep == 7)
         {
-
-            targetDummy->CastSpell(targetDummy, SPELL_CREATE_HEART_OF_HAKKAR_RIFT, true);
+            if (Unit* pTarget = m_creature->GetMap()->GetUnit(targetDummy))
+                pTarget->CastSpell(pTarget, SPELL_CREATE_HEART_OF_HAKKAR_RIFT, true);
 
             ++mEventStep;
             mEventTimer = 500;
@@ -297,10 +301,11 @@ struct mob_molthor : public ScriptedAI
         }
         else if (mEventStep == 9)
         {
-            m_creature->CastSpell(targetDummy, SPELL_CREATE_HEART_OF_HAKKAR_EXPLOISON, true);
-            m_creature->CastSpell(targetDummy, SPELL_HELLFIRE_CAST_VISUAL, true);
-            heart->SetLootState(GO_JUST_DEACTIVATED);
-            heart->RemoveFromWorld();
+            if (Unit* pTarget = m_creature->GetMap()->GetUnit(targetDummy))
+            {
+                m_creature->CastSpell(pTarget, SPELL_CREATE_HEART_OF_HAKKAR_EXPLOISON, true);
+                m_creature->CastSpell(pTarget, SPELL_HELLFIRE_CAST_VISUAL, true);
+            }
             ++mEventStep;
             mEventTimer = 4000;
         }
@@ -312,7 +317,8 @@ struct mob_molthor : public ScriptedAI
         }
         else if (mEventStep == 11)
         {
-            m_creature->CastSpell(target, SPELL_SPIRIT_OF_ZANDALAR, false);
+            if (Unit* pTarget = m_creature->GetMap()->GetUnit(target))
+                m_creature->CastSpell(pTarget, SPELL_SPIRIT_OF_ZANDALAR, false);
             ++mEventStep;
             mEventTimer = 4000;
         }
@@ -343,21 +349,23 @@ struct mob_molthor : public ScriptedAI
         else if (mEventStep == 16)
         {
             m_creature->SetFacingTo(4.24f);
-            targetDummy->ForcedDespawn();
+            if (Creature* pTarget = m_creature->GetMap()->GetCreature(targetDummy))
+                pTarget->ForcedDespawn();
             for (int i = 0; i < 4; ++i)
                 servants[i]->ForcedDespawn();
-            targetDummy->ForcedDespawn();
-
+            if (GameObject* pObject = m_creature->GetMap()->GetGameObject(heart))
+            {
+                pObject->SetLootState(GO_JUST_DEACTIVATED);
+                pObject->RemoveFromWorld();
+            }
             Reset();
         }
     }
-
-
 };
 
-bool onHakkarQuestComplete(Player* plr, Creature* cr, Quest const*)
+bool onHakkarQuestComplete(Player* plr, Creature* cr, Quest const* pQuest)
 {
-    if (cr->AI() && plr && cr)
+    if (cr->AI() && plr && cr && pQuest->GetQuestId() == QUEST_HEART_OF_HAKKAR)
         static_cast<mob_molthor*>(cr->AI())->StartQuestEvent(plr);
 
     return true;
@@ -366,9 +374,9 @@ bool onHakkarQuestComplete(Player* plr, Creature* cr, Quest const*)
 
 enum Riggle
 {
-        SAY_START = 0,
-        SAY_WINNER = 1,
-        SAY_END = 2,
+        SAY_START = -1600000,
+        SAY_WINNER = -1600001,
+        SAY_END = -1600002,
         QUEST_MASTER_ANGLER = 8193
 };
 
@@ -400,7 +408,7 @@ struct mob_riggle_bassbait : public ScriptedAI
         if (EndEvent)
             return;
 
-        if ((currenttime->tm_hour == 14) && (currenttime->tm_sec == 0) && IsHolidayActive(HOLIDAY_FISHING_EXTRAVAGANZA))
+        if ((currenttime->tm_hour == 14) && (currenttime->tm_sec == 30))
         {
             DoScriptText(SAY_START, m_creature);
             m_creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
@@ -408,44 +416,46 @@ struct mob_riggle_bassbait : public ScriptedAI
                 
         if ((currenttime->tm_hour == 16) && (currenttime->tm_sec == 0) || winner)
         {
-            if (Player* pPlayer = m_creature->GetMap()->GetPlayer(winner))
-                DoScriptText(SAY_WINNER, m_creature);
-            
             DoScriptText(SAY_END, m_creature);
             EndEvent = true;
         }
      }
 
-        
-    bool OnGossipHello(Player* pPlayer, Creature* pCreature)
-    {
-        if (pCreature->isQuestGiver())
-        {
-            pPlayer->PrepareQuestMenu(pCreature->GetGUID());
-            pPlayer->SEND_GOSSIP_MENU(7614, pCreature->GetGUID());//Gossip DB
-            return true;
-        }
-            
-        pPlayer->SEND_GOSSIP_MENU(7714, pCreature->GetGUID());//Gossip DB
-        return true;
-    }
-        
-    bool ChooseReward(Player* pPlayer, Creature* pCreature, const Quest *pQuest, uint32 item)
-    {
-        if (pQuest->GetQuestId() == QUEST_MASTER_ANGLER)
-        {
-            pCreature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
-            ((mob_riggle_bassbait*)(pCreature->AI()))->winner = pPlayer->GetObjectGuid();
-        }
-        return true;
-    }
-        
-    CreatureAI* GetAI(Creature* pCreature) const
-    {
-        return new mob_riggle_bassbait(pCreature);
-    }
 };
 
+bool OnGossipHello(Player* pPlayer, Creature* pCreature)
+{
+    if (pCreature->isQuestGiver())
+    {
+        pPlayer->PrepareQuestMenu(pCreature->GetGUID());
+        pPlayer->SEND_GOSSIP_MENU(DEFAULT_GOSSIP_MESSAGE, pCreature->GetGUID());//Gossip DB
+        return true;
+    }
+
+    pPlayer->SEND_GOSSIP_MENU(DEFAULT_GOSSIP_MESSAGE, pCreature->GetGUID());//Gossip DB
+    return true;
+};
+
+bool ChooseReward(Player* pPlayer, Creature* pCreature, const Quest *pQuest)
+{
+    if (pQuest->GetQuestId() == QUEST_MASTER_ANGLER)
+    {
+        pCreature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+        ((mob_riggle_bassbait*)(pCreature->AI()))->winner = pPlayer->GetObjectGuid();
+        DoScriptText(SAY_WINNER, pCreature, pPlayer);
+        if (Creature* pQuestGiver = GetClosestCreatureWithEntry(pCreature, 15078, 50.0f))
+        {
+            pQuestGiver->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+        }
+
+    }
+    return true;
+};
+
+CreatureAI* GetAI_mob_riggle(Creature* _Creature)
+{
+    return new mob_riggle_bassbait(_Creature);
+};
 
 /*######
 ##
@@ -464,5 +474,12 @@ void AddSC_stranglethorn_vale()
     pNewScript->Name = "mob_molthor";
     pNewScript->GetAI = [](Creature* c)->CreatureAI* { return new mob_molthor(c); };
     pNewScript->pQuestRewardedNPC = &onHakkarQuestComplete;
+    pNewScript->RegisterSelf();
+
+    pNewScript = new Script;
+    pNewScript->Name = "mob_riggle";
+    pNewScript->GetAI = &GetAI_mob_riggle;
+    pNewScript->pQuestRewardedNPC = &ChooseReward;
+    pNewScript->pGossipHello = &OnGossipHello;
     pNewScript->RegisterSelf();
 }
