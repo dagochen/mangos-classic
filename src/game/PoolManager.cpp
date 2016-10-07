@@ -27,6 +27,8 @@
 
 INSTANTIATE_SINGLETON_1(PoolManager);
 
+
+
 ////////////////////////////////////////////////////////////
 // template class SpawnedPoolData
 
@@ -157,6 +159,36 @@ bool PoolGroup<T>::CheckPool() const
     }
     return true;
 }
+
+
+
+uint64 PoolManager::GetLastLootTime(uint32 poolId)
+{
+    std::map<uint32, uint64>::iterator it;
+    it = mLastLoot.find(poolId);
+    if (it != mLastLoot.end())
+    return it->second;
+}
+
+void PoolManager::SetLastLootTime(uint32 poolId)
+{
+    mLastLoot[poolId] = time(NULL);
+}
+
+uint32 PoolManager::GetCurrentLimit(uint32 poolId)
+{
+    std::map<uint32, uint32>::iterator it;
+    it = mCurrentLimit.find(poolId);
+    if (it != mCurrentLimit.end())
+        return it->second;
+}
+
+void PoolManager::SetCurrentLimit(uint32 poolId, uint32 value)
+{
+    mCurrentLimit[poolId] = value;
+}
+
+
 
 // Method to check event linking
 template <class T>
@@ -327,7 +359,18 @@ void PoolGroup<T>::SpawnObject(MapPersistentState& mapState, uint32 limit, uint3
     SpawnedPoolData& spawns = mapState.GetSpawnedPoolData();
 
     uint32 lastDespawned = 0;
-    int count = limit - spawns.GetSpawnedObjects(poolId);
+    uint32 currentLimit = sPoolMgr.GetCurrentLimit(poolId);
+    uint64 diff = time(NULL) - sPoolMgr.GetLastLootTime(poolId);
+    uint32 maxlimit = (float)(limit-0.5f) * 2;
+    if (diff < 300000)
+        currentLimit++;
+    else
+        currentLimit = limit;
+    currentLimit = maxlimit < currentLimit ? maxlimit : currentLimit;
+    currentLimit = currentLimit > limit ? currentLimit : limit;
+    int count = currentLimit - spawns.GetSpawnedObjects(poolId);
+    sPoolMgr.SetLastLootTime(poolId);
+    sPoolMgr.SetCurrentLimit(poolId, currentLimit);
 
     // If triggered from some object respawn this object is still marked as spawned
     // and also counted into m_SpawnedPoolAmount so we need increase count to be
@@ -508,7 +551,6 @@ void PoolGroup<Pool>::ReSpawn1Object(MapPersistentState& /*mapState*/, PoolObjec
 
 ////////////////////////////////////////////////////////////
 // Methods of class PoolManager
-
 PoolManager::PoolManager(): max_pool_id(0)
 {
 }

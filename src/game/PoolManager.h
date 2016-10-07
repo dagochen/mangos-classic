@@ -64,6 +64,7 @@ class Pool                                                  // for Pool of Pool 
 typedef std::set<uint32> SpawnedPoolObjects;
 typedef std::map<uint32, uint32> SpawnedPoolPools;
 
+
 class SpawnedPoolData
 {
     public:
@@ -83,6 +84,8 @@ class SpawnedPoolData
         bool IsInitialized() const { return m_isInitialized; }
         void SetInitialized() { m_isInitialized = true; }
 
+       
+
         SpawnedPoolObjects const& GetSpawnedCreatures() const { return mSpawnedCreatures; }
         SpawnedPoolObjects const& GetSpawnedGameobjects() const { return mSpawnedGameobjects; }
         SpawnedPoolPools const& GetSpawnedPools() const { return mSpawnedPools; }
@@ -91,6 +94,7 @@ class SpawnedPoolData
         SpawnedPoolObjects mSpawnedGameobjects;
         SpawnedPoolPools   mSpawnedPools;
         bool m_isInitialized;
+        
 };
 
 typedef std::vector<PoolObject> PoolObjectList;
@@ -116,6 +120,8 @@ class PoolGroup
         void ReSpawn1Object(MapPersistentState& mapState, PoolObject* obj);
         void RemoveOneRelation(uint16 child_pool_id);
 
+    
+
         PoolObjectList const& GetExplicitlyChanced() const { return ExplicitlyChanced; }
         PoolObjectList const& GetEqualChanced() const { return EqualChanced; }
 
@@ -124,6 +130,8 @@ class PoolGroup
         uint32 poolId;
         PoolObjectList ExplicitlyChanced;
         PoolObjectList EqualChanced;
+        std::map<uint32, uint64> m_lastLoot;
+        std::map<uint32, uint32> m_currentLimit;
 };
 
 class PoolManager
@@ -174,6 +182,13 @@ class PoolManager
         // used for calling from global systems when need initialize spawn pool state in appropriate (possible) map persistent state
         void InitSpawnPool(MapPersistentState& mapState, uint16 pool_id);
 
+        uint64 GetLastLootTime(uint32 poolId);
+        void SetLastLootTime(uint32 poolId);
+
+        uint32 GetCurrentLimit(uint32 poolId);
+
+        void SetCurrentLimit(uint32 poolId, uint32 value);
+
         template<typename T>
         void UpdatePoolInMaps(uint16 pool_id, uint32 db_guid_or_pool_id = 0);
 
@@ -195,11 +210,15 @@ class PoolManager
         typedef std::vector<PoolGroup<Pool> >       PoolGroupPoolMap;
         typedef std::pair<uint32, uint16> SearchPair;
         typedef std::map<uint32, uint16> SearchMap;
-
+        typedef std::map<uint32, uint32> CurrentLimit;
+        typedef std::map<uint32, uint64> LastLoot;
+        
         PoolTemplateDataMap mPoolTemplate;
         PoolGroupCreatureMap mPoolCreatureGroups;
         PoolGroupGameObjectMap mPoolGameobjectGroups;
         PoolGroupPoolMap mPoolPoolGroups;
+        CurrentLimit mCurrentLimit;
+        LastLoot mLastLoot;
 
         // static maps DB low guid -> pool id
         SearchMap mCreatureSearchMap;
