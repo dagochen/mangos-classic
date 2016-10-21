@@ -53,9 +53,7 @@ bool GameEventMgr::CheckOneGameEvent(uint16 entry, time_t currenttime) const
 
                    
                     uint16 event_id = fields[0].GetUInt16();
-                   
-
-                    GameEventData& pGameEvent = mGameEvent[entry];
+                    GameEventData pGameEvent = mGameEvent[entry];
                     uint64 starttime = fields[1].GetUInt64();
                     pGameEvent.start = time_t(starttime);
                     uint64 endtime = fields[2].GetUInt64();
