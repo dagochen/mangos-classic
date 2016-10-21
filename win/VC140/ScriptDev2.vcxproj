@@ -397,8 +397,10 @@
     <ClCompile Include="..\..\src\scriptdev2\system\ScriptLoader.cpp" />
     <ClCompile Include="..\..\src\scriptdev2\system\system.cpp" />
     <ClCompile Include="..\..\src\scriptdev2\ScriptMgr.cpp" />
+    <ClCompile Include="..\..\src\scriptdev2\scripts\world\event_elemental_invasion.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\game\GameEventMgr.h" />
     <ClInclude Include="..\..\src\scriptdev2\base\escort_ai.h" />
     <ClInclude Include="..\..\src\scriptdev2\base\follower_ai.h" />
     <ClInclude Include="..\..\src\scriptdev2\base\guard_ai.h" />
