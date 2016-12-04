@@ -200,6 +200,41 @@ CreatureAI* GetAI_boss_grobbulus(Creature* pCreature)
     return new boss_grobbulusAI(pCreature);
 }
 
+struct mob_grobbulus_cloud : public ScriptedAI
+{
+    mob_grobbulus_cloud(Creature* pCreature) : ScriptedAI(pCreature)
+    {
+        Reset();
+        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
+        SetCombatMovement(false);
+        m_creature->ApplySpellImmune(0, IMMUNITY_SCHOOL, SPELL_SCHOOL_NATURE, true);
+        // m_creature->SetVisibility(VISIBILITY_OFF);
+    }
+
+    uint32 m_uiPoisonCloudTimer;
+
+    void Reset()
+    {
+        m_uiPoisonCloudTimer = 1000;
+    }
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (m_uiPoisonCloudTimer <= uiDiff)
+        {
+            if (DoCastSpellIfCan(m_creature, 28158, CAST_TRIGGERED) == CAST_OK)
+                m_uiPoisonCloudTimer = 60000;
+        }
+        else
+            m_uiPoisonCloudTimer -= uiDiff;
+    }
+};
+
+CreatureAI* GetAI_mob_grobbulus_cloud(Creature* pCreature)
+{
+    return new mob_grobbulus_cloud(pCreature);
+}
+
 void AddSC_boss_grobbulus()
 {
     Script* pNewScript;
@@ -207,5 +242,10 @@ void AddSC_boss_grobbulus()
     pNewScript = new Script;
     pNewScript->Name = "boss_grobbulus";
     pNewScript->GetAI = &GetAI_boss_grobbulus;
+    pNewScript->RegisterSelf();
+
+    pNewScript = new Script;
+    pNewScript->Name = "mob_grobbulus_cloud";
+    pNewScript->GetAI = &GetAI_mob_grobbulus_cloud;
     pNewScript->RegisterSelf();
 }
