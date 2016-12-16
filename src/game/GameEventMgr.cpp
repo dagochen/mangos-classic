@@ -38,172 +38,9 @@ bool GameEventMgr::CheckOneGameEvent(uint16 entry, time_t currenttime) const
     if (mGameEvent[entry].start < currenttime && currenttime < mGameEvent[entry].end &&
         ((currenttime - mGameEvent[entry].start) % (mGameEvent[entry].occurence * MINUTE)) < (mGameEvent[entry].length * MINUTE))
         return true;
-    
-    switch (entry)
-    {
-        case 4: // Markt in Elwynn
-        case 5: // Markt in Mulgore
-            if ((mGameEvent[entry].start + mGameEvent[entry].length * MINUTE) < currenttime)
-            {
-                QueryResult* result = WorldDatabase.Query("SELECT entry, UNIX_TIMESTAMP(start_time) FROM game_event WHERE entry in (4,5)");
-
-                do
-                {
-                    Field* fields = result->Fetch();
-
-                   
-                    uint16 event_id = fields[0].GetUInt16();
-                    GameEventData pGameEvent = mGameEvent[entry];
-                    uint64 starttime = fields[1].GetUInt64();
-                    pGameEvent.start = time_t(starttime);
-                    uint64 endtime = fields[2].GetUInt64();
-                    pGameEvent.end = time_t(endtime);
-                    pGameEvent.occurence = fields[3].GetUInt32();
-                    pGameEvent.length = fields[4].GetUInt32();
-                    pGameEvent.holiday_id = HolidayIds(fields[5].GetUInt32());
-
-                    if (pGameEvent.length == 0)                     // length>0 is validity check
-                    {
-                        sLog.outErrorDb("`game_event` game event id (%i) have length 0 and can't be used.", event_id);
-                        continue;
-                    }
-
-                    if (pGameEvent.occurence < pGameEvent.length)   // occurence < length is useless. This also asserts that occurence > 0!
-                    {
-                        sLog.outErrorDb("`game_event` game event id (%i) has occurence %u  < length %u and can't be used.", event_id, pGameEvent.occurence, pGameEvent.length);
-                        continue;
-                    }
-
-                    pGameEvent.description = fields[6].GetCppString();
-                } while (result->NextRow());
-                
-                tm* now = localtime(&currenttime);
-                uint32 nowYear = now->tm_year + 1900;
-                uint32 nowMonth = now->tm_mon + 1;
-
-
-                uint32 year = (nowMonth + 2 < 13) ? nowYear : nowYear + 1;
-                uint32 month = (nowMonth + 2 < 13) ? nowMonth + 2 : nowMonth - 10;
-                uint32 dayOfMonth;
-
-                uint32 numberOfDays;
-                for (uint16 i = 0; i < 2; i++)
-                {
-                    switch (nowMonth + i)
-                    {
-                    case 4:
-                    case 6:
-                    case 9:
-                    case 11:
-                        numberOfDays += 30;
-                        break;
-                    case 2:
-                        if ((nowYear % 4 == 0 && nowYear % 100 != 0) || (nowYear % 400 == 0))
-                            numberOfDays += 29;
-                        else
-                            numberOfDays += 28;
-                        break;
-                    default:
-                        numberOfDays += 31;
-                    }
-                }
-                numberOfDays += 3;
-                uint32 diff = numberOfDays - now->tm_mday; // 61-12 = 49
-                uint32 mod = diff % 7; // 49 % 7 = 0
-                uint32 firstDayOfNextMonth = ((now->tm_wday + mod) % 7) + 1; // Mi + 0 = Mi + 1 = Donnerstag
-
-                if (firstDayOfNextMonth <= 5)
-                    dayOfMonth = 1 + (5 - firstDayOfNextMonth);
-                else
-                    dayOfMonth = 1 + firstDayOfNextMonth;
-                // 2016-10-07 04:00:00
-                WorldDatabase.PExecute("UPDATE game_event set start_time = '%u-%u-%u 04:00:00' where entry = %u", year, month, dayOfMonth, entry);
-            }
-            break;
-        case 23: // Aufbau Elwynn
-        case 24: // Aufbau Mulgore
-            if ((mGameEvent[entry].start + mGameEvent[entry].length * MINUTE) < currenttime)
-            {
-                tm* now = localtime(&currenttime);
-                uint32 nowYear = now->tm_year + 1900;
-                uint32 nowMonth = now->tm_mon + 1;
-                
-
-                uint32 year = (nowMonth+2 < 13) ? nowYear : nowYear+1;
-                uint32 month = (nowMonth+2 < 13) ? nowMonth + 2 : nowMonth - 10;
-                uint32 dayOfMonth;
-                
-                uint32 numberOfDays;
-                for (uint16 i = 0; i < 2; i++)
-                {
-                    switch (nowMonth+i)
-                    {
-                        case 4:
-                        case 6:
-                        case 9:
-                        case 11:
-                            numberOfDays += 30;
-                            break;
-                        case 2:
-                            if ((nowYear % 4 == 0 && nowYear % 100 != 0) || (nowYear % 400 == 0))
-                                numberOfDays += 29;
-                            else
-                                numberOfDays += 28;
-                            break;
-                        default:
-                            numberOfDays += 31;
-                    }
-                }
-
-                uint32 diff = numberOfDays - now->tm_mday; // 61-12 = 49
-                uint32 mod = diff % 7; // 49 % 7 =0 
-                uint32 firstDayOfNextMonth = ((now->tm_wday + mod) % 7) + 1; // Mi + 0 = Mi + 1 = Donnerstag
-
-                if (firstDayOfNextMonth <= 5)
-                    dayOfMonth = 1 + (5 - firstDayOfNextMonth);
-                else
-                    dayOfMonth =  1 + firstDayOfNextMonth;
-                // 2016-10-07 04:00:00
-                WorldDatabase.PExecute("UPDATE game_event set start_time = '%u-%u-%u 04:00:00' where entry = %u", year, month, dayOfMonth, entry);
-            }
-            break;
-        default:
-            break;
-    }
-    
-    return false;
-}
-
-
-
-uint64 calculateTime(tm* now)
-{
-    uint64 result = 0;
-
-    if (now->tm_mon == 3 || now->tm_mon == 5 || now->tm_mon == 8 || now->tm_mon == 10)
-        result = 30;
-    else if (now->tm_mon == 1)
-    {
-        bool isLeapYear = (now->tm_year % 4 == 0 && now->tm_year % 100 != 0) || (now->tm_year % 400 == 0);
-        if (isLeapYear)
-            result = 29;
-        else
-            result = 28;
-    }
     else
-        result = 31;
-
-    result = result - now->tm_mday; // 31-11 = 20
-    uint32 lastDayOfMonth = ((result % 7) + now->tm_wday) % 7;
-    
-    if (lastDayOfMonth <= 5)
-        result + 1 + (5 - lastDayOfMonth);
-    else
-        result + 6;
-
-    return result * DAY + 4 * HOUR;
+      return false;
 }
-
 uint32 GameEventMgr::NextCheck(uint16 entry) const
 {
     time_t currenttime = time(nullptr);
@@ -306,6 +143,68 @@ void GameEventMgr::LoadFromDB()
             pGameEvent.occurence    = fields[3].GetUInt32();
             pGameEvent.length       = fields[4].GetUInt32();
             pGameEvent.holiday_id   = HolidayIds(fields[5].GetUInt32());
+
+            switch (event_id)
+            {
+            case 4: // Markt in Elwynn
+            case 5: // Markt in Mulgore
+            case 23: // Aufbau Elwynn
+            case 24: // Aufbau Mulgore
+                if ((mGameEvent[event_id].start + mGameEvent[event_id].length * MINUTE) < time(NULL))
+                {
+                    time_t currenttime = time(NULL);
+                    tm* now = localtime(&currenttime);
+                    uint32 nowYear = now->tm_year + 1900;
+                    uint32 nowMonth = now->tm_mon + 1;
+
+
+                    uint32 year = (nowMonth + 2 < 13) ? nowYear : nowYear + 1;
+                    uint32 month = (nowMonth + 2 < 13) ? nowMonth + 2 : nowMonth - 10;
+                    uint32 dayOfMonth;
+
+                    uint32 numberOfDays = 0;
+                    for (uint16 i = 0; i < 2; i++)
+                    {
+                        if (i > 0)
+                        {
+                            nowMonth = nowMonth++;
+                            nowMonth = (nowMonth > 12) ? 1 : nowMonth;
+                        }
+
+                        switch (nowMonth)
+                        {
+                        case 4:
+                        case 6:
+                        case 9:
+                        case 11:
+                            numberOfDays += 30;
+                            break;
+                        case 2:
+                            if ((nowYear % 4 == 0 && nowYear % 100 != 0) || (nowYear % 400 == 0))
+                                numberOfDays += 29;
+                            else
+                                numberOfDays += 28;
+                            break;
+                        default:
+                            numberOfDays += 31;
+                        }
+                    }
+                    if (event_id == 3 || event_id == 4)
+                        numberOfDays += 3;
+
+                    uint32 diff = numberOfDays - now->tm_mday; // 61-12 = 49
+                    uint32 mod = diff % 7; // 49 % 7 = 0
+                    uint32 firstDayOfNextMonth = ((now->tm_wday + mod) % 7) + 1; // Mi + 0 = Mi + 1 = Donnerstag
+
+                    if (firstDayOfNextMonth <= 5)
+                        dayOfMonth = 1 + (5 - firstDayOfNextMonth);
+                    else
+                        dayOfMonth = 1 + firstDayOfNextMonth;
+                    // 2016-10-07 04:00:00
+                    WorldDatabase.PExecute("UPDATE game_event SET start_time = '%u-%u-%u 04:00:00' WHERE entry = %u", year, month, dayOfMonth, event_id);
+                }
+                break;
+            }
 
             if (pGameEvent.length == 0)                     // length>0 is validity check
             {
