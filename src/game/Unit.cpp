@@ -382,6 +382,18 @@ bool Unit::UpdateMeleeAttackingState()
     }
     else
     {
+        SpellAuraHolderMap& vAuras = GetSpellAuraHolderMap();
+        for (SpellAuraHolderMap::const_iterator i = vAuras.begin(), next; i != vAuras.end(); i = next)
+        {
+            const SpellEntry* se = i->second->GetSpellProto();
+            next = i; ++next;
+            if (se->AuraInterruptFlags & AURA_INTERRUPT_FLAG_PHYSICAL_ATTACK)
+            {
+                RemoveSpellAuraHolder(i->second);
+                next = vAuras.begin();
+            }
+        }
+
         if (isAttackReady(BASE_ATTACK))
         {
             // prevent base and off attack in same time, delay attack at 0.2 sec
@@ -2088,6 +2100,8 @@ void Unit::AttackerStateUpdate(Unit* pVictim, WeaponAttackType attType, bool ext
         return;                                             // ignore ranged case
 
     uint32 extraAttacks = m_extraAttacks;
+
+
 
     // melee attack spell casted at main hand attack only
     if (attType == BASE_ATTACK && m_currentSpells[CURRENT_MELEE_SPELL])
@@ -4010,6 +4024,9 @@ void Unit::RemoveAurasOnCast(SpellEntry const* castedSpellEntry)
         SpellEntry const* spellEntry = holder->GetSpellProto();
         bool removeThisHolder = false;
 
+        if (spellEntry->AuraInterruptFlags & AURA_INTERRUPT_FLAG_SPELLCAST)
+            removeThisHolder = true;
+
         if (spellEntry->AuraInterruptFlags & AURA_INTERRUPT_FLAG_UNK2)
         {
             if (castedSpellEntry->HasAttribute(SPELL_ATTR_EX_NOT_BREAK_STEALTH))
@@ -4031,6 +4048,8 @@ void Unit::RemoveAurasOnCast(SpellEntry const* castedSpellEntry)
             else
                 removeThisHolder = true;
         }
+
+
 
         if (removeThisHolder)
         {
