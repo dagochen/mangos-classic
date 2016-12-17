@@ -217,14 +217,14 @@ void SpellCastTargets::write(ByteBuffer& data) const
         if (m_targetMask & TARGET_FLAG_UNIT)
         {
             if (m_unitTarget)
-                data << m_unitTarget->GetPackGUID();
+                data << m_unitTarget->GetObjectGuid();
             else
                 data << uint8(0);
         }
         else if (m_targetMask & (TARGET_FLAG_OBJECT | TARGET_FLAG_OBJECT_UNK))
         {
             if (m_GOTarget)
-                data << m_GOTarget->GetPackGUID();
+                data << m_GOTarget->GetObjectGuid();
             else
                 data << uint8(0);
         }
@@ -237,7 +237,7 @@ void SpellCastTargets::write(ByteBuffer& data) const
     if (m_targetMask & (TARGET_FLAG_ITEM | TARGET_FLAG_TRADE_ITEM))
     {
         if (m_itemTarget)
-            data << m_itemTarget->GetPackGUID();
+            data << m_itemTarget->GetObjectGuid();
         else
             data << uint8(0);
     }
@@ -3159,6 +3159,7 @@ void Spell::finish(bool ok)
     // Stop Attack for some spells
     if (m_spellInfo->HasAttribute(SPELL_ATTR_STOP_ATTACK_TARGET))
         m_caster->AttackStop();
+
 }
 
 void Spell::SendCastResult(SpellCastResult result)
@@ -3221,11 +3222,11 @@ void Spell::SendSpellStart()
 
     WorldPacket data(SMSG_SPELL_START, (8 + 8 + 4 + 2 + 4));
     if (m_CastItem)
-        data << m_CastItem->GetPackGUID();
+        data << m_CastItem->GetObjectGuid();
     else
-        data << m_caster->GetPackGUID();
+        data << m_caster->GetObjectGuid();
 
-    data << m_caster->GetPackGUID();
+    data << m_caster->GetObjectGuid();
     data << uint32(m_spellInfo->Id);                        // spellId
     data << uint16(castFlags);                              // cast flags
     data << uint32(m_timer);                                // delay?
@@ -3253,11 +3254,11 @@ void Spell::SendSpellGo()
     WorldPacket data(SMSG_SPELL_GO, 53);                    // guess size
 
     if (m_CastItem)
-        data << m_CastItem->GetPackGUID();
+        data << m_CastItem->GetObjectGuid();
     else
-        data << m_caster->GetPackGUID();
+        data << m_caster->GetObjectGuid();
 
-    data << m_caster->GetPackGUID();
+    data << m_caster->GetObjectGuid();
     data << uint32(m_spellInfo->Id);                        // spellId
     data << uint16(castFlags);                              // cast flags
 
@@ -3373,9 +3374,9 @@ void Spell::SendLogExecute()
     WorldPacket data(SMSG_SPELLLOGEXECUTE, (8 + 4 + 4 + 4 + 4 + 8));
 
     if (m_caster->GetTypeId() == TYPEID_PLAYER)
-        data << m_caster->GetPackGUID();
+        data << m_caster->GetObjectGuid();
     else
-        data << target->GetPackGUID();
+        data << target->GetObjectGuid();
 
     data << uint32(m_spellInfo->Id);
     uint32 count1 = 1;
@@ -3398,7 +3399,7 @@ void Spell::SendLogExecute()
                     break;
                 case SPELL_EFFECT_POWER_DRAIN:
                     if (Unit* unit = m_targets.getUnitTarget())
-                        data << unit->GetPackGUID();
+                        data << unit->GetObjectGuid();
                     else
                         data << uint8(0);
                     data << uint32(0);
@@ -3407,21 +3408,21 @@ void Spell::SendLogExecute()
                     break;
                 case SPELL_EFFECT_ADD_EXTRA_ATTACKS:
                     if (Unit* unit = m_targets.getUnitTarget())
-                        data << unit->GetPackGUID();
+                        data << unit->GetObjectGuid();
                     else
-                        data << uint8(0);
-                    data << uint32(0);                      // count?
+                        data << ObjectGuid();
+                    data << uint32(m_currentBasePoints[0]);    // count?
                     break;
                 case SPELL_EFFECT_INTERRUPT_CAST:
                     if (Unit* unit = m_targets.getUnitTarget())
-                        data << unit->GetPackGUID();
+                        data << unit->GetObjectGuid();
                     else
                         data << uint8(0);
                     data << uint32(0);                      // spellid
                     break;
                 case SPELL_EFFECT_DURABILITY_DAMAGE:
                     if (Unit* unit = m_targets.getUnitTarget())
-                        data << unit->GetPackGUID();
+                        data << unit->GetObjectGuid();
                     else
                         data << uint8(0);
                     data << uint32(0);
@@ -3430,7 +3431,7 @@ void Spell::SendLogExecute()
                 case SPELL_EFFECT_OPEN_LOCK:
                 case SPELL_EFFECT_OPEN_LOCK_ITEM:
                     if (Item* item = m_targets.getItemTarget())
-                        data << item->GetPackGUID();
+                        data << item->GetObjectGuid();
                     else
                         data << uint8(0);
                     break;
@@ -3459,11 +3460,11 @@ void Spell::SendLogExecute()
                 case SPELL_EFFECT_SUMMON_OBJECT_SLOT4:
                 case SPELL_EFFECT_SUMMON_DEMON:
                     if (Unit* unit = m_targets.getUnitTarget())
-                        data << unit->GetPackGUID();
+                        data << unit->GetObjectGuid();
                     else if (m_targets.getItemTargetGuid())
                         data << m_targets.getItemTargetGuid().WriteAsPacked();
                     else if (GameObject* go = m_targets.getGOTarget())
-                        data << go->GetPackGUID();
+                        data << go->GetObjectGuid();
                     else
                         data << uint8(0);                   // guid
                     break;
@@ -3472,7 +3473,7 @@ void Spell::SendLogExecute()
                     break;
                 case SPELL_EFFECT_DISMISS_PET:
                     if (Unit* unit = m_targets.getUnitTarget())
-                        data << unit->GetPackGUID();
+                        data << unit->GetObjectGuid();
                     else
                         data << uint8(0);
                     break;
@@ -3488,7 +3489,7 @@ void Spell::SendLogExecute()
 void Spell::SendInterrupted(uint8 result)
 {
     WorldPacket data(SMSG_SPELL_FAILURE, (8 + 4 + 1));
-    data << m_caster->GetPackGUID();
+    data << m_caster->GetObjectGuid();
     data << m_spellInfo->Id;
     data << result;
     m_caster->SendMessageToSet(&data, true);
