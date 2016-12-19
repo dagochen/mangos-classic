@@ -1959,6 +1959,26 @@ bool Creature::IsOutOfThreatArea(Unit* pVictim) const
     if (!pVictim->isVisibleForOrDetect(this, this, false))
         return true;
 
+    const SpellEntry* spell = ((Creature*)this)->ReachWithSpellAttack(pVictim);
+    bool canReachOtherHostilesWithMeleeAttack = false;
+    bool canCastSpell = false;
+
+    for each (const HostileReference* ref in getThreatManager().getThreatList())
+    {
+        Unit* unit = ref->getTarget();
+        if (CanReachWithMeleeAttack(unit))
+        {
+            canReachOtherHostilesWithMeleeAttack = true;
+            break;
+        }
+    }
+
+    if (spell && IsWithinLOSInMap(pVictim))
+        canCastSpell = true;
+
+    if (hasUnitState(UNIT_STAT_ROOT) && !CanReachWithMeleeAttack(pVictim) && canReachOtherHostilesWithMeleeAttack && !canCastSpell && !IsNonMeleeSpellCasted(false))
+        return true;
+
     if (sMapStore.LookupEntry(GetMapId())->IsDungeon())
         return false;
 
