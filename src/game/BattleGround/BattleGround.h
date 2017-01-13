@@ -46,6 +46,12 @@ struct BattleGroundEventIdx
     uint8 event2;
 };
 
+struct AFKTimer
+{
+    uint32 timer;
+    uint32 infoCounter;
+};
+
 enum BattleGroundSounds
 {
     SOUND_HORDE_WINS                = 8454,
@@ -169,7 +175,11 @@ enum ScoreType
     SCORE_GRAVEYARDS_DEFENDED   = 12,
     SCORE_TOWERS_ASSAULTED      = 13,
     SCORE_TOWERS_DEFENDED       = 14,
-    SCORE_SECONDARY_OBJECTIVES  = 15
+    SCORE_SECONDARY_OBJECTIVES  = 15,
+    // OTHER
+    SCORE_HEALING_DONE          = 16,
+    SCORE_DAMAGE_DONE           = 17,
+
 };
 
 enum BattleGroundStartingEvents
@@ -216,8 +226,8 @@ class BattleGroundScore
         uint32 GetDeaths() const            { return Deaths; }
         uint32 GetHonorableKills() const    { return HonorableKills; }
         uint32 GetBonusHonor() const        { return BonusHonor; }
-        uint32 GetDamageDone() const        { return 0; }
-        uint32 GetHealingDone() const       { return 0; }
+        uint32 GetDamageDone() const        { return DamageDone; }
+        uint32 GetHealingDone() const       { return HealingDone; }
 
         virtual uint32 GetAttr1() const     { return 0; }
         virtual uint32 GetAttr2() const     { return 0; }
@@ -230,6 +240,8 @@ class BattleGroundScore
         uint32 HonorableKills;
         uint32 DishonorableKills;
         uint32 BonusHonor;
+        uint32 DamageDone;
+        uint32 HealingDone;
 };
 
 /*
@@ -482,6 +494,10 @@ class BattleGround
         // door-events are automaticly added - but _ALL_ other must be in this vector
         std::map<uint8, uint8> m_ActiveEvents;
 
+        bool AddReport(Player* reporter, Player* reportedPlayer);
+        uint32 getReportCount(Player* target);
+        void RemoveAFK(ObjectGuid guid, bool removeReporter = false);
+        
 
     protected:
         // this method is called, when BG cannot spawn its own spirit guide, or something is wrong, It correctly ends BattleGround
@@ -526,6 +542,14 @@ class BattleGround
         /* Player lists */
         typedef std::deque<ObjectGuid> OfflineQueue;
         OfflineQueue m_OfflineQueue;                        // Player GUID
+
+        typedef std::multimap<ObjectGuid, ObjectGuid> ReportedPlayers;
+        ReportedPlayers m_reportedPlayers;
+
+        typedef std::map<ObjectGuid, std::pair<uint32, uint32>> AFKPlayers;
+        AFKPlayers  m_AfkPlayers;
+
+        uint32 m_uiAfkTimer;
 
         /* Invited counters are useful for player invitation to BG - do not allow, if BG is started to one faction to have 2 more players than another faction */
         /* Invited counters will be changed only when removing already invited player from queue, removing player from battleground and inviting player to BG */

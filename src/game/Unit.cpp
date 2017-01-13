@@ -611,6 +611,17 @@ uint32 Unit::DealDamage(Unit* pVictim, uint32 damage, CleanDamage const* cleanDa
         return damage;
     }
 
+    if (pVictim->GetTypeId() == TYPEID_PLAYER && this->GetTypeId() == TYPEID_PLAYER)
+    {
+        if (GetMap()->IsBattleGround() && pVictim->GetMap()->IsBattleGround())
+        {
+            Player* player = (Player*)this;
+            BattleGround* bg = player->GetBattleGround();
+            bg->UpdatePlayerScore(player, SCORE_DAMAGE_DONE, damage);
+        }
+    }
+
+
     // duel ends when player has 1 or less hp
     bool duel_hasEnded = false;
     if (pVictim->GetTypeId() == TYPEID_PLAYER && ((Player*)pVictim)->duel && damage >= (health - 1))
@@ -5400,6 +5411,16 @@ int32 Unit::DealHeal(Unit* pVictim, uint32 addhealth, SpellEntry const* spellPro
     // Script Event HealedBy
     if (pVictim->GetTypeId() == TYPEID_UNIT && ((Creature*)pVictim)->AI())
         ((Creature*)pVictim)->AI()->HealedBy(this, addhealth);
+
+    if (pVictim->GetTypeId() == TYPEID_PLAYER && this->GetTypeId() == TYPEID_PLAYER)
+    {
+        if (GetMap()->IsBattleGround() && pVictim->GetMap()->IsBattleGround())
+        {
+            Player* player = (Player*)this;
+            BattleGround* bg = player->GetBattleGround();
+            bg->UpdatePlayerScore(player, SCORE_HEALING_DONE, gain);
+        }
+    }
 
     return gain;
 }

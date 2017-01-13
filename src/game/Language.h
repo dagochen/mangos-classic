@@ -1033,6 +1033,8 @@ enum MangosStrings
     LANG_OPVP_SI_CAPTURE_A              = 1636,
 
     // FREE IDS                           1700-9999
+    LANG_REPORT_PLAYER                  = 1701,
+    LANG_REPORT_PLAYER_FAILED           = 1702,
 
     // Use for not-in-official-sources patches
     //                                    10000-10999

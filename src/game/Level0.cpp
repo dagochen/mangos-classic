@@ -290,3 +290,64 @@ bool ChatHandler::HandleServerMotdCommand(char* /*args*/)
     PSendSysMessage(LANG_MOTD_CURRENT, sWorld.GetMotd());
     return true;
 }
+
+
+bool ChatHandler::HandleReportAFKCommand(char* args)
+{
+    Unit* target = getSelectedUnit();
+    Player* player = m_session->GetPlayer();
+
+    if (!target || !player->GetSelectionGuid())
+    {
+        SendSysMessage(LANG_SELECT_CHAR_OR_CREATURE);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (target->GetTypeId() != TYPEID_PLAYER)
+        return false;
+
+    if (!player->GetMap()->IsBattleGround() || !target->GetMap()->IsBattleGround())
+        return false;
+
+    Player* report = (Player*)target;
+
+    BattleGround* bg = player->GetBattleGround();
+
+    if (bg->AddReport(player, report))
+        SendSysMessage(LANG_REPORT_PLAYER);
+    else
+        SendSysMessage(LANG_REPORT_PLAYER_FAILED);
+
+    return true;
+}
+
+bool ChatHandler::HandleReportCountCommand(char* args)
+{
+    Unit* target = getSelectedUnit();
+    Player* player = m_session->GetPlayer();
+
+    if (!target || !player->GetSelectionGuid())
+    {
+        SendSysMessage(LANG_SELECT_CHAR_OR_CREATURE);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (target->GetTypeId() != TYPEID_PLAYER)
+        return false;
+
+    if (!player->GetMap()->IsBattleGround() || !target->GetMap()->IsBattleGround())
+        return false;
+
+    Player* report = (Player*)target;
+
+    BattleGround* bg = player->GetBattleGround();
+
+    uint32 reportCount = bg->getReportCount(report);
+
+
+    std::ostringstream out;
+    out << "Name: " << report->GetName() << " GUID: " << report->GetGUIDLow() << " Reports: " << reportCount;
+    PSendSysMessage(out.str().c_str());
+}

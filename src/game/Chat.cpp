@@ -570,6 +570,13 @@ ChatCommand* ChatHandler::getCommandTable()
         { nullptr,          0,                  false, nullptr,                                        "", nullptr }
     };
 
+    static ChatCommand reportCommandTable[] =
+    {
+        { "player",         SEC_PLAYER,     true, &ChatHandler::HandleReportAFKCommand,                "", nullptr },
+        { "count",          SEC_GAMEMASTER, true, &ChatHandler::HandleReportCountCommand,              "", nullptr },
+        { nullptr,          0,              false, nullptr,                                            "", nullptr }
+    };
+
     static ChatCommand sendCommandTable[] =
     {
         { "mass",           SEC_ADMINISTRATOR,  true,  nullptr,                                        "", sendMassCommandTable },
@@ -763,6 +770,7 @@ ChatCommand* ChatHandler::getCommandTable()
         { "waterwalk",      SEC_GAMEMASTER,     false, &ChatHandler::HandleWaterwalkCommand,           "", nullptr },
         { "quit",           SEC_CONSOLE,        true,  &ChatHandler::HandleQuitCommand,                "", nullptr },
         { "mmap",           SEC_GAMEMASTER,     false, nullptr,                                        "", mmapCommandTable },
+        { "report",         SEC_PLAYER,         false, &ChatHandler::HandleReportAFKCommand,           "", reportCommandTable },
 
         { nullptr,          0,                  false, nullptr,                                        "", nullptr }
     };
