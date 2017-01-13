@@ -433,7 +433,8 @@ void Player::UpdateCritPercentage(WeaponAttackType attType)
             return;
     }
 
-    float value = GetTotalPercentageModValue(modGroup);
+    float value = 5.0f;
+    value += GetTotalPercentageModValue(modGroup);
     // Modify crit from weapon skill and maximized defense skill of same level victim difference
     value += (int32(GetWeaponSkillValue(attType)) - int32(GetMaxSkillValueForLevel())) * 0.04f;
     value = value < 0.0f ? 0.0f : value;
@@ -442,7 +443,8 @@ void Player::UpdateCritPercentage(WeaponAttackType attType)
 
 void Player::UpdateAllCritPercentages()
 {
-    float value = GetMeleeCritFromAgility();
+    float value = 5.0f;
+    value += GetMeleeCritFromAgility();
 
     SetBaseModValue(CRIT_PERCENTAGE, PCT_MOD, value);
     SetBaseModValue(OFFHAND_CRIT_PERCENTAGE, PCT_MOD, value);
@@ -473,7 +475,8 @@ void Player::UpdateParryPercentage()
 void Player::UpdateDodgePercentage()
 {
     // Dodge from agility
-    float value = GetDodgeFromAgility();
+    float value = 5.0f;
+    value += GetDodgeFromAgility();
     // Modify value from defense skill
     value += (int32(GetDefenseSkillValue()) - int32(GetMaxSkillValueForLevel())) * 0.04f;
     // Dodge from SPELL_AURA_MOD_DODGE_PERCENT aura
@@ -491,7 +494,7 @@ void Player::UpdateSpellCritChance(uint32 school)
         return;
     }
     // For others recalculate it from:
-    float crit = 0.0f;
+    float crit = 5.0f;
     // Crit from Intellect
     crit += GetSpellCritFromIntellect();
     // Increase crit from SPELL_AURA_MOD_SPELL_CRIT_CHANCE

@@ -4687,17 +4687,15 @@ float Player::GetMeleeCritFromAgility()
 float Player::GetDodgeFromAgility()
 {
     // from mangos 3462 for 1.12
-    float val = 0, classrate = 0;
+    float val = 0.0f, classrate = 0;
 
     // dodge
     if (getClass() == CLASS_HUNTER) classrate = 26.5;
     else if (getClass() == CLASS_ROGUE)  classrate = 14.5;
     else classrate = 20;
     ///*+(Defense*0,04);
-    if (getRace() == RACE_NIGHTELF)
-        val = GetStat(STAT_AGILITY) / classrate + 1;
-    else
-        val = GetStat(STAT_AGILITY) / classrate;
+   
+    val = GetStat(STAT_AGILITY) / classrate;
 
     return val;
 
