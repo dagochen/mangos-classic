@@ -708,7 +708,7 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket& recv_data)
     if (sObjectMgr.IsTavernAreaTrigger(Trigger_ID))
     {
         // set resting flag we are in the inn
-        if (player->GetRestType() != REST_TYPE_IN_CITY)
+        if (player->GetRestType() != REST_TYPE_IN_CITY && !player->pvpInfo.inHostileArea)
             player->SetRestType(REST_TYPE_IN_TAVERN, Trigger_ID);
         return;
     }
