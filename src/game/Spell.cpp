@@ -2763,6 +2763,9 @@ void Spell::cast(bool skipCheck)
 
     // Okay, everything is prepared. Now we need to distinguish between immediate and evented delayed spells
     float speed = m_spellInfo->speed == 0.0f && m_triggeredBySpellInfo ? m_triggeredBySpellInfo->speed : m_spellInfo->speed;
+    if (m_caster->GetTypeId() == TYPEID_PLAYER && !m_IsTriggeredSpell && speed > 0.0f && !IsSpellHaveEffect(m_spellInfo, SPELL_EFFECT_CHARGE) && (IsEffectHandledOnDelayedSpellLaunch(m_spellInfo, EFFECT_INDEX_0) || IsEffectHandledOnDelayedSpellLaunch(m_spellInfo, EFFECT_INDEX_1) || IsEffectHandledOnDelayedSpellLaunch(m_spellInfo, EFFECT_INDEX_2)))
+        m_caster->SetInDummyCombatState(true);
+
     if (speed > 0.0f)
     {
         // Remove used for cast item if need (it can be already nullptr after TakeReagents call
@@ -3087,6 +3090,9 @@ void Spell::finish(bool ok)
     }
 
     m_spellState = SPELL_STATE_FINISHED;
+
+    if (m_caster->GetTypeId() == TYPEID_PLAYER && m_spellInfo->Id != 5229 && m_spellInfo->Id != 2687 && m_spellInfo->Id != 29131)
+        m_caster->SetInDummyCombatState(false);
 
     // other code related only to successfully finished spells
     if (!ok)
