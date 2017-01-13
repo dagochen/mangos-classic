@@ -1635,6 +1635,8 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
             break;
     }
 
+
+    bool toggleEnchant = false;
     if (apply)
     {
         // remove other shapeshift before applying a new one
@@ -1658,6 +1660,7 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
                 case FORM_BEAR:
                 case FORM_DIREBEAR:
                 {
+                    toggleEnchant = true;
                     // get furor proc chance
                     int32 furorChance = 0;
                     Unit::AuraList const& mDummy = target->GetAurasByType(SPELL_AURA_DUMMY);
@@ -1716,6 +1719,33 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
                     break;
             }
         }
+        
+        if (target->GetTypeId() == TYPEID_PLAYER && toggleEnchant)
+        {
+            Player* player = (Player*)target;
+            Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
+            if (item && !item->IsBroken())
+            {
+                for (uint32 slot = 0; slot < MAX_INSPECTED_ENCHANTMENT_SLOT; ++slot)
+                {
+                    uint32 enchant_id = item->GetEnchantmentId((EnchantmentSlot)slot);
+                    if (!enchant_id)
+                        continue;
+
+                    SpellItemEnchantmentEntry const* pEnchant = sSpellItemEnchantmentStore.LookupEntry(enchant_id);
+                    if (!pEnchant)
+                        continue;
+
+                    for (int s = 0; s < 3; ++s)
+                    {
+                        uint32 enchant_display_type = pEnchant->type[s];
+                        if (enchant_display_type == ITEM_ENCHANTMENT_TYPE_DAMAGE)
+                            player->ApplyEnchantment(item, (EnchantmentSlot)slot, !apply);   // remove spells that not fit to form
+                    }
+                }
+            }
+        }
+
 
         target->SetShapeshiftForm(form);
     }
@@ -1738,6 +1768,9 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
         if (target->getClass() == CLASS_DRUID)
             target->SetPowerType(POWER_MANA);
 
+        toggleEnchant = target->IsInFeralForm();
+
+
         target->SetShapeshiftForm(FORM_NONE);
     }
 
@@ -1747,6 +1780,32 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
 
     if (target->GetTypeId() == TYPEID_PLAYER)
         ((Player*)target)->InitDataForForm();
+
+    if (target->GetTypeId() == TYPEID_PLAYER && toggleEnchant)
+    {
+        Player* player = (Player*)target;
+        Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
+        if (item && !item->IsBroken())
+        {
+            for (uint32 slot = 0; slot < MAX_INSPECTED_ENCHANTMENT_SLOT; ++slot)
+            {
+                uint32 enchant_id = item->GetEnchantmentId((EnchantmentSlot)slot);
+                if (!enchant_id)
+                    continue;
+
+                SpellItemEnchantmentEntry const* pEnchant = sSpellItemEnchantmentStore.LookupEntry(enchant_id);
+                if (!pEnchant)
+                    continue;
+
+                for (int s = 0; s < 3; ++s)
+                {
+                    uint32 enchant_display_type = pEnchant->type[s];
+                    if (enchant_display_type == ITEM_ENCHANTMENT_TYPE_DAMAGE)
+                        player->ApplyEnchantment(item, (EnchantmentSlot)slot, !apply);   // remove spells that not fit to form
+                }
+            }
+        }
+    }
 }
 
 void Aura::HandleAuraTransform(bool apply, bool Real)
