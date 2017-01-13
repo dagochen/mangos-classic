@@ -1186,6 +1186,10 @@ void WorldSession::HandleRequestPetInfoOpcode(WorldPacket& /*recv_data */)
         DEBUG_LOG("WORLD: Received opcode CMSG_REQUEST_PET_INFO");
         recv_data.hexlike();
     */
+    if (_player->GetPet())
+        _player->PetSpellInitialize();
+    else if (_player->GetCharm())
+        _player->CharmSpellInitialize();
 }
 
 void WorldSession::HandleSetTaxiBenchmarkOpcode(WorldPacket& recv_data)
