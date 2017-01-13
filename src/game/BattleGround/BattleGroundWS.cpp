@@ -26,7 +26,7 @@
 #include "WorldPacket.h"
 #include "Language.h"
 
-BattleGroundWS::BattleGroundWS(): m_ReputationCapture(0), m_HonorWinKills(0), m_HonorEndKills(0)
+BattleGroundWS::BattleGroundWS(): m_ReputationCapture(0), m_HonorWinBonus(0), m_HonorLoseBonus(0)
 {
     m_StartMessageIds[BG_STARTING_EVENT_FIRST]  = 0;
     m_StartMessageIds[BG_STARTING_EVENT_SECOND] = LANG_BG_WS_START_ONE_MINUTE;
@@ -504,19 +504,25 @@ void BattleGroundWS::Reset()
     m_flagCarrierHorde.Clear();
 
     bool isBGWeekend = BattleGroundMgr::IsBGWeekend(GetTypeID());
-    m_ReputationCapture = (isBGWeekend) ? 25 : 15;
-    m_HonorWinKills = (isBGWeekend) ? 3 : 1;
-    m_HonorEndKills = (isBGWeekend) ? 4 : 2;
+    m_ReputationCapture = (isBGWeekend) ? 45 : 35;
+    m_HonorWinBonus = 0;
+    m_HonorLoseBonus = 0;
+  
 }
 
 void BattleGroundWS::EndBattleGround(Team winner)
 {
     // win reward
     if (winner == ALLIANCE)
-        RewardHonorToTeam(BG_WSG_WinMatchHonor[GetBracketId()], ALLIANCE);
+    {
+        RewardHonorToTeam(BattleGroundMgr::IsBGWeekend(GetTypeID()) ? BG_WSG_WinMatchHonorBonus[GetBracketId()] : BG_WSG_WinMatchHonor[GetBracketId()], ALLIANCE);
+        RewardHonorToTeam(BattleGroundMgr::IsBGWeekend(GetTypeID()) ? BG_WSG_LoseMatchHonorBonus[GetBracketId()] : 0, HORDE);
+    }
     if (winner == HORDE)
-        RewardHonorToTeam(BG_WSG_WinMatchHonor[GetBracketId()], HORDE);
-
+    {
+        RewardHonorToTeam(BattleGroundMgr::IsBGWeekend(GetTypeID()) ? BG_WSG_WinMatchHonorBonus[GetBracketId()] : BG_WSG_WinMatchHonor[GetBracketId()], HORDE);
+        RewardHonorToTeam(BattleGroundMgr::IsBGWeekend(GetTypeID()) ? BG_WSG_LoseMatchHonorBonus[GetBracketId()] : 0, ALLIANCE);
+    }
     BattleGround::EndBattleGround(winner);
 }
 
