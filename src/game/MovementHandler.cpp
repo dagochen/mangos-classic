@@ -28,6 +28,7 @@
 #include "WaypointMovementGenerator.h"
 #include "MapPersistentStateMgr.h"
 #include "ObjectMgr.h"
+#include "Map.h"
 
 #define MOVEMENT_PACKET_TIME_DELAY 0
 
@@ -567,24 +568,73 @@ void WorldSession::HandleMoverRelocation(MovementInfo& movementInfo)
             }
             else
             {
-                // NOTE: this is actually called many times while falling
-                // even after the player has been teleported away
-                // TODO: discard movement packets after the player is rooted
-                if (plMover->isAlive())
+                float newPosX;
+                float newPosY;
+                float newPosZ;
+                bool foundNearPlayer = false;
+
+                newPosX = plMover->GetPositionX();
+                newPosY = plMover->GetPositionY();
+                newPosZ = plMover->GetPositionZ();
+
+                // Z-Coord depending on MapTerrain
+                float ground_z = newPosZ;
+                float max_z = plMover->GetMap()->GetTerrain()->GetWaterOrGroundLevel(plMover->GetPositionX(), plMover->GetPositionY(), plMover->GetPositionZ(), &ground_z, !((Unit const*)this)->HasAuraType(SPELL_AURA_WATER_WALK));
+                if (max_z > INVALID_HEIGHT)
                 {
-                    plMover->EnvironmentalDamage(DAMAGE_FALL_TO_VOID, plMover->GetMaxHealth());
-                    // pl can be alive if GM/etc
-                    if (!plMover->isAlive())
-                    {
-                        // change the death state to CORPSE to prevent the death timer from
-                        // starting in the next player update
-                        plMover->KillPlayer();
-                        plMover->BuildPlayerRepop();
-                    }
+                    if (newPosZ > max_z)
+                        newPosZ = max_z;
+                    else if (newPosZ < ground_z)
+                        newPosZ = ground_z;
                 }
 
-                // cancel the death timer here if started
-                plMover->RepopAtGraveyard();
+                // In Dungeons find optional player to teleport to, if z coord is still bad
+                if (!plMover->GetMap()->IsContinent() && newPosZ < -500)
+                {
+                    Map::PlayerList const& PlayerList = plMover->GetMap()->GetPlayers();
+
+                    for (Map::PlayerList::const_iterator itr = PlayerList.begin(); itr != PlayerList.end(); ++itr)
+                    {
+                        if (itr->getSource()->GetObjectGuid() != plMover->GetObjectGuid() && itr->getSource()->IsWithinDist2d(plMover->GetPositionX(), plMover->GetPositionY(), 50.0f))
+                        {
+                            newPosX = itr->getSource()->GetPositionX();
+                            newPosY = itr->getSource()->GetPositionY();
+                            newPosZ = itr->getSource()->GetPositionZ();
+                            foundNearPlayer = true;
+                            break;
+                        }
+                    }
+                }
+                
+                if (!foundNearPlayer && newPosZ < -500)
+                {
+                    const AreaTrigger* trigger = sObjectMgr.GetMapEntranceTrigger(plMover->GetMapId());
+                    newPosX = trigger->target_X;
+                    newPosY = trigger->target_Y;
+                    newPosZ = trigger->target_Z;
+                }
+
+                if (!plMover->TeleportTo(plMover->GetMapId(), newPosX, newPosY, newPosZ, plMover->GetOrientation()))
+                {
+                    // NOTE: this is actually called many times while falling
+                    // even after the player has been teleported away
+                    // TODO: discard movement packets after the player is rooted
+                    if (plMover->isAlive())
+                    {
+                        plMover->EnvironmentalDamage(DAMAGE_FALL_TO_VOID, plMover->GetMaxHealth());
+                        // pl can be alive if GM/etc
+                        if (!plMover->isAlive())
+                        {
+                            // change the death state to CORPSE to prevent the death timer from
+                            // starting in the next player update
+                            plMover->KillPlayer();
+                            plMover->BuildPlayerRepop();
+                        }
+                    }
+
+                    // cancel the death timer here if started
+                    plMover->RepopAtGraveyard();
+                }
             }
         }
     }
