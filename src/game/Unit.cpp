@@ -1552,52 +1552,23 @@ void Unit::CalculateMeleeDamage(Unit* pVictim, CalcDamageInfo* damageInfo, Weapo
             damageInfo->HitInfo |= HITINFO_GLANCING;
             damageInfo->TargetState = VICTIMSTATE_NORMAL;
             damageInfo->procEx |= PROC_EX_NORMAL_HIT;
-            // calculate base values and mods
-            float baseLowEnd = 1.3f;
-            float baseHighEnd = 1.2f;
-            switch (getClass())                             // lowering base values for casters
-            {
-                case CLASS_SHAMAN:
-                case CLASS_PRIEST:
-                case CLASS_MAGE:
-                case CLASS_WARLOCK:
-                case CLASS_DRUID:
-                    baseLowEnd  -= 0.7f;
-                    baseHighEnd -= 0.3f;
-                    break;
-            }
-
-            float maxLowEnd = 0.6f;
-            switch (getClass())                             // upper for melee classes
-            {
-                case CLASS_WARRIOR:
-                case CLASS_ROGUE:
-                    maxLowEnd = 0.91f;                      // If the attacker is a melee class then instead the lower value of 0.91
-            }
-
             // calculate values
             int32 diff = damageInfo->target->GetDefenseSkillValue() - GetWeaponSkillValue(damageInfo->attackType);
-            float lowEnd  = baseLowEnd - (0.05f * diff);
-            float highEnd = baseHighEnd - (0.03f * diff);
+            float reducePercent = 0.0f;
+            if (diff <= 5)
+                reducePercent = diff;
+            else if (diff <= 10)
+                reducePercent = 2.f * (diff - 5) + 5;
+            else
+                reducePercent = 4.f * (diff-5) - 5;
 
-            // apply max/min bounds
-            if (lowEnd < 0.01f)                             // the low end must not go bellow 0.01f
-                lowEnd = 0.01f;
-            else if (lowEnd > maxLowEnd)                    // the smaller value of this and 0.6 is kept as the low end
-                lowEnd = maxLowEnd;
+            //cap at 0% and at 30%
+            reducePercent = std::max(reducePercent, 0.1f);
+            reducePercent = std::min(reducePercent, 35.0f);
+            reducePercent /= 100.f;
 
-            if (highEnd < 0.2f)                             // high end limits
-                highEnd = 0.2f;
-            if (highEnd > 0.99f)
-                highEnd = 0.99f;
-
-            if (lowEnd > highEnd)                           // prevent negative range size
-                lowEnd = highEnd;
-
-            float reducePercent = lowEnd + rand_norm_f() * (highEnd - lowEnd);
-
-            damageInfo->cleanDamage += uint32((1.0f - reducePercent) * damageInfo->totalDamage);
-            damageInfo->totalDamage = uint32(reducePercent * damageInfo->totalDamage);
+            damageInfo->cleanDamage += damageInfo->totalDamage - uint32(reducePercent *  damageInfo->totalDamage);
+            damageInfo->totalDamage = damageInfo->totalDamage - uint32(reducePercent *  damageInfo->totalDamage);
 
             for (uint8 i = 0; i < m_weaponDamageCount[damageInfo->attackType]; i++)
                 damageInfo->subDamage[i].damage = uint32(reducePercent * damageInfo->subDamage[i].damage);
