@@ -1859,6 +1859,18 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         case TARGET_ALL_FRIENDLY_UNITS_AROUND_CASTER:
             // selected friendly units (for casting objects) around casting object
             FillAreaTargets(targetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_FRIENDLY, GetCastingObject());
+            if (m_spellInfo->Id == 22888 || m_spellInfo->Id == 24425)
+            {
+                
+                Map::PlayerList const& PlayerList = m_caster->GetMap()->GetPlayers();
+                for (Map::PlayerList::const_iterator itr = PlayerList.begin(); itr != PlayerList.end(); ++itr)
+                {
+                    if (itr->getSource()->GetZoneId() == m_caster->GetZoneId() && itr->getSource()->IsInWorld() && itr->getSource()->isAlive() && itr->getSource()->IsFriendlyTo(m_caster))
+                    {
+                        targetUnitMap.push_back(itr->getSource());
+                    }
+                }
+            }
             break;
         case TARGET_ALL_FRIENDLY_UNITS_IN_AREA:
             FillAreaTargets(targetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_FRIENDLY);
@@ -6079,7 +6091,7 @@ bool Spell::CheckTarget(Unit* target, SpellEffectIndex eff)
             // Get GO cast coordinates if original caster -> GO
             if (target != m_caster)
                 if (WorldObject* caster = GetCastingObject())
-                    if (!target->IsWithinLOSInMap(caster))
+                    if (VMAP::VMapFactory::checkSpellForLoS(m_spellInfo->Id) && !target->IsWithinLOSInMap(caster))
                         return false;
             break;
     }
