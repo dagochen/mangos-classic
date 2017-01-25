@@ -3827,6 +3827,25 @@ void Unit::RemoveAurasByCasterSpell(uint32 spellId, ObjectGuid casterGuid)
     }
 }
 
+void Unit::RemoveAurasByType(AuraType effect)
+{
+    // Dispel all existing auras vs current dispel type
+    SpellAuraHolderMap& auras = GetSpellAuraHolderMap();
+    for (SpellAuraHolderMap::iterator itr = auras.begin(); itr != auras.end();)
+    {
+        SpellEntry const* spell = itr->second->GetSpellProto();
+        if (spell->EffectApplyAuraName[0] == effect || spell->EffectApplyAuraName[1] == effect || spell->EffectApplyAuraName[2] == effect)
+        {
+            // Dispel aura
+            RemoveAurasDueToSpell(spell->Id);
+            itr = auras.begin();
+        }
+        else
+            ++itr;
+    }
+}
+
+
 void Unit::RemoveSingleAuraFromSpellAuraHolder(uint32 spellId, SpellEffectIndex effindex, ObjectGuid casterGuid, AuraRemoveMode mode)
 {
     SpellAuraHolderBounds spair = GetSpellAuraHolderBounds(spellId);
@@ -6864,6 +6883,7 @@ bool Unit::canDetectInvisibilityOf(Unit const* u) const
 
 void Unit::UpdateSpeed(UnitMoveType mtype, bool forced, float ratio)
 {
+   
     // not in combat pet have same speed as owner
     switch (mtype)
     {
