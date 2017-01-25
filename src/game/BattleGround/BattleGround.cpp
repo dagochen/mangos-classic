@@ -700,11 +700,11 @@ void BattleGround::EndBattleGround(Team winner)
         static SqlStatementID insPvPstatsBattleground;
         QueryResult* result;
 
-        SqlStatement stmt = CharacterDatabase.CreateStatement(insPvPstatsBattleground, "INSERT INTO pvpstats_battlegrounds (id, winner_team, bracket_id, type, date) VALUES (?, ?, ?, ?, NOW())");
+        SqlStatement stmt = CharacterDatabase.CreateStatement(insPvPstatsBattleground, "INSERT INTO pvpstats_battlegrounds (id, winner_team, bracket_id, type, duration, date) VALUES (?, ?, ?, ?, ?, NOW())");
 
         uint8 battleground_bracket = GetMinLevel() / 10;
         uint8 battleground_type = (uint8)GetTypeID();
-
+        uint64 duration = m_StartTime / 1000;
         // query next id
         result = CharacterDatabase.Query("SELECT MAX(id) FROM pvpstats_battlegrounds");
         if (result)
@@ -714,7 +714,7 @@ void BattleGround::EndBattleGround(Team winner)
             delete result;
         }
 
-        stmt.PExecute(battleground_id, bgScoresWinner, battleground_bracket, battleground_type);
+        stmt.PExecute(battleground_id, bgScoresWinner, battleground_bracket, battleground_type, duration);
     }
 
     SetWinner(winner);
@@ -974,7 +974,7 @@ void BattleGround::RemovePlayerAtLeave(ObjectGuid guid, bool Transport, bool Sen
             plr->RemoveSpellsCausingAura(SPELL_AURA_MOD_SHAPESHIFT);
 
         plr->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
-
+        plr->SetHealthPercent(100);
         if (!plr->isAlive())                                // resurrect on exit
         {
             plr->ResurrectPlayer(1.0f);
