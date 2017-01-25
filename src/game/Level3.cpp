@@ -2139,6 +2139,204 @@ bool ChatHandler::HandleLearnCommand(char* args)
 
     return true;
 }
+// Player, Quest, Item (opt)
+bool ChatHandler::HandleRefundQuestItem(char* args)
+{
+    // Player
+    Player* target;
+    ObjectGuid target_guid;
+    std::string target_name;
+    if (!ExtractPlayerTarget(&args, &target, &target_guid, &target_name))
+        return false;
+
+    if (target_name.empty() || !target_guid)
+    {
+        PSendSysMessage(LANG_NO_PLAYERS_FOUND, target_name);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    // Quest
+    uint32 entry;
+    if (!ExtractUint32KeyFromLink(&args, "Hquest", entry))
+        return false;
+
+    Quest const* pQuest = sObjectMgr.GetQuestTemplate(entry);
+    if (!pQuest)
+    {
+        PSendSysMessage(LANG_COMMAND_QUEST_NOTFOUND, entry);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    // Item
+    uint32 itemId;
+    if (!ExtractUInt32(&args, itemId))
+        return false;
+
+    ItemPrototype const* prototype = sObjectMgr.GetItemPrototype(itemId);
+
+    if (!prototype)
+    {
+        PSendSysMessage(LANG_COMMAND_ITEMIDINVALID, itemId);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    uint8 rewarded;
+    uint32 choiceItem;
+    uint32 rewardItem1;
+    uint32 rewardItem2;
+    uint32 rewardItem3;
+    uint32 rewardItem4;
+    uint8 refunded;
+
+    QueryResult* result = CharacterDatabase.PQuery("SELECT rewarded, choiceItem, rewardItem1, rewardItem2, rewardItem3, rewardItem4, refunded FROM character_queststatus WHERE quest = %u and guid = %u", entry, target_guid);
+    if (result)
+    {
+        Field* fields = result->Fetch();
+        rewarded = fields[0].GetUInt8();
+        choiceItem = fields[1].GetUInt32();
+        rewardItem1 = fields[2].GetUInt32();
+        rewardItem2 = fields[3].GetUInt32();
+        rewardItem3 = fields[4].GetUInt32();
+        rewardItem4 = fields[5].GetUInt32();
+        refunded = fields[6].GetUInt8();
+        delete result;
+    }
+
+    if (!rewarded)
+    {
+        PSendSysMessage(LANG_NOREFUND_INCOMPLETEQUEST);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (refunded == 1)
+    {
+        PSendSysMessage(LANG_NOREFUND_ALREADYREFUNDED);
+        SetSentErrorMessage(true);
+        return false;
+    }
+    int32 itemIndex = -1;
+    bool belongsToQuest = false;
+    for (uint32 i = 0; i < pQuest->GetRewChoiceItemsCount(); i++)
+    {
+        if (itemId == pQuest->RewChoiceItemId[i])
+        {
+            belongsToQuest = true;
+            itemIndex = 0;
+            break;
+        }
+    }
+    if (!belongsToQuest && itemIndex == -1)
+    {
+        for (uint32 i = 0; i < pQuest->GetRewItemsCount(); i++)
+        {
+            if (itemId == pQuest->RewItemId[i])
+            {
+                belongsToQuest = true;
+                itemIndex = i + 1;
+                break;
+            }
+        }
+    }
+    bool oldEntry = ((choiceItem + rewardItem1 + rewardItem2 + rewardItem3 + rewardItem4) == 0);
+
+    bool canRefund = false;
+    switch (itemIndex)
+    {
+        case 0:
+            canRefund = itemId == choiceItem;
+            choiceItem = (oldEntry == 0) ? itemId : choiceItem;
+            break;
+        case 1:
+            canRefund = itemId == rewardItem1;
+            rewardItem1 = (oldEntry == 0) ? itemId : rewardItem1;
+            break;
+        case 2:
+            canRefund = itemId == rewardItem2;
+            rewardItem2 = (oldEntry == 0) ? itemId : rewardItem2;
+            break;
+        case 3:
+            canRefund = itemId == rewardItem3;
+            rewardItem3 = (oldEntry == 0) ? itemId : rewardItem3;
+            break;
+        case 4:
+            canRefund = itemId == rewardItem4;
+            rewardItem4 = (oldEntry == 0) ? itemId : rewardItem4;
+            break;
+    }
+
+    if ((oldEntry && belongsToQuest) || (!oldEntry && canRefund))
+    {
+        std::stringstream items;
+        for (uint32 i = 0; i < pQuest->GetRewChoiceItemsCount(); i++)
+        {
+            items << pQuest->RewChoiceItemId[i];
+            if (i + 1 < pQuest->GetRewChoiceItemsCount())
+                items << ",";
+        }
+
+        for (uint32 i = 0; i < pQuest->GetRewItemsCount(); i++)
+        {
+            items << pQuest->RewItemId[i];
+            if (i + 1 < pQuest->GetRewItemsCount())
+                items << ",";
+        }
+
+        uint32 count = 0;
+        QueryResult* result2 = CharacterDatabase.PQuery("SELECT count(*) FROM character_inventory WHERE guid = %u AND item_template in (%s)", target_guid, items.str());
+        if (result2)
+        {
+            Field* fields = result2->Fetch();
+            count = fields[0].GetUInt32();
+            delete result2;
+        }
+
+        if (count > 0)
+        {
+            PSendSysMessage(LANG_NOREFUND_HASITEM);
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        MailDraft draft;
+        std::string msgSubject = "Item-Wiederherstellung";
+        std::string msgText = "Hallo!$B$BDu hast uns gebeten, einen verlorenen Gegenstand aus dem wirbelnden Nether zur\303\274ckzuholen. Bitte bedenke, dass wir dies nur ein einziges mal vornehmen k\303\266nnen.$B$BViele Gr\303\274ße$B$BDein Classic-WoW-Team";
+        draft.SetSubjectAndBody(msgSubject, msgText);
+
+        if (Item* item = Item::CreateItem(itemId, 1, m_session ? m_session->GetPlayer() : 0))
+        {
+            item->SaveToDB();                               // save for prevent lost at next mail load, if send fail then item will deleted
+            draft.AddItem(item);
+        }
+
+        MailSender sender(MAIL_NORMAL, m_session ? m_session->GetPlayer()->GetObjectGuid().GetCounter() : 0, MAIL_STATIONERY_GM);
+        draft.SendMailTo(MailReceiver(target, target_guid), sender);
+
+        static SqlStatementID updStatmt;
+        SqlStatement stmt = CharacterDatabase.CreateStatement(updStatmt, "UPDATE character_queststatus SET refunded = ?, choiceItem = ?, rewardItem1 = ?, rewardItem2 = ?, rewardItem3 = ?,rewardItem4 = ? WHERE guid = ? AND quest = ?");
+
+        stmt.addUInt8(1);
+        stmt.addUInt32(choiceItem);
+        stmt.addUInt32(rewardItem1);
+        stmt.addUInt32(rewardItem2);
+        stmt.addUInt32(rewardItem3);
+        stmt.addUInt32(rewardItem4);
+        stmt.addUInt32(target_guid);
+        stmt.addUInt32(entry);
+        stmt.Execute();
+    }
+    else
+    {
+        PSendSysMessage(LANG_NOREFUND_WRONGITEM);
+        SetSentErrorMessage(true);
+        return false;
+    }
+   
+    return true;
+}
 
 bool ChatHandler::HandleAddItemCommand(char* args)
 {

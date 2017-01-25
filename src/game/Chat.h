@@ -562,6 +562,7 @@ class MANGOS_DLL_SPEC ChatHandler
         bool HandleLevelUpCommand(char* args);
         bool HandleShowAreaCommand(char* args);
         bool HandleHideAreaCommand(char* args);
+        bool HandleRefundQuestItem(char* args);
         bool HandleAddItemCommand(char* args);
         bool HandleAddItemSetCommand(char* args);
 

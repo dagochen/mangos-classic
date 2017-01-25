@@ -1036,6 +1036,10 @@ enum MangosStrings
     LANG_REPORT_PLAYER                  = 1701,
     LANG_REPORT_PLAYER_FAILED           = 1702,
 
+    LANG_NOREFUND_INCOMPLETEQUEST       = 1703,
+    LANG_NOREFUND_ALREADYREFUNDED       = 1704,
+    LANG_NOREFUND_WRONGITEM             = 1705,
+    LANG_NOREFUND_HASITEM               = 1706,
     // Use for not-in-official-sources patches
     //                                    10000-10999
 

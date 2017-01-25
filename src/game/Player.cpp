@@ -11799,6 +11799,8 @@ void Player::RewardQuest(Quest const* pQuest, uint32 reward, Object* questGiver,
         if (bg->GetTypeID() == BATTLEGROUND_AV)
             ((BattleGroundAV*)bg)->HandleQuestComplete(pQuest->GetQuestId(), this);
 
+    QuestStatusData& q_status = mQuestStatus[quest_id];
+
     if (pQuest->GetRewChoiceItemsCount() > 0)
     {
         if (uint32 itemId = pQuest->RewChoiceItemId[reward])
@@ -11808,6 +11810,7 @@ void Player::RewardQuest(Quest const* pQuest, uint32 reward, Object* questGiver,
             {
                 Item* item = StoreNewItem(dest, itemId, true, Item::GenerateItemRandomPropertyId(itemId));
                 SendNewItem(item, pQuest->RewChoiceItemCount[reward], true, false);
+                q_status.m_choiceItem = itemId;
             }
         }
     }
@@ -11823,6 +11826,7 @@ void Player::RewardQuest(Quest const* pQuest, uint32 reward, Object* questGiver,
                 {
                     Item* item = StoreNewItem(dest, itemId, true, Item::GenerateItemRandomPropertyId(itemId));
                     SendNewItem(item, pQuest->RewItemCount[i], true, false);
+                    q_status.m_rewardItems[i] = itemId;
                 }
             }
         }
@@ -11834,7 +11838,6 @@ void Player::RewardQuest(Quest const* pQuest, uint32 reward, Object* questGiver,
     if (log_slot < MAX_QUEST_LOG_SIZE)
         SetQuestSlot(log_slot, 0);
 
-    QuestStatusData& q_status = mQuestStatus[quest_id];
 
     // Used for client inform but rewarded only in case not max level
     uint32 xp = uint32(pQuest->XPValue(this) * sWorld.getConfig(CONFIG_FLOAT_RATE_XP_QUEST));
@@ -15043,8 +15046,8 @@ void Player::_SaveQuestStatus()
         {
             case QUEST_NEW :
             {
-                SqlStatement stmt = CharacterDatabase.CreateStatement(insertQuestStatus, "INSERT INTO character_queststatus (guid,quest,status,rewarded,explored,timer,mobcount1,mobcount2,mobcount3,mobcount4,itemcount1,itemcount2,itemcount3,itemcount4) "
-                                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                SqlStatement stmt = CharacterDatabase.CreateStatement(insertQuestStatus, "INSERT INTO character_queststatus (guid,quest,status,rewarded,explored,timer,mobcount1,mobcount2,mobcount3,mobcount4,itemcount1,itemcount2,itemcount3,itemcount4,choiceItem,rewardItem1,rewardItem2,rewardItem3,rewardItem4, refunded) "
+                                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
                 stmt.addUInt32(GetGUIDLow());
                 stmt.addUInt32(i->first);
@@ -15056,13 +15059,20 @@ void Player::_SaveQuestStatus()
                     stmt.addUInt32(questStatus.m_creatureOrGOcount[k]);
                 for (int k = 0; k < QUEST_OBJECTIVES_COUNT; ++k)
                     stmt.addUInt32(questStatus.m_itemcount[k]);
+                stmt.addUInt32(questStatus.m_choiceItem);
+                stmt.addUInt32(questStatus.m_rewardItems[0]);
+                stmt.addUInt32(questStatus.m_rewardItems[1]);
+                stmt.addUInt32(questStatus.m_rewardItems[2]);
+                stmt.addUInt32(questStatus.m_rewardItems[3]);
+                stmt.addUInt8(questStatus.m_wasRefunded);
                 stmt.Execute();
             }
             break;
             case QUEST_CHANGED :
             {
                 SqlStatement stmt = CharacterDatabase.CreateStatement(updateQuestStatus, "UPDATE character_queststatus SET status = ?,rewarded = ?,explored = ?,timer = ?,"
-                                    "mobcount1 = ?,mobcount2 = ?,mobcount3 = ?,mobcount4 = ?,itemcount1 = ?,itemcount2 = ?,itemcount3 = ?,itemcount4 = ?  WHERE guid = ? AND quest = ?");
+                                    "mobcount1 = ?,mobcount2 = ?,mobcount3 = ?,mobcount4 = ?,itemcount1 = ?,itemcount2 = ?,itemcount3 = ?,itemcount4 = ?, choiceItem = ?,"
+                                    "rewardItem1 = ?,rewardItem2 = ?,rewardItem3 = ?,rewardItem4 = ?, refunded = ? WHERE guid = ? AND quest = ?");
 
                 stmt.addUInt8(questStatus.m_status);
                 stmt.addUInt8(questStatus.m_rewarded);
@@ -15072,6 +15082,12 @@ void Player::_SaveQuestStatus()
                     stmt.addUInt32(questStatus.m_creatureOrGOcount[k]);
                 for (int k = 0; k < QUEST_OBJECTIVES_COUNT; ++k)
                     stmt.addUInt32(questStatus.m_itemcount[k]);
+                stmt.addUInt32(questStatus.m_choiceItem);
+                stmt.addUInt32(questStatus.m_rewardItems[0]);
+                stmt.addUInt32(questStatus.m_rewardItems[1]);
+                stmt.addUInt32(questStatus.m_rewardItems[2]);
+                stmt.addUInt32(questStatus.m_rewardItems[3]);
+                stmt.addUInt8(questStatus.m_wasRefunded);
                 stmt.addUInt32(GetGUIDLow());
                 stmt.addUInt32(i->first);
                 stmt.Execute();

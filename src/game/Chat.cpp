@@ -771,6 +771,7 @@ ChatCommand* ChatHandler::getCommandTable()
         { "quit",           SEC_CONSOLE,        true,  &ChatHandler::HandleQuitCommand,                "", nullptr },
         { "mmap",           SEC_GAMEMASTER,     false, nullptr,                                        "", mmapCommandTable },
         { "report",         SEC_PLAYER,         false, &ChatHandler::HandleReportAFKCommand,           "", reportCommandTable },
+        { "refund",         SEC_GAMEMASTER,     false, &ChatHandler::HandleRefundQuestItem,           "", nullptr },
 
         { nullptr,          0,                  false, nullptr,                                        "", nullptr }
     };
