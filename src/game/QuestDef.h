@@ -343,7 +343,7 @@ struct QuestStatusData
 {
     QuestStatusData()
         : m_status(QUEST_STATUS_NONE), m_rewarded(false), m_choiceItem(0),
-          m_explored(false), m_timer(0), uState(QUEST_NEW), m_wasRefunded(false)
+          m_explored(false), m_timer(0), uState(QUEST_NEW), m_wasRefunded(false), m_updated(false)
     {
         memset(m_itemcount, 0, QUEST_ITEM_OBJECTIVES_COUNT * sizeof(uint32));
         memset(m_creatureOrGOcount, 0, QUEST_OBJECTIVES_COUNT * sizeof(uint32));
@@ -358,6 +358,7 @@ struct QuestStatusData
     uint32 m_timer;
     QuestUpdateState uState;
     bool m_wasRefunded;
+    bool m_updated;
 
     uint32 m_itemcount[ QUEST_ITEM_OBJECTIVES_COUNT ];
     uint32 m_creatureOrGOcount[ QUEST_OBJECTIVES_COUNT ];

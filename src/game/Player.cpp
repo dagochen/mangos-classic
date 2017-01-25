@@ -11811,6 +11811,7 @@ void Player::RewardQuest(Quest const* pQuest, uint32 reward, Object* questGiver,
                 Item* item = StoreNewItem(dest, itemId, true, Item::GenerateItemRandomPropertyId(itemId));
                 SendNewItem(item, pQuest->RewChoiceItemCount[reward], true, false);
                 q_status.m_choiceItem = itemId;
+                q_status.m_updated = true;
             }
         }
     }
@@ -11827,6 +11828,7 @@ void Player::RewardQuest(Quest const* pQuest, uint32 reward, Object* questGiver,
                     Item* item = StoreNewItem(dest, itemId, true, Item::GenerateItemRandomPropertyId(itemId));
                     SendNewItem(item, pQuest->RewItemCount[i], true, false);
                     q_status.m_rewardItems[i] = itemId;
+                    q_status.m_updated = true;
                 }
             }
         }
@@ -14057,8 +14059,8 @@ void Player::_LoadQuestStatus(QueryResult* result)
 
     uint32 slot = 0;
 
-    ////                                                     0      1       2         3         4      5          6          7          8          9           10          11          12
-    // QueryResult *result = CharacterDatabase.PQuery("SELECT quest, status, rewarded, explored, timer, mobcount1, mobcount2, mobcount3, mobcount4, itemcount1, itemcount2, itemcount3, itemcount4 FROM character_queststatus WHERE guid = '%u'", GetGUIDLow());
+    ////                                                     0      1       2         3         4      5          6          7          8          9           10          11          12           13          14           15             16          17          18          19
+    // QueryResult *result = CharacterDatabase.PQuery("SELECT quest, status, rewarded, explored, timer, mobcount1, mobcount2, mobcount3, mobcount4, itemcount1, itemcount2, itemcount3, itemcount4, choiceItem, rewardItem1, rewardItem2, rewardItem3, rewardItem4, refunded, updated FROM character_queststatus WHERE guid = '%u'", GetGUIDLow());
 
     if (result)
     {
@@ -14108,7 +14110,15 @@ void Player::_LoadQuestStatus(QueryResult* result)
                 questStatusData.m_itemcount[1] = fields[10].GetUInt32();
                 questStatusData.m_itemcount[2] = fields[11].GetUInt32();
                 questStatusData.m_itemcount[3] = fields[12].GetUInt32();
+                questStatusData.m_choiceItem = fields[13].GetUInt32();
+                questStatusData.m_rewardItems[0] = fields[14].GetUInt32();
+                questStatusData.m_rewardItems[1] = fields[15].GetUInt32();
+                questStatusData.m_rewardItems[2] = fields[16].GetUInt32();
+                questStatusData.m_rewardItems[3] = fields[17].GetUInt32();
+                questStatusData.m_rewarded = fields[18].GetBool();
+                questStatusData.m_updated = fields[19].GetBool();
 
+    
                 questStatusData.uState = QUEST_UNCHANGED;
 
                 // add to quest log
@@ -14140,6 +14150,22 @@ void Player::_LoadQuestStatus(QueryResult* result)
                 {
                     // learn rewarded spell if unknown
                     learnQuestRewardedSpells(pQuest);
+                }
+
+                if (!questStatusData.m_updated)
+                {
+                    for (uint32 i = 0; i < pQuest->GetRewChoiceItemsCount(); i++)
+                    {
+                        if (HasItemCount(pQuest->RewChoiceItemId[i], 1, true))
+                            questStatusData.m_choiceItem = pQuest->RewChoiceItemId[i];
+                    }
+                    for (uint32 j = 0; j < pQuest->GetRewItemsCount(); j++)
+                    {
+                        if (HasItemCount(pQuest->RewItemId[j], 1, true))
+                            questStatusData.m_rewardItems[j] = pQuest->RewItemId[j];
+                    }
+                    questStatusData.m_updated = true;
+                    questStatusData.uState = QUEST_CHANGED;
                 }
 
                 DEBUG_LOG("Quest status is {%u} for quest {%u} for player (GUID: %u)", questStatusData.m_status, quest_id, GetGUIDLow());
@@ -15046,8 +15072,8 @@ void Player::_SaveQuestStatus()
         {
             case QUEST_NEW :
             {
-                SqlStatement stmt = CharacterDatabase.CreateStatement(insertQuestStatus, "INSERT INTO character_queststatus (guid,quest,status,rewarded,explored,timer,mobcount1,mobcount2,mobcount3,mobcount4,itemcount1,itemcount2,itemcount3,itemcount4,choiceItem,rewardItem1,rewardItem2,rewardItem3,rewardItem4, refunded) "
-                                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                SqlStatement stmt = CharacterDatabase.CreateStatement(insertQuestStatus, "INSERT INTO character_queststatus (guid,quest,status,rewarded,explored,timer,mobcount1,mobcount2,mobcount3,mobcount4,itemcount1,itemcount2,itemcount3,itemcount4,choiceItem,rewardItem1,rewardItem2,rewardItem3,rewardItem4, refunded, updated) "
+                                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
                 stmt.addUInt32(GetGUIDLow());
                 stmt.addUInt32(i->first);
@@ -15065,6 +15091,7 @@ void Player::_SaveQuestStatus()
                 stmt.addUInt32(questStatus.m_rewardItems[2]);
                 stmt.addUInt32(questStatus.m_rewardItems[3]);
                 stmt.addUInt8(questStatus.m_wasRefunded);
+                stmt.addUInt8(questStatus.m_updated);
                 stmt.Execute();
             }
             break;
@@ -15072,7 +15099,7 @@ void Player::_SaveQuestStatus()
             {
                 SqlStatement stmt = CharacterDatabase.CreateStatement(updateQuestStatus, "UPDATE character_queststatus SET status = ?,rewarded = ?,explored = ?,timer = ?,"
                                     "mobcount1 = ?,mobcount2 = ?,mobcount3 = ?,mobcount4 = ?,itemcount1 = ?,itemcount2 = ?,itemcount3 = ?,itemcount4 = ?, choiceItem = ?,"
-                                    "rewardItem1 = ?,rewardItem2 = ?,rewardItem3 = ?,rewardItem4 = ?, refunded = ? WHERE guid = ? AND quest = ?");
+                                    "rewardItem1 = ?,rewardItem2 = ?,rewardItem3 = ?,rewardItem4 = ?, refunded = ?, updated = ? WHERE guid = ? AND quest = ?");
 
                 stmt.addUInt8(questStatus.m_status);
                 stmt.addUInt8(questStatus.m_rewarded);
@@ -15088,6 +15115,7 @@ void Player::_SaveQuestStatus()
                 stmt.addUInt32(questStatus.m_rewardItems[2]);
                 stmt.addUInt32(questStatus.m_rewardItems[3]);
                 stmt.addUInt8(questStatus.m_wasRefunded);
+                stmt.addUInt8(questStatus.m_updated);
                 stmt.addUInt32(GetGUIDLow());
                 stmt.addUInt32(i->first);
                 stmt.Execute();
