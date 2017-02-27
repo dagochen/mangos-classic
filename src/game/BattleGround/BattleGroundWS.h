@@ -111,6 +111,7 @@ class BattleGroundWS : public BattleGround
         /* inherited from BattlegroundClass */
         virtual void AddPlayer(Player* plr) override;
         virtual void StartingEventOpenDoors() override;
+        virtual bool IsAlmostOver() override;
 
         /* BG Flags */
         ObjectGuid GetAllianceFlagCarrierGuid() const { return m_flagCarrierAlliance; }

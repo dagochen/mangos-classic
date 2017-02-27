@@ -314,6 +314,12 @@ bool ChatHandler::HandleReportAFKCommand(char* args)
 
     BattleGround* bg = player->GetBattleGround();
 
+    if (bg->IsAlmostOver())
+    {
+        SendSysMessage(LANG_REPORT_PLAYER_FAILED_ALMOST_OVER);
+        return false;
+    }
+
     if (bg->AddReport(player, report))
         SendSysMessage(LANG_REPORT_PLAYER);
     else

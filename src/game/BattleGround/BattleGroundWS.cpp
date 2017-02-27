@@ -94,6 +94,11 @@ void BattleGroundWS::StartingEventOpenDoors()
     SpawnEvent(WS_EVENT_FLAG_H, 0, true);
 }
 
+bool BattleGroundWS::IsAlmostOver()
+{
+    return m_TeamScores[TEAM_INDEX_ALLIANCE] == 2 || m_TeamScores[TEAM_INDEX_HORDE] == 2;
+}
+
 void BattleGroundWS::AddPlayer(Player* plr)
 {
     BattleGround::AddPlayer(plr);

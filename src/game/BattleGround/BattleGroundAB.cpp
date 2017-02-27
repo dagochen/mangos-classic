@@ -151,6 +151,11 @@ void BattleGroundAB::StartingEventOpenDoors()
     OpenDoorEvent(BG_EVENT_DOOR);
 }
 
+bool BattleGroundAB::IsAlmostOver()
+{
+    return m_TeamScores[TEAM_INDEX_ALLIANCE] >= 1800 || m_TeamScores[TEAM_INDEX_HORDE] >= 1800;
+}
+
 void BattleGroundAB::AddPlayer(Player* plr)
 {
     BattleGround::AddPlayer(plr);

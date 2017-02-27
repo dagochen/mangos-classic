@@ -332,6 +332,8 @@ class BattleGroundAV : public BattleGround
         virtual void AddPlayer(Player* plr) override;
 
         virtual void StartingEventOpenDoors() override;
+        virtual bool IsAlmostOver() override;
+
         // world states
         virtual void FillInitialWorldStates(WorldPacket& data, uint32& count) override;
 

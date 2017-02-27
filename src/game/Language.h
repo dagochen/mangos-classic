@@ -1035,6 +1035,7 @@ enum MangosStrings
     // FREE IDS                           1700-9999
     LANG_REPORT_PLAYER                  = 1701,
     LANG_REPORT_PLAYER_FAILED           = 1702,
+    LANG_REPORT_PLAYER_FAILED_ALMOST_OVER = 1707,
 
     LANG_NOREFUND_INCOMPLETEQUEST       = 1703,
     LANG_NOREFUND_ALREADYREFUNDED       = 1704,
