@@ -466,6 +466,7 @@ class MANGOS_DLL_SPEC ChatHandler
 
         bool HandleReportAFKCommand(char* args);
         bool HandleReportCountCommand(char* args);
+        bool HandleJoinBGQueue(char* args);
 
         bool HandleResetAchievementsCommand(char* args);
         bool HandleResetAllCommand(char* args);

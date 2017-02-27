@@ -16638,13 +16638,13 @@ void Player::SendCooldownEvent(SpellEntry const* spellInfo, uint32 itemId, Spell
     SendDirectMessage(&data);
 }
 
-void Player::SetBattleGroundEntryPoint(Player* leader /*= nullptr*/)
+void Player::SetBattleGroundEntryPoint(Player* leader /*= nullptr*/, bool saveAgain /*= false*/)
 {
     // chat command use case, or non-group join
     if (!leader || !leader->IsInWorld() || leader->IsTaxiFlying() || leader->GetMap()->IsDungeon() || leader->GetMap()->IsBattleGround())
         leader = this;
 
-    if (leader->IsInWorld() && !leader->IsTaxiFlying())
+    if (leader->IsInWorld() && !leader->IsTaxiFlying() && !leader->HasMovementFlag(MOVEFLAG_ONTRANSPORT))
     {
         // If map is dungeon find linked graveyard
         if (leader->GetMap()->IsDungeon())
@@ -16653,6 +16653,7 @@ void Player::SetBattleGroundEntryPoint(Player* leader /*= nullptr*/)
             {
                 m_bgData.joinPos = WorldLocation(entry->map_id, entry->x, entry->y, entry->z, 0.0f);
                 m_bgData.m_needSave = true;
+                m_bgData.m_saveAgain = saveAgain;
                 return;
             }
             else
@@ -16663,8 +16664,110 @@ void Player::SetBattleGroundEntryPoint(Player* leader /*= nullptr*/)
         {
             m_bgData.joinPos = WorldLocation(leader->GetMapId(), leader->GetPositionX(), leader->GetPositionY(), leader->GetPositionZ(), leader->GetOrientation());
             m_bgData.m_needSave = true;
+            m_bgData.m_saveAgain = saveAgain;
             return;
         }
+    }
+
+    if (leader->IsTaxiFlying() && !leader->HasMovementFlag(MOVEFLAG_ONTRANSPORT))
+    {
+        uint32 taxiId = leader->m_taxi.GetTaxiSource();
+        TaxiNodesEntry const* node = sTaxiNodesStore.LookupEntry(taxiId);
+        m_bgData.joinPos = WorldLocation(leader->GetMapId(), node->x, node->y, node->z, leader->GetOrientation());
+        m_bgData.m_needSave = true;
+        m_bgData.m_saveAgain = saveAgain;
+        return;
+    }
+
+    if (leader->HasMovementFlag(MOVEFLAG_ONTRANSPORT))
+    {
+        if (const WorldSafeLocsEntry* entry = sObjectMgr.GetClosestGraveYard(leader->GetPositionX(), leader->GetPositionY(), leader->GetPositionZ(), leader->GetMapId(), leader->GetTeam()))
+        {
+            m_bgData.joinPos = WorldLocation(entry->map_id, entry->x, entry->y, entry->z, 0.0f);
+            m_bgData.m_needSave = true;
+            m_bgData.m_saveAgain = saveAgain;
+            return;
+        }
+    }
+
+
+    // In error cases use homebind position
+    m_bgData.joinPos = WorldLocation(m_homebindMapId, m_homebindX, m_homebindY, m_homebindZ, 0.0f);
+    m_bgData.m_needSave = true;
+    m_bgData.m_saveAgain = saveAgain;
+}
+
+void Player::UpdateBattleGroundEntryPoint()
+{
+    if (!m_bgData.m_saveAgain)
+        return;
+
+    if (IsInWorld() && !IsTaxiFlying() && !HasMovementFlag(MOVEFLAG_ONTRANSPORT))
+    {
+        // If map is dungeon find linked graveyard
+        if (GetMap()->IsDungeon())
+        {
+            if (const WorldSafeLocsEntry* entry = sObjectMgr.GetClosestGraveYard(GetPositionX(), GetPositionY(), GetPositionZ(), GetMapId(), GetTeam()))
+            {
+                m_bgData.joinPos = WorldLocation(entry->map_id, entry->x, entry->y, entry->z, 0.0f);
+                m_bgData.m_needSave = true;
+                return;
+            }
+            else
+                sLog.outError("SetBattleGroundEntryPoint: Dungeon map %u has no linked graveyard, setting home location as entry point.", GetMapId());
+        }
+        // If new entry point is not BG or arena set it
+        else if (!GetMap()->IsBattleGround())
+        {
+            m_bgData.joinPos = WorldLocation(GetMapId(), GetPositionX(), GetPositionY(), GetPositionZ(), GetOrientation());
+            m_bgData.m_needSave = true;
+            return;
+        }
+    }
+
+    if (IsTaxiFlying())
+    {
+        uint32 taxiId = m_taxi.GetTaxiSource();
+        TaxiNodesEntry const* node = sTaxiNodesStore.LookupEntry(taxiId);
+        m_bgData.joinPos = WorldLocation(GetMapId(), node->x, node->y, node->z, GetOrientation());
+        m_bgData.m_needSave = true;
+        return;
+    }
+
+    if (HasMovementFlag(MOVEFLAG_ONTRANSPORT))
+    {
+        uint32 entry = GetTransport()->GetEntry();
+        WorldLocation loc;
+        switch (entry)
+        {
+            case 20808: // Ratchet <--> Beutebucht
+                loc = GetMapId() == 0 ? WorldLocation(GetMapId(), -14285.17f, 557.55f, 8.86f, 4.30f) : WorldLocation(GetMapId(), -999.12f, -3825.31f, 5.34f, 1.09f);
+                break;
+            case 164871: // Orgrimmar <--> Unterstadt
+                loc = GetMapId() == 0 ? WorldLocation(GetMapId(), 2067.27f, 288.56f, 97.03f, 4.49f) : WorldLocation(GetMapId(), 1323.46f, -4641.58f, 53.82f, 6.26f);
+                break;
+            case 175080: // Gromgol <--> Orgrimmar
+                loc = GetMapId() == 0 ? WorldLocation(GetMapId(), -12444.37f, 219.05f, 31.79f, 5.7f) : WorldLocation(GetMapId(), 1360.06f, -4638.52f, 53.83f, 3.64f);
+                break;
+            case 176231: // Menethil <--> Therammore
+                loc = GetMapId() == 0 ? WorldLocation(GetMapId(), -3895.40f, -601.69f, 5.44f, 5.08f) : WorldLocation(GetMapId(), -4001.57f, -4727.90f, 4.99f, 0.78f);
+                break;
+            case 176244: // Teldrassil <--> Auberdine
+                loc = WorldLocation(GetMapId(), 6579.50f, 768.85f, 5.74f, 2.92f);
+                break;
+            case 176310: // Menethil <--> Auberdine
+                loc = GetMapId() == 0 ? WorldLocation(GetMapId(), -3725.48f, -582.80f, 6.22f, 3.71f) : WorldLocation(GetMapId(), 6422.23f, 818.44f, 5.62f, 6.06f);
+                break;
+            case 176495: // Gromgol <--> Unterstadt
+                loc = GetZoneId() == 85 ? WorldLocation(GetMapId(), 2058.04f, 240.94f, 99.76f, 1.3f) : WorldLocation(GetMapId(), -12410.10f, 206.74f, 31.59f, 3.11f);
+                break;
+            case 177233:
+                loc = WorldLocation(GetMapId(), -4215.49f, 3285.64f, 6.47f, 3.21f);
+                break;
+        }
+        m_bgData.joinPos = loc;
+        m_bgData.m_needSave = true;
+        return;
     }
 
     // In error cases use homebind position

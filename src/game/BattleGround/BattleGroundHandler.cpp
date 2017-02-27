@@ -103,12 +103,16 @@ void WorldSession::HandleBattlemasterJoinOpcode(WorldPacket& recv_data)
     if (_player->InBattleGround() || _player->IsInvitedForAnyBG())
         return;
 
-    Creature* unit = GetPlayer()->GetMap()->GetCreature(guid);
-    if (!unit)
-        return;
+    if (guid != GetPlayer()->GetObjectGuid())
+    {
+        Creature* unit = GetPlayer()->GetMap()->GetCreature(guid);
+        if (!unit)
+            return;
 
-    if (!unit->isBattleMaster())                            // it's not battlemaster
-        return;
+        if (!unit->isBattleMaster())                            // it's not battlemaster
+            return;
+    }
+   
 
     // get bg instance or bg template if instance not found
     BattleGround* bg = nullptr;
@@ -194,7 +198,7 @@ void WorldSession::HandleBattlemasterJoinOpcode(WorldPacket& recv_data)
         // already checked if queueSlot is valid, now just get it
         uint32 queueSlot = _player->AddBattleGroundQueueId(bgQueueTypeId);
         // store entry point coords
-        _player->SetBattleGroundEntryPoint();
+        _player->SetBattleGroundEntryPoint(_player, guid == _player->GetObjectGuid());
 
         WorldPacket data;
         // send status packet (in queue)
