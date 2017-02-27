@@ -547,10 +547,13 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                         SpellEntry const* spellInfo = sSpellStore.LookupEntry(itr->first);
 
                         if (spellInfo->SpellFamilyName == SPELLFAMILY_ROGUE &&
-                                spellInfo->Id != m_spellInfo->Id && GetSpellRecoveryTime(spellInfo) > 0)
+                            spellInfo->Id != m_spellInfo->Id)
+                        {
                             ((Player*)m_caster)->RemoveSpellCooldown((itr++)->first, true);
+                        }
                         else
                             ++itr;
+                       
                     }
                     return;
                 }

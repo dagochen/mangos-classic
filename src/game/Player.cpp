@@ -16636,10 +16636,11 @@ void Player::AddSpellAndCategoryCooldowns(SpellEntry const* spellInfo, uint32 it
         {
             for (SpellCategorySet::const_iterator i_scset = i_scstore->second.begin(); i_scset != i_scstore->second.end(); ++i_scset)
             {
-                if (*i_scset == spellInfo->Id)              // skip main spell, already handled above
+                SpellEntry const* entry = sSpellStore.LookupEntry(*i_scset);
+                if (entry->Id == spellInfo->Id || entry->SpellFamilyName != spellInfo->SpellFamilyName)              // skip main spell, already handled above and skip Spells of other Classes
                     continue;
 
-                AddSpellCooldown(*i_scset, itemId, catrecTime);
+                AddSpellCooldown(entry->Id, itemId, catrecTime);
             }
         }
     }
