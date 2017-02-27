@@ -364,11 +364,21 @@ bool ChatHandler::HandleJoinBGQueue(char* args)
 
     if (!player)
         return false;
-
-    // bg ID
+      
     uint32 bgId;
-    if (!ExtractUInt32(&args, bgId))
+    std::string name = args;
+    std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+
+
+    if ("ws" == name)
+        bgId = 489;
+    else if ("av" == name)
+        bgId = 30;
+    else if ("ab" == name)
+        bgId = 529;
+    else
         return false;
+
 
     WorldPacket data;
     data << player->GetObjectGuid();                                      // battlemaster guid
