@@ -586,12 +586,19 @@ void Spell::FillTargetMap()
             for (UnitList::const_iterator itr = tmpUnitLists[effToIndex[i]].begin(); itr != tmpUnitLists[effToIndex[i]].end(); ++itr)
             {
                 Player* targetOwner = (*itr)->GetCharmerOrOwnerPlayerOrPlayerItself();
+                Unit* targetUnit = (*itr);
                 if (targetOwner && targetOwner != me && targetOwner->IsPvP() && !me->IsInDuelWith(targetOwner))
                 {
                     if (IsAreaOfEffectSpell(m_spellInfo) && targetOwner->GetTeam() != me->GetTeam())
                     {
                         continue;
                     }
+                    me->UpdatePvP(true);
+                    me->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_ENTER_PVP_COMBAT);
+                    break;
+                }
+                else if (targetUnit && me->IsEnemyFaction(targetUnit))
+                {
                     me->UpdatePvP(true);
                     me->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_ENTER_PVP_COMBAT);
                     break;

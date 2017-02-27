@@ -1653,6 +1653,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         static Team TeamForRace(uint8 race);
         Team GetTeam() const { return m_team; }
         static uint32 getFactionForRace(uint8 race);
+        bool IsEnemyFaction(Unit * unit);
         void setFactionForRace(uint8 race);
 
         void InitDisplayIds();

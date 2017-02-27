@@ -1189,6 +1189,11 @@ void Player::Update(uint32 update_diff, uint32 p_time)
                 UpdatePvP(true);
                 RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_ENTER_PVP_COMBAT);
             }
+            else if (IsEnemyFaction(pVictim))
+            {
+                UpdatePvP(true);
+                RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_ENTER_PVP_COMBAT);
+            }
         }
     }
 
@@ -5745,6 +5750,28 @@ uint32 Player::getFactionForRace(uint8 race)
     }
 
     return rEntry->FactionID;
+}
+
+bool Player::IsEnemyFaction(Unit* unit)
+{
+    if (unit->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP))
+        return true;
+
+    if (unit->getFactionTemplateEntry()->factionFlags & FACTION_TEMPLATE_FLAG_PVP)
+        return true;
+
+    if (GetTeam() == HORDE)
+    {
+        if ((unit->getFactionTemplateEntry()->hostileMask & FACTION_MASK_HORDE) != 0 && (unit->getFactionTemplateEntry()->friendlyMask & FACTION_MASK_ALLIANCE) != 0)
+            return true;
+    }
+    else if (GetTeam() == ALLIANCE)
+    {
+        if ((unit->getFactionTemplateEntry()->hostileMask & FACTION_MASK_ALLIANCE) != 0 && (unit->getFactionTemplateEntry()->friendlyMask & FACTION_MASK_HORDE) != 0)
+            return true;
+    }
+    
+    return false; 
 }
 
 void Player::setFactionForRace(uint8 race)
