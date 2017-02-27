@@ -489,7 +489,7 @@ Player::Player(WorldSession* session): Unit(), m_mover(this), m_camera(this), m_
     m_restTime = 0;
     m_deathTimer = 0;
     m_deathExpireTime = 0;
-
+    m_lastPvPDailyBonus = 0;
     m_swingErrorMsg = 0;
 
     m_DetectInvTimer = 1 * IN_MILLISECONDS;
@@ -13138,6 +13138,8 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder* holder)
     // Action bars state
     SetByteValue(PLAYER_FIELD_BYTES, 2, fields[54].GetUInt8());
 
+    m_lastPvPDailyBonus = (time_t)fields[55].GetUInt64();
+
     // cleanup inventory related item value fields (its will be filled correctly in _LoadInventory)
     for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
     {
@@ -14556,7 +14558,7 @@ void Player::SaveToDB()
                               "death_expire_time, taxi_path, "
                               "honor_highest_rank, honor_standing, stored_honor_rating , stored_dishonorable_kills, stored_honorable_kills, "
                               "watchedFaction, drunk, health, power1, power2, power3, "
-                              "power4, power5, exploredZones, equipmentCache, ammoId, actionBars) "
+                              "power4, power5, exploredZones, equipmentCache, ammoId, actionBars, lastPvPBonus) "
                               "VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
                               "?, ?, ?, ?, ?, "
                               "?, ?, ?, "
@@ -14565,7 +14567,7 @@ void Player::SaveToDB()
                               "?, ?, "
                               "?, ?, ?, ?, ?, "
                               "?, ?, ?, ?, ?, ?, "
-                              "?, ?, ?, ?, ?, ?) ");
+                              "?, ?, ?, ?, ?, ?, ?) ");
 
     uberInsert.addUInt32(GetGUIDLow());
     uberInsert.addUInt32(GetSession()->GetAccountId());
@@ -14675,6 +14677,8 @@ void Player::SaveToDB()
     uberInsert.addUInt32(GetUInt32Value(PLAYER_AMMO_ID));
 
     uberInsert.addUInt32(uint32(GetByteValue(PLAYER_FIELD_BYTES, 2)));
+
+    uberInsert.addUInt64(m_lastPvPDailyBonus);
 
     uberInsert.Execute();
 

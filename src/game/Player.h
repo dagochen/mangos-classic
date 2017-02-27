@@ -1708,6 +1708,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         /***                  PVP SYSTEM                       ***/
         /*********************************************************/
 
+        uint64 m_lastPvPDailyBonus;
+
         // End of PvP System
 
         void SetDrunkValue(uint16 newDrunkValue, uint32 itemid = 0);

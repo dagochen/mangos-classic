@@ -761,7 +761,6 @@ void BattleGround::EndBattleGround(Team winner)
         {
             static SqlStatementID insPvPstatsPlayer;
             BattleGroundScoreMap::iterator score = m_PlayerScores.find(itr->first);
-            SqlStatement stmt = CharacterDatabase.CreateStatement(insPvPstatsPlayer, "INSERT INTO pvpstats_players (battleground_id, character_guid, score_killing_blows, score_deaths, score_honorable_kills, score_bonus_honor, score_damage_done, score_healing_done, attr_1, attr_2, attr_3, attr_4, attr_5) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             SqlStatement stmt = CharacterDatabase.CreateStatement(insPvPstatsPlayer, "INSERT INTO pvpstats_players (battleground_id, character_guid, score_killing_blows, score_deaths, score_honorable_kills, score_bonus_honor, score_damage_done, score_healing_done) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 
             stmt.addUInt32(battleground_id);
@@ -785,6 +784,7 @@ void BattleGround::EndBattleGround(Team winner)
         {
             RewardMark(plr, ITEM_WINNER_COUNT);
             RewardQuestComplete(plr);
+            RewardDailyBonus(plr);
         }
         else
             RewardMark(plr, ITEM_LOSER_COUNT);
@@ -848,6 +848,23 @@ void BattleGround::RewardMark(Player* plr, uint32 count)
             break;
     }
 }
+
+
+/*ALTER TABLE `characters`.`characters`   
+ADD COLUMN `lastPvPBonus` BIGINT(20) UNSIGNED DEFAULT 0  NOT NULL AFTER `deleteDate`;
+*/
+
+void BattleGround::RewardDailyBonus(Player* plr)
+{
+    time_t now = time(nullptr);
+
+    if (plr->m_lastPvPDailyBonus + DAY < now && m_PlayersCount[0] == m_MaxPlayersPerTeam && m_PlayersCount[1] == m_MaxPlayersPerTeam &&  (m_StartTime / 1000) > 600)
+    {
+        RewardItem(plr, 98765, 1);
+        plr->m_lastPvPDailyBonus = now;
+    }
+}
+
 
 void BattleGround::RewardSpellCast(Player* plr, uint32 spell_id)
 {
