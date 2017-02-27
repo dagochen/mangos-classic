@@ -6333,13 +6333,34 @@ void Unit::ApplySpellImmune(uint32 spellId, uint32 op, uint32 type, bool apply)
     }
     else
     {
+        bool deleted = false;
         for (SpellImmuneList::iterator itr = m_spellImmune[op].begin(); itr != m_spellImmune[op].end(); ++itr)
         {
             if (itr->spellId == spellId)
             {
-                m_spellImmune[op].erase(itr);
-                break;
+
+                for (SpellAuraHolderMap::iterator holder = m_spellAuraHolders.begin(); holder != m_spellAuraHolders.end(); ++holder)
+                {
+                    for (uint32 i = 0; i < MAX_EFFECT_INDEX; ++i)
+                    {
+                        // If there is another SpellAura with same Effect still active after removing the current immunity, apply that one
+                        if (spellId != holder->second->GetSpellProto()->Id &&
+                            ((holder->second->GetSpellProto()->EffectMiscValue[i] == type) && (holder->second->GetSpellProto()->EffectApplyAuraName[i] == SPELL_AURA_MECHANIC_IMMUNITY)))
+                        {
+                            m_spellImmune[op].erase(itr);
+                            deleted = true;
+                            SpellImmune Immune;
+                            Immune.spellId = holder->second->GetSpellProto()->Id;
+                            Immune.type = type;
+                            m_spellImmune[op].push_back(Immune);
+                        }
+                    }
+                }
+                if (!deleted)
+                    m_spellImmune[op].erase(itr);
+
             }
+            break;
         }
     }
 }
