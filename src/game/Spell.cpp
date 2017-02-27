@@ -4763,8 +4763,14 @@ SpellCastResult Spell::CheckCast(bool strict)
             {
                 Creature* pet = m_caster->GetPet();
                 if (!pet)
-                    return SPELL_FAILED_NO_PET;
-
+                {
+                    Pet* dbpet = new Pet;
+                    dbpet->LoadPetFromDB((Player*)m_caster, 0);
+                    if (!dbpet)
+                        return SPELL_FAILED_NO_PET;
+                    else
+                        break;
+                }
                 if (pet->isAlive())
                     return SPELL_FAILED_ALREADY_HAVE_SUMMON;
 
