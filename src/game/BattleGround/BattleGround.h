@@ -46,12 +46,6 @@ struct BattleGroundEventIdx
     uint8 event2;
 };
 
-struct AFKTimer
-{
-    uint32 timer;
-    uint32 infoCounter;
-};
-
 enum BattleGroundSounds
 {
     SOUND_HORDE_WINS                = 8454,
@@ -175,11 +169,7 @@ enum ScoreType
     SCORE_GRAVEYARDS_DEFENDED   = 12,
     SCORE_TOWERS_ASSAULTED      = 13,
     SCORE_TOWERS_DEFENDED       = 14,
-    SCORE_SECONDARY_OBJECTIVES  = 15,
-    // OTHER
-    SCORE_HEALING_DONE          = 16,
-    SCORE_DAMAGE_DONE           = 17,
-
+    SCORE_SECONDARY_OBJECTIVES  = 15
 };
 
 enum BattleGroundStartingEvents
@@ -218,7 +208,7 @@ class BattleGroundScore
 {
     public:
         BattleGroundScore() : KillingBlows(0), Deaths(0), HonorableKills(0),
-            DishonorableKills(0), BonusHonor(0), HealingDone(0), DamageDone(0)
+            DishonorableKills(0), BonusHonor(0)
         {}
         virtual ~BattleGroundScore() {}                     // virtual destructor is used when deleting score from scores map
 
@@ -226,8 +216,8 @@ class BattleGroundScore
         uint32 GetDeaths() const            { return Deaths; }
         uint32 GetHonorableKills() const    { return HonorableKills; }
         uint32 GetBonusHonor() const        { return BonusHonor; }
-        uint32 GetDamageDone() const        { return DamageDone; }
-        uint32 GetHealingDone() const       { return HealingDone; }
+        uint32 GetDamageDone() const        { return 0; }
+        uint32 GetHealingDone() const       { return 0; }
 
         virtual uint32 GetAttr1() const     { return 0; }
         virtual uint32 GetAttr2() const     { return 0; }
@@ -240,8 +230,6 @@ class BattleGroundScore
         uint32 HonorableKills;
         uint32 DishonorableKills;
         uint32 BonusHonor;
-        uint32 DamageDone;
-        uint32 HealingDone;
 };
 
 /*
@@ -262,9 +250,8 @@ class BattleGround
         virtual ~BattleGround();
         virtual void Update(uint32 diff);                   // must be implemented in BG subclass of BG specific update code, but must in begginning call parent version
         virtual void Reset();                               // resets all common properties for battlegrounds, must be implemented and called in BG subclass
-        virtual void StartingEventCloseDoors() {};
-        virtual void StartingEventOpenDoors() {};
-        virtual bool IsAlmostOver() { return true; };
+        virtual void StartingEventCloseDoors() {}
+        virtual void StartingEventOpenDoors() {}
 
         /* Battleground */
         // Get methods:
@@ -273,7 +260,7 @@ class BattleGround
         BattleGroundBracketId GetBracketId() const { return m_BracketId; }
         // the instanceId check is also used to determine a bg-template
         // that's why the m_map hack is here..
-        uint32 GetInstanceID()              { return m_Map ? GetBgMap()->GetInstanceId() : 0; }
+        uint32 GetInstanceID() const        { return m_Map ? GetBgMap()->GetInstanceId() : 0; }
         BattleGroundStatus GetStatus() const { return m_Status; }
         uint32 GetClientInstanceID() const  { return m_ClientInstanceID; }
         uint32 GetStartTime() const         { return m_StartTime; }
@@ -343,7 +330,7 @@ class BattleGround
 
         /* Map pointers */
         void SetBgMap(BattleGroundMap* map) { m_Map = map; }
-        BattleGroundMap* GetBgMap()
+        BattleGroundMap* GetBgMap() const
         {
             MANGOS_ASSERT(m_Map);
             return m_Map;
@@ -365,8 +352,8 @@ class BattleGround
         /* Packet Transfer */
         // method that should fill worldpacket with actual world states (not yet implemented for all battlegrounds!)
         virtual void FillInitialWorldStates(WorldPacket& /*data*/, uint32& /*count*/) {}
-        void SendPacketToTeam(Team team, WorldPacket* packet, Player* sender = nullptr, bool self = true);
-        void SendPacketToAll(WorldPacket* packet);
+        void SendPacketToTeam(Team team, WorldPacket const& packet, Player* sender = nullptr, bool self = true) const;
+        void SendPacketToAll(WorldPacket const& packet) const;
 
         template<class Do>
         void BroadcastWorker(Do& _do);
@@ -377,15 +364,14 @@ class BattleGround
         void RewardHonorToTeam(uint32 Honor, Team team);
         void RewardReputationToTeam(uint32 faction_id, uint32 Reputation, Team team);
         void RewardMark(Player* plr, uint32 count);
-        void SendRewardMarkByMail(Player* plr, uint32 mark, uint32 count);
+        void SendRewardMarkByMail(Player* plr, uint32 mark, uint32 count) const;
         void RewardItem(Player* plr, uint32 item_id, uint32 count);
         void RewardQuestComplete(Player* plr);
-        void RewardDailyBonus(Player* plr);
-        void RewardSpellCast(Player* plr, uint32 spell_id);
+        void RewardSpellCast(Player* plr, uint32 spell_id) const;
         void UpdateWorldState(uint32 Field, uint32 Value);
-        void UpdateWorldStateForPlayer(uint32 Field, uint32 Value, Player* Source);
+        void UpdateWorldStateForPlayer(uint32 Field, uint32 Value, Player* Source) const;
         virtual void EndBattleGround(Team winner);
-        void BlockMovement(Player* plr);
+        static void BlockMovement(Player* plr);
 
         void SendMessageToAll(int32 entry, ChatMsg type, Player const* source = nullptr);
         void SendYellToAll(int32 entry, uint32 language, ObjectGuid guid);
@@ -458,7 +444,7 @@ class BattleGround
         ObjectGuid GetSingleCreatureGuid(uint8 event1, uint8 event2);
 
         void OpenDoorEvent(uint8 event1, uint8 event2 = 0);
-        bool IsDoor(uint8 event1, uint8 event2);
+        bool IsDoor(uint8 event1, uint8 event2) const;
 
         void HandleTriggerBuff(ObjectGuid go_guid);
 
@@ -496,10 +482,6 @@ class BattleGround
         // door-events are automaticly added - but _ALL_ other must be in this vector
         std::map<uint8, uint8> m_ActiveEvents;
 
-        bool AddReport(Player* reporter, Player* reportedPlayer);
-        uint32 getReportCount(Player* target);
-        void RemoveAFK(ObjectGuid guid, bool removeReporter = false);
-        
 
     protected:
         // this method is called, when BG cannot spawn its own spirit guide, or something is wrong, It correctly ends BattleGround
@@ -544,14 +526,6 @@ class BattleGround
         /* Player lists */
         typedef std::deque<ObjectGuid> OfflineQueue;
         OfflineQueue m_OfflineQueue;                        // Player GUID
-
-        typedef std::multimap<ObjectGuid, ObjectGuid> ReportedPlayers;
-        ReportedPlayers m_reportedPlayers;
-
-        typedef std::map<ObjectGuid, std::pair<uint32, uint32>> AFKPlayers;
-        AFKPlayers  m_AfkPlayers;
-
-        uint32 m_uiAfkTimer;
 
         /* Invited counters are useful for player invitation to BG - do not allow, if BG is started to one faction to have 2 more players than another faction */
         /* Invited counters will be changed only when removing already invited player from queue, removing player from battleground and inviting player to BG */

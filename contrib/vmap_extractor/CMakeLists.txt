@@ -17,9 +17,6 @@
 cmake_minimum_required (VERSION 2.6)
 project (MANGOS_VMAP_EXTRACT_IO)
 
-include(../../cmake/common.cmake)
-include(CheckPlatform)
-
 # uncomment next line to disable debug mode
 ADD_DEFINITIONS("-DIOMAP_DEBUG")
 # build setup currently only supports libmpq 0.4.x
@@ -27,6 +24,14 @@ ADD_DEFINITIONS("-DUSE_LIBMPQ04")
 ADD_DEFINITIONS("-Wall")
 ADD_DEFINITIONS("-ggdb")
 ADD_DEFINITIONS("-O3")
+
+if (APPLE)
+  add_definitions("-Dfopen64=fopen")
+  add_definitions("-Dfseeko64=fseeko")
+  add_definitions("-Dfseek64=fseek")
+  add_definitions("-Dftell64=ftell")
+  add_definitions("-Dftello64=ftello")
+endif()
 
 include_directories(../../dep/libmpq)
 

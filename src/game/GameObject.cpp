@@ -287,7 +287,7 @@ void GameObject::Update(uint32 update_diff, uint32 p_time)
                                 caster->FinishSpell(CURRENT_CHANNELED_SPELL);
 
                                 WorldPacket data(SMSG_FISH_NOT_HOOKED, 0);
-                                ((Player*)caster)->GetSession()->SendPacket(&data);
+                                ((Player*)caster)->GetSession()->SendPacket(data);
                             }
                             // can be deleted
                             m_lootState = GO_JUST_DEACTIVATED;
@@ -348,12 +348,33 @@ void GameObject::Update(uint32 update_diff, uint32 p_time)
                     }
 
                     // Should trap trigger?
-                    Unit* enemy = nullptr;                     // pointer to appropriate target if found any
-                    MaNGOS::AnyUnfriendlyUnitInObjectRangeCheck u_check(this, radius);
-                    MaNGOS::UnitSearcher<MaNGOS::AnyUnfriendlyUnitInObjectRangeCheck> checker(enemy, u_check);
-                    Cell::VisitAllObjects(this, checker, radius);
-                    if (enemy)
-                        Use(enemy);
+                    Unit* target = nullptr;                     // pointer to appropriate target if found any
+                    switch (goInfo->trapCustom.triggerOn)
+                    {
+                        case 1: // friendly
+                        {
+                            MaNGOS::AnyFriendlyUnitInObjectRangeCheck u_check(this, radius);
+                            MaNGOS::UnitSearcher<MaNGOS::AnyFriendlyUnitInObjectRangeCheck> checker(target, u_check);
+                            Cell::VisitAllObjects(this, checker, radius);
+                            break;
+                        }
+                        case 2: // all
+                        {
+                            MaNGOS::AnyUnitInObjectRangeCheck u_check(this, radius);
+                            MaNGOS::UnitSearcher<MaNGOS::AnyUnitInObjectRangeCheck> checker(target, u_check);
+                            Cell::VisitAllObjects(this, checker, radius);
+                            break;
+                        }
+                        default: // unfriendly
+                        {
+                            MaNGOS::AnyUnfriendlyUnitInObjectRangeCheck u_check(this, radius);
+                            MaNGOS::UnitSearcher<MaNGOS::AnyUnfriendlyUnitInObjectRangeCheck> checker(target, u_check);
+                            Cell::VisitAllObjects(this, checker, radius);
+                            break;
+                        }
+                    }
+                    if (target && (!goInfo->trapCustom.triggerOn || !target->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE))) // do not trigger on hostile traps if not selectable
+                        Use(target);
                 }
 
                 if (uint32 max_charges = goInfo->GetCharges())
@@ -420,7 +441,7 @@ void GameObject::Update(uint32 update_diff, uint32 p_time)
                         for (GuidSet::const_iterator itr = m_UniqueUsers.begin(); itr != m_UniqueUsers.end(); ++itr)
                         {
                             if (Player* owner = GetMap()->GetPlayer(*itr))
-                                owner->CastSpell(owner, spellId, false, nullptr, nullptr, GetObjectGuid());
+                                owner->CastSpell(owner, spellId, TRIGGERED_NONE, nullptr, nullptr, GetObjectGuid());
                         }
 
                         ClearAllUsesData();
@@ -540,7 +561,7 @@ void GameObject::Delete()
         AddObjectToRemoveList();
 }
 
-void GameObject::SaveToDB()
+void GameObject::SaveToDB() const
 {
     // this should only be used when the gameobject has already been loaded
     // preferably after adding to map, because mapid may not be valid otherwise
@@ -554,7 +575,7 @@ void GameObject::SaveToDB()
     SaveToDB(GetMapId());
 }
 
-void GameObject::SaveToDB(uint32 mapid)
+void GameObject::SaveToDB(uint32 mapid) const
 {
     const GameObjectInfo* goI = GetGOInfo();
 
@@ -678,7 +699,7 @@ struct GameObjectRespawnDeleteWorker
 };
 
 
-void GameObject::DeleteFromDB()
+void GameObject::DeleteFromDB() const
 {
     if (!HasStaticDBSpawnData())
     {
@@ -903,7 +924,7 @@ bool GameObject::ActivateToQuest(Player* pTarget) const
     return false;
 }
 
-void GameObject::SummonLinkedTrapIfAny()
+void GameObject::SummonLinkedTrapIfAny() const
 {
     uint32 linkedEntry = GetGOInfo()->GetLinkedGameObjectEntry();
     if (!linkedEntry)
@@ -929,7 +950,7 @@ void GameObject::SummonLinkedTrapIfAny()
     GetMap()->Add(linkedGO);
 }
 
-void GameObject::TriggerLinkedGameObject(Unit* target)
+void GameObject::TriggerLinkedGameObject(Unit* target) const
 {
     uint32 trapEntry = GetGOInfo()->GetLinkedGameObjectEntry();
 
@@ -940,7 +961,7 @@ void GameObject::TriggerLinkedGameObject(Unit* target)
     if (!trapInfo || trapInfo->type != GAMEOBJECT_TYPE_TRAP)
         return;
 
-    SpellEntry const* trapSpell = sSpellStore.LookupEntry(trapInfo->trap.spellId);
+    SpellEntry const* trapSpell = sSpellTemplate.LookupEntry<SpellEntry>(trapInfo->trap.spellId);
 
     // The range to search for linked trap is weird. We set 0.5 as default. Most (all?)
     // traps are probably expected to be pretty much at the same location as the used GO,
@@ -966,7 +987,7 @@ void GameObject::TriggerLinkedGameObject(Unit* target)
         trapGO->Use(target);
 }
 
-GameObject* GameObject::LookupFishingHoleAround(float range)
+GameObject* GameObject::LookupFishingHoleAround(float range) const
 {
     GameObject* ok = nullptr;
 
@@ -1038,7 +1059,7 @@ void GameObject::Use(Unit* user)
     // by default spell caster is user
     Unit* spellCaster = user;
     uint32 spellId = 0;
-    bool triggered = false;
+    uint32 triggeredFlags = 0;
 
     // test only for exist cooldown data (cooldown timer used for door/buttons reset that not have use cooldown)
     if (uint32 cooldown = GetGOInfo()->GetCooldown())
@@ -1132,7 +1153,8 @@ void GameObject::Use(Unit* user)
 
             // FIXME: when GO casting will be implemented trap must cast spell to target
             if (goInfo->trap.spellId)
-                caster->CastSpell(user, goInfo->trap.spellId, true, nullptr, nullptr, GetObjectGuid());
+                if (caster->CastSpell(user, goInfo->trap.spellId, TRIGGERED_OLD_TRIGGERED, nullptr, nullptr, GetObjectGuid()) != SPELL_CAST_OK)
+                    return;
             // use template cooldown if provided
             m_cooldownTime = time(nullptr) + (goInfo->trap.cooldown ? goInfo->trap.cooldown : uint32(4));
 
@@ -1151,7 +1173,7 @@ void GameObject::Use(Unit* user)
             // Some may have have animation and/or are expected to despawn.
 
             // TODO: Improve this when more information is available, currently these traps are known that must send the anim (Onyxia/ Heigan Fissures/ Trap in DireMaul)
-            if (GetDisplayId() == 4392 || GetDisplayId() == 4472 || GetDisplayId() == 4491 || GetDisplayId() == 6785 || GetDisplayId() == 3073)
+            if (goInfo->ExtraFlags & GAMEOBJECT_EXTRA_FLAG_CUSTOM_ANIM_ON_USE)
                 SendGameObjectCustomAnim(GetObjectGuid());
 
             // TODO: Despawning of traps? (Also related to code in ::Update)
@@ -1243,8 +1265,8 @@ void GameObject::Use(Unit* user)
             SetLootState(GO_ACTIVATED);
 
             // this appear to be ok, however others exist in addition to this that should have custom (ex: 190510, 188692, 187389)
-            if (info->goober.customAnim)
-                SendGameObjectCustomAnim(GetObjectGuid());
+            if (info->ExtraFlags & GAMEOBJECT_EXTRA_FLAG_CUSTOM_ANIM_ON_USE)
+                SendGameObjectCustomAnim(GetObjectGuid(), info->goober.customAnim);
             else
                 SetGoState(GO_STATE_ACTIVE);
 
@@ -1258,7 +1280,7 @@ void GameObject::Use(Unit* user)
                 {
                     WorldPacket data(SMSG_GAMEOBJECT_PAGETEXT, 8);
                     data << ObjectGuid(GetObjectGuid());
-                    player->GetSession()->SendPacket(&data);
+                    player->GetSession()->SendPacket(data);
                 }
                 else if (info->goober.gossipID)             // ...or gossip, if page does not exist
                 {
@@ -1294,6 +1316,7 @@ void GameObject::Use(Unit* user)
 
             // cast this spell later if provided
             spellId = info->goober.spellId;
+            triggeredFlags = TRIGGERED_OLD_TRIGGERED;
 
             break;
         }
@@ -1400,7 +1423,7 @@ void GameObject::Use(Unit* user)
                         SetLootState(GO_JUST_DEACTIVATED);
 
                         WorldPacket data(SMSG_FISH_ESCAPED, 0);
-                        player->GetSession()->SendPacket(&data);
+                        player->GetSession()->SendPacket(data);
                     }
                     break;
                 }
@@ -1411,7 +1434,7 @@ void GameObject::Use(Unit* user)
                     SetLootState(GO_JUST_DEACTIVATED);
 
                     WorldPacket data(SMSG_FISH_NOT_HOOKED, 0);
-                    player->GetSession()->SendPacket(&data);
+                    player->GetSession()->SendPacket(data);
                     break;
                 }
             }
@@ -1466,10 +1489,10 @@ void GameObject::Use(Unit* user)
 
             if (info->summoningRitual.animSpell)
             {
-                player->CastSpell(player, info->summoningRitual.animSpell, true);
+                player->CastSpell(player, info->summoningRitual.animSpell, TRIGGERED_OLD_TRIGGERED);
 
                 // for this case, summoningRitual.spellId is always triggered
-                triggered = true;
+                triggeredFlags = TRIGGERED_OLD_TRIGGERED;
             }
 
             // full amount unique participants including original summoner, need more
@@ -1485,7 +1508,7 @@ void GameObject::Use(Unit* user)
 
             // spell have reagent and mana cost but it not expected use its
             // it triggered spell in fact casted at currently channeled GO
-            triggered = true;
+            triggeredFlags = TRIGGERED_OLD_TRIGGERED;
 
             // finish owners spell
             if (owner)
@@ -1536,7 +1559,7 @@ void GameObject::Use(Unit* user)
             Player* targetPlayer = ObjectAccessor::FindPlayer(player->GetSelectionGuid());
 
             // accept only use by player from same group for caster except caster itself
-            if (!targetPlayer || targetPlayer == player || !targetPlayer->IsInSameGroupWith(player))
+            if (!targetPlayer || targetPlayer == player || !targetPlayer->IsInSameRaidWith(player))
                 return;
 
             // required lvl checks!
@@ -1635,14 +1658,14 @@ void GameObject::Use(Unit* user)
     if (!spellId)
         return;
 
-    SpellEntry const* spellInfo = sSpellStore.LookupEntry(spellId);
+    SpellEntry const* spellInfo = sSpellTemplate.LookupEntry<SpellEntry>(spellId);
     if (!spellInfo)
     {
         sLog.outError("WORLD: unknown spell id %u at use action for gameobject (Entry: %u GoType: %u )", spellId, GetEntry(), GetGoType());
         return;
     }
 
-    Spell* spell = new Spell(spellCaster, spellInfo, triggered, GetObjectGuid());
+    Spell* spell = new Spell(spellCaster, spellInfo, triggeredFlags, GetObjectGuid());
 
     // spell target is user of GO
     SpellCastTargets targets;
@@ -2141,7 +2164,7 @@ void GameObject::TickCapturePoint()
         StartEvents_Event(GetMap(), eventId, this, this, true, *capturingPlayers.begin());
 }
 
-float GameObject::GetInteractionDistance()
+float GameObject::GetInteractionDistance() const
 {
     switch (GetGoType())
     {

@@ -69,12 +69,6 @@ find_package(Git)
 #find_package(PCHSupport)
 include(cotire)
 
-# TODO: remove this (refactor TBB CMake code)
-# VS100 uses MSBuild.exe instead of devenv.com, so force it to use devenv.com
-if(WIN32 AND MSVC_VERSION MATCHES 1600)
-  find_package(VisualStudio2010)
-endif()
-
 # Override configuration-types - we don't use anything else than debug and release
 if(CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_CONFIGURATION_TYPES Release Debug)
@@ -109,25 +103,6 @@ else()
   message(FATAL_ERROR "This project requires boost.  Please install from http://www.boost.org")
 endif()
 
-if(NOT USE_STD_MALLOC)
-  unset(TBB_INCLUDE_DIR CACHE)
-  unset(TBB_LIBRARIES CACHE)
-  unset(TBB_LIBRARIES_DIR CACHE)
-  unset(TBB_INCLUDE_DIR)
-  unset(TBB_LIBRARIES)
-  unset(TBB_LIBRARIES_DIR)
-  if(TBB_USE_EXTERNAL)
-    find_package(TBB)
-    if(NOT TBB_FOUND)
-      message(FATAL_ERROR
-        "This project requires TBB installed when TBB_USE_EXTERNAL is set. Please download the TBB Stable Release from http://www.threadingbuildingblocks.org/ and install it. If this script didn't find TBB and it was correctly installed please set TBB_ROOT to the correct path."
-      )
-    endif()
-  else()
-    include(cmake/macros/ImportTBB.cmake)
-  endif()
-endif()
-
 # Win32 delivered packages
 if(WIN32)
   set(MYSQL_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/dep/include/mysql)
@@ -152,6 +127,16 @@ if(UNIX)
     find_package(MySQL REQUIRED)
   endif()
 
+  # If OpenSSL path isn't specified on mac we set the one that homebrew uses
+  # since that's what most people will be using.
+  if (APPLE)
+    if (NOT OPENSSL_ROOT_DIR)
+      set(OPENSSL_ROOT_DIR /usr/local/opt/openssl/)
+    endif()
+    if (NOT OPENSSL_INCLUDE_DIR)
+      set(OPENSSL_INCLUDE_DIR /usr/local/opt/openssl/include)
+    endif()
+  endif()
   find_package(OpenSSL REQUIRED)
   find_package(ZLIB REQUIRED)
 endif()
@@ -204,6 +189,10 @@ endif()
 
 # print out the results before continuing
 include(cmake/showoptions.cmake)
+
+if(NOT BUILD_CORE AND NOT BUILD_EXTRACTOR AND NOT BUILD_VMAP_EXTRACTOR AND NOT BUILD_MMAP_EXTRACTOR)
+  message(FATAL_ERROR "You must select something to build!")
+endif()
 
 # Generate revision-extractor
 set(GENREV_SRC
@@ -260,7 +249,7 @@ if(XCODE)
   endif()
 endif()
 
-add_subdirectory(dep) # TODO: add vmap extractor build support
+add_subdirectory(dep)
 
 # Add definitions for all build types
 # Don't place this above 'dep' subdirectory! Because of defines build will crash.
@@ -278,17 +267,28 @@ if(WIN32)
   set(DEFINITIONS ${DEFINITIONS} WIN32 _WIN32)
 endif()
 
-if(USE_STD_MALLOC)
-  set(DEFINITIONS ${DEFINITIONS} USE_STANDARD_MALLOC)
-endif()
-
 if(DEBUG)
   set_directory_properties(PROPERTIES COMPILE_DEFINITIONS "${DEFINITIONS};${DEFINITIONS_DEBUG}")
 else()
   set_directory_properties(PROPERTIES COMPILE_DEFINITIONS "${DEFINITIONS};${DEFINITIONS_RELEASE}")
 endif()
 
-add_subdirectory(src)
+if(BUILD_CORE)
+  add_subdirectory(src)
+endif()
+
+if(BUILD_EXTRACTOR)
+  add_subdirectory(contrib/extractor)
+endif()
+
+if(BUILD_VMAP_EXTRACTOR)
+  add_subdirectory(contrib/vmap_extractor)
+  add_subdirectory(contrib/vmap_assembler)
+endif()
+
+if(BUILD_MMAP_EXTRACTOR)
+  add_subdirectory(contrib/mmap)
+endif()
 # if(SQL)
 #   add_subdirectory(sql)
 # endif()
