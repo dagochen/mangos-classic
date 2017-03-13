@@ -6877,3 +6877,46 @@ bool ChatHandler::HandleServerResetAllRaidCommand(char* args)
     return true;
 }
 
+bool ChatHandler::HandlePlayerStatsCommand(char* args)
+{
+
+    Player* player = m_session->GetPlayer();
+    Unit* target = getSelectedUnit();
+
+    // Melee Miss Chance
+    float miss_chance = player->MeleeMissChanceCalc(target, BASE_ATTACK);
+    // Melee Crit Chance
+    float crit_chance = player->GetUnitCriticalChance(BASE_ATTACK, target);
+
+    // Parry Chance
+    float parry_chance = player->GetUnitParryChance();
+   
+    // Dodge Chance
+    float dodge_chance = player->GetUnitDodgeChance();
+ 
+    // Block Chance
+    float block_chance = player->GetUnitBlockChance();
+
+    // SPell Bonus Dmg
+    
+    float fire_bonus_dmg = player->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
+    float frost_bonus_dmg = player->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FROST);
+    float arcane_bonus_dmg = player->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_ARCANE);
+    float shadow_bonus_dmg = player->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
+    float nature_bonus_dmg = player->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_NATURE);
+    float holy_bonus_dmg = player->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY);
+   
+
+    // Spell Bonus Heal
+    float heal_bonus = player->SpellBaseHealingBonusDone(SPELL_SCHOOL_MASK_SPELL);
+
+    // Manaregen
+    float mana_regen = player->m_modManaRegen;
+
+    float mana_regen_interrupt = player->m_modManaRegenInterrupt;
+
+    return true;
+
+    
+
+}
