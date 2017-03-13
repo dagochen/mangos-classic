@@ -57,6 +57,7 @@ struct boss_grobbulusAI : public ScriptedAI
     uint32 m_uiInjectionTimer;
     uint32 m_uiPoisonCloudTimer;
     uint32 m_uiSlimeSprayTimer;
+    uint32 m_uiBerserkTimeSecs;
     uint32 m_uiBerserkTimer;
     uint32 m_uiSlimeStreamTimer;
 
@@ -65,7 +66,8 @@ struct boss_grobbulusAI : public ScriptedAI
         m_uiInjectionTimer = 12 * IN_MILLISECONDS;
         m_uiPoisonCloudTimer = urand(20 * IN_MILLISECONDS, 25 * IN_MILLISECONDS);
         m_uiSlimeSprayTimer = urand(20 * IN_MILLISECONDS, 30 * IN_MILLISECONDS);
-        m_uiBerserkTimer = 12 * MINUTE * IN_MILLISECONDS;
+        m_uiBerserkTimeSecs = 12 * MINUTE;
+        m_uiBerserkTimer = m_uiBerserkTimeSecs * IN_MILLISECONDS;
         m_uiSlimeStreamTimer = 5 * IN_MILLISECONDS;         // The first few secs it is ok to be out of range
     }
 
@@ -175,13 +177,7 @@ struct boss_grobbulusAI : public ScriptedAI
         if (m_uiInjectionTimer < uiDiff)
         {
             if (DoCastMutagenInjection())
-            {
-                // Mutagen Injection should be used more often when below 30%
-                if (m_creature->GetHealthPercent() > 30.0f)
-                    m_uiInjectionTimer = urand(7000, 13000);
-                else
-                    m_uiInjectionTimer = urand(3000, 7000);
-            }
+                m_uiInjectionTimer = urand(10 * IN_MILLISECONDS, 13 * IN_MILLISECONDS) -  5 * (m_uiBerserkTimeSecs * IN_MILLISECONDS - m_uiBerserkTimer) / m_uiBerserkTimeSecs;
         }
         else
             m_uiInjectionTimer -= uiDiff;

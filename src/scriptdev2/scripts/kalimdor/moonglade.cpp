@@ -638,7 +638,7 @@ struct boss_eranikusAI : public ScriptedAI
             case POINT_ID_TYRANDE_ABSOLUTION:
                 if (pSummoned->GetEntry() == NPC_TYRANDE_WHISPERWIND)
                 {
-                    pSummoned->CastSpell(pSummoned, SPELL_ARCANE_CHANNELING, TRIGGERED_NONE);
+                    pSummoned->CastSpell(pSummoned, SPELL_ARCANE_CHANNELING, false);
                     DoScriptText(SAY_TYRANDE_FORGIVEN_1, pSummoned);
                 }
                 break;

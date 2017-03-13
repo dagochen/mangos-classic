@@ -16,8 +16,8 @@
 
 /* ScriptData
 SDName: Boss_Azuregos
-SD%Complete: 99
-SDComment: Enrage is disabled because it is very doubtful that Azuregos had one in Classic
+SD%Complete: 90
+SDComment: Spell reflect not effecting dots (Core problem)
 SDCategory: Azshara
 EndScriptData */
 
@@ -35,7 +35,7 @@ enum
     SPELL_FROST_BREATH          = 21099,
     SPELL_REFLECT               = 22067,
     SPELL_CLEAVE                = 19983,                    // Was 8255; this one is from wowhead and seems to be the correct one
-//    SPELL_ENRAGE                = 23537,                  // Enrage code is disabled. See comment above
+    SPELL_ENRAGE                = 23537,
 };
 
 struct boss_azuregosAI : public ScriptedAI
@@ -48,7 +48,7 @@ struct boss_azuregosAI : public ScriptedAI
     uint32 m_uiTeleportTimer;
     uint32 m_uiReflectTimer;
     uint32 m_uiCleaveTimer;
-//    bool m_bEnraged;
+    bool m_bEnraged;
 
     void Reset() override
     {
@@ -58,14 +58,14 @@ struct boss_azuregosAI : public ScriptedAI
         m_uiTeleportTimer   = 30000;
         m_uiReflectTimer    = urand(15000, 30000);
         m_uiCleaveTimer     = 7000;
-//        m_bEnraged          = false;
+        m_bEnraged          = false;
     }
 
     void KilledUnit(Unit* pVictim) override
     {
         // Mark killed players with Mark of Frost
         if (pVictim->GetTypeId() == TYPEID_PLAYER)
-            pVictim->CastSpell(pVictim, SPELL_MARK_OF_FROST_PLAYER, TRIGGERED_OLD_TRIGGERED, nullptr, nullptr, m_creature->GetObjectGuid());
+            pVictim->CastSpell(pVictim, SPELL_MARK_OF_FROST_PLAYER, true, nullptr, nullptr, m_creature->GetObjectGuid());
     }
 
     void Aggro(Unit* /*pWho*/) override
@@ -85,7 +85,7 @@ struct boss_azuregosAI : public ScriptedAI
             if (DoCastSpellIfCan(m_creature, SPELL_ARCANE_VACUUM) == CAST_OK)
             {
                 DoScriptText(SAY_TELEPORT, m_creature);
-                m_uiTeleportTimer = urand(20000, 30000);
+                m_uiTeleportTimer = 30000;
             }
         }
         else
@@ -104,7 +104,7 @@ struct boss_azuregosAI : public ScriptedAI
         if (m_uiBreathTimer < uiDiff)
         {
             if (DoCastSpellIfCan(m_creature, SPELL_FROST_BREATH) == CAST_OK)
-                m_uiBreathTimer = urand(10000, 25000);
+                m_uiBreathTimer = urand(10000, 15000);
         }
         else
             m_uiBreathTimer -= uiDiff;
@@ -112,10 +112,10 @@ struct boss_azuregosAI : public ScriptedAI
         // Mana Storm Timer
         if (m_uiManaStormTimer < uiDiff)
         {
-            if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_NEAREST_BY, 0))
+            if (Unit* pTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0))
             {
                 if (DoCastSpellIfCan(pTarget, SPELL_MANA_STORM) == CAST_OK)
-                    m_uiManaStormTimer = urand(18000, 35000);
+                    m_uiManaStormTimer = urand(7500, 12500);
             }
         }
         else
@@ -140,11 +140,11 @@ struct boss_azuregosAI : public ScriptedAI
             m_uiCleaveTimer -= uiDiff;
 
         // EnrageTimer
-//        if (!m_bEnraged && m_creature->GetHealthPercent() < 26.0f)
-//        {
-//            if (DoCastSpellIfCan(m_creature, SPELL_ENRAGE) == CAST_OK)
-//                m_bEnraged = true;
-//        }
+        if (!m_bEnraged && m_creature->GetHealthPercent() < 26.0f)
+        {
+            if (DoCastSpellIfCan(m_creature, SPELL_ENRAGE) == CAST_OK)
+                m_bEnraged = true;
+        }
 
         DoMeleeAttackIfReady();
     }

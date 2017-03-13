@@ -58,22 +58,12 @@ class AuthSocket : public MaNGOS::Socket
         void _SetVSFields(const std::string& rI);
 
     private:
-        enum eStatus
-        {
-            STATUS_CHALLENGE,
-            STATUS_LOGON_PROOF,
-            STATUS_RECON_PROOF,
-            STATUS_PATCH,      // unused in CMaNGOS
-            STATUS_AUTHED,
-            STATUS_CLOSED
-        };
-
         BigNumber N, s, g, v;
         BigNumber b, B;
         BigNumber K;
         BigNumber _reconnectProof;
 
-        eStatus _status;
+        bool _authed;
 
         std::string _login;
         std::string _safelogin;

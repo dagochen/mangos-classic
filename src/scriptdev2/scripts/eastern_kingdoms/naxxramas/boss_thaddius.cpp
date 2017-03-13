@@ -54,6 +54,11 @@ enum
     SAY_SLAY                        = -1533033,
     SAY_ELECT                       = -1533034,
     SAY_DEATH                       = -1533035,
+    // Background screams in Instance if Thaddius still alive, needs general support most likely
+    SAY_SCREAM1                     = -1533036,
+    SAY_SCREAM2                     = -1533037,
+    SAY_SCREAM3                     = -1533038,
+    SAY_SCREAM4                     = -1533039,
     EMOTE_POLARITY_SHIFT            = -1533151,
 
     // Thaddius Spells
@@ -245,7 +250,7 @@ bool EffectDummyNPC_spell_thaddius_encounter(Unit* /*pCaster*/, uint32 uiSpellId
                     return true;
                 // remove Stun and then Cast
                 pCreatureTarget->RemoveAurasDueToSpell(SPELL_THADIUS_SPAWN);
-                pCreatureTarget->CastSpell(pCreatureTarget, SPELL_THADIUS_LIGHTNING_VISUAL, TRIGGERED_NONE);
+                pCreatureTarget->CastSpell(pCreatureTarget, SPELL_THADIUS_LIGHTNING_VISUAL, false);
             }
             return true;
         case SPELL_THADIUS_LIGHTNING_VISUAL:
@@ -588,7 +593,7 @@ struct boss_thaddiusAddsAI : public ScriptedAI
         DoMeleeAttackIfReady();
     }
 
-    void DamageTaken(Unit* pKiller, uint32& uiDamage, DamageEffectType /*damagetype*/) override
+    void DamageTaken(Unit* pKiller, uint32& uiDamage) override
     {
         if (uiDamage < m_creature->GetHealth())
             return;

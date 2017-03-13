@@ -209,7 +209,7 @@ struct boss_chromaggusAI : public ScriptedAI
 
                         // WORKAROUND
                         if (pUnit->GetTypeId() == TYPEID_PLAYER)
-                            m_creature->CastSpell(pUnit, 5, TRIGGERED_NONE);
+                            m_creature->CastSpell(pUnit, 5, false);
                     }
                 }
             }

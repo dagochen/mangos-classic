@@ -21,7 +21,6 @@
 #include <time.h>
 #include <stdio.h>
 #include <string.h>
-#include <iostream>
 
 #pragma warning(disable:4996)
 
@@ -337,28 +336,31 @@ int main(int argc, char** argv)
     }
 
     /// get existed header data for compare
-    std::stringstream oldData;
-    std::ifstream headerFile(outfile);
-    if (headerFile.is_open())
+    std::string oldData;
+
+    if (FILE* headerFile = fopen(outfile.c_str(), "rb"))
     {
-        oldData << headerFile.rdbuf();
-        headerFile.close();
+        while (!feof(headerFile))
+        {
+            int c = fgetc(headerFile);
+            if (c < 0)
+                break;
+            oldData += (char)c;
+        }
+
+        fclose(headerFile);
     }
 
     /// update header only if different data
-    if (newData != oldData.str())
+    if (newData != oldData)
     {
-        std::ofstream outStream(outfile);
-        if (!outStream)
+        if (FILE* outputFile = fopen(outfile.c_str(), "w"))
         {
-            std::cerr << "Error writing to " << outfile << std::endl;
-            return 1;
+            fprintf(outputFile, "%s", newData.c_str());
+            fclose(outputFile);
         }
         else
-        {
-            outStream << newData;
-            outStream.close();
-        }
+            return 1;
     }
 
     return 0;

@@ -19,21 +19,15 @@
 #include "Util.h"
 #include "Timer.h"
 #include "utf8cpp/utf8.h"
+#include "mersennetwister/MersenneTwister.h"
 #include "TSS.h"
 
 #include <boost/asio.hpp>
 
-#include <random>
 #include <chrono>
 #include <cstdarg>
 
-std::mt19937* initRand()
-{
-    std::seed_seq seq = { size_t(std::time(nullptr)), size_t(std::clock()) };
-    return new std::mt19937(seq);
-}
-
-static MaNGOS::thread_local_ptr<std::mt19937> mtRand(&initRand);
+static MaNGOS::thread_local_ptr<MTRand> mtRand;
 
 uint32 WorldTimer::m_iTime = 0;
 uint32 WorldTimer::m_iPrevTime = 0;
@@ -62,56 +56,42 @@ uint32 WorldTimer::getMSTime()
 //////////////////////////////////////////////////////////////////////////
 int32 irand(int32 min, int32 max)
 {
-    std::uniform_int_distribution<int32> dist(min, max);
-    return dist(*mtRand.get());
+    return int32(mtRand->randInt(max - min)) + min;
 }
 
 uint32 urand(uint32 min, uint32 max)
 {
-    std::uniform_int_distribution<uint32> dist(min, max);
-    return dist(*mtRand.get());
+    return mtRand->randInt(max - min) + min;
 }
 
 float frand(float min, float max)
 {
-    std::uniform_real_distribution<double> dist(min, max);
-    return float(dist(*mtRand.get()));
+    return mtRand->randExc(max - min) + min;
 }
 
-int32 irand()
+int32 rand32()
 {
-    std::uniform_int_distribution<int32> dist;
-    return dist(*mtRand.get());
+    return mtRand->randInt();
 }
 
-uint32 urand()
+double rand_norm(void)
 {
-    std::uniform_int_distribution<uint32> dist;
-    return dist(*mtRand.get());
+    return mtRand->randExc();
 }
 
-double rand_norm()
+float rand_norm_f(void)
 {
-    std::uniform_real_distribution<double> dist(0, 1.0f);
-    return dist(*mtRand.get());
+    return (float)mtRand->randExc();
 }
 
-float rand_norm_f()
+double rand_chance(void)
 {
-    std::uniform_real_distribution<float> dist(0, 1.0f);
-    return dist(*mtRand.get());
+    return mtRand->randExc(100.0);
 }
 
-double rand_chance()
+float rand_chance_f(void)
 {
-    std::uniform_real_distribution<double> dist(0, 100.0);
-    return dist(*mtRand.get());
-}
-
-float rand_chance_f()
-{
-    std::uniform_real_distribution<double> dist(0, 100.0);
-    return float(dist(*mtRand.get()));
+    return (float)mtRand->randExc(100.0);
 }
 
 Tokens StrSplit(const std::string& src, const std::string& sep)

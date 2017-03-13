@@ -9,7 +9,7 @@
 #include "Object.h"
 #include "Unit.h"
 #include "Creature.h"
-#include "AI/CreatureAI.h"
+#include "CreatureAI.h"
 #include "GameObject.h"
 #include "sc_creature.h"
 #include "sc_gossip.h"

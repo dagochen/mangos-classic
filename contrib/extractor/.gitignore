@@ -15,4 +15,4 @@
 debug
 release
 *.ilk
-*.exe
+ad_debug.exe

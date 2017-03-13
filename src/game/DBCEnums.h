@@ -117,7 +117,7 @@ enum SpellCastTargetFlags
     TARGET_FLAG_TRADE_ITEM      = 0x00001000,               // pguid, 0 spells
     TARGET_FLAG_STRING          = 0x00002000,               // string, 0 spells
     TARGET_FLAG_GAMEOBJECT_ITEM = 0x00004000,               // 199 spells, opening object/lock
-    TARGET_FLAG_CORPSE_ALLY     = 0x00008000,               // pguid, resurrection spells
+    TARGET_FLAG_CORPSE          = 0x00008000,               // pguid, resurrection spells
     TARGET_FLAG_UNK2            = 0x00010000,               // pguid, not used in any spells (can be set dynamically)
 };
 
@@ -129,14 +129,6 @@ enum SpellEffectIndex
 };
 
 #define MAX_EFFECT_INDEX 3
-
-enum SpellEffectIndexMask
-{
-    EFFECT_MASK_INDEX_0 = (1 << EFFECT_INDEX_0),
-    EFFECT_MASK_INDEX_1 = (1 << EFFECT_INDEX_1),
-    EFFECT_MASK_INDEX_2 = (1 << EFFECT_INDEX_2),
-    EFFECT_MASK_ALL = (EFFECT_MASK_INDEX_0 | EFFECT_MASK_INDEX_1 | EFFECT_MASK_INDEX_2)
-};
 
 enum SpellFamily
 {

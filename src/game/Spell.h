@@ -26,7 +26,6 @@
 #include "ObjectGuid.h"
 #include "Unit.h"
 #include "Player.h"
-#include "SQLStorages.h"
 
 class WorldSession;
 class WorldPacket;
@@ -35,7 +34,6 @@ class Item;
 class GameObject;
 class Group;
 class Aura;
-struct SpellTargetEntry;
 
 enum SpellCastFlags
 {
@@ -308,10 +306,10 @@ class Spell
         void EffectSkinPlayerCorpse(SpellEffectIndex eff_idx);
         void EffectSummonDemon(SpellEffectIndex eff_idx);
 
-        Spell(Unit* caster, SpellEntry const* info, uint32 triggeredFlags, ObjectGuid originalCasterGUID = ObjectGuid(), SpellEntry const* triggeredBy = nullptr);
+        Spell(Unit* caster, SpellEntry const* info, bool triggered, ObjectGuid originalCasterGUID = ObjectGuid(), SpellEntry const* triggeredBy = nullptr);
         ~Spell();
 
-        SpellCastResult SpellStart(SpellCastTargets const* targets, Aura* triggeredByAura = nullptr);
+        void SpellStart(SpellCastTargets const* targets, Aura* triggeredByAura = nullptr);
 
         void cancel();
 
@@ -319,7 +317,7 @@ class Spell
         void cast(bool skipCheck = false);
         void finish(bool ok = true);
         void TakePower();
-        void TakeAmmo() const;
+        void TakeAmmo();
         void TakeReagents();
         void TakeCastItem();
 
@@ -334,11 +332,11 @@ class Spell
         void _handle_finish_phase();
 
         SpellCastResult CheckItems();
-        SpellCastResult CheckRange(bool strict) const;
+        SpellCastResult CheckRange(bool strict);
         SpellCastResult CheckPower();
         SpellCastResult CheckCasterAuras() const;
 
-        int32 CalculateDamage(SpellEffectIndex i, Unit* target) const { return m_caster->CalculateSpellDamage(target, m_spellInfo, i, &m_currentBasePoints[i]); }
+        int32 CalculateDamage(SpellEffectIndex i, Unit* target) { return m_caster->CalculateSpellDamage(target, m_spellInfo, i, &m_currentBasePoints[i]); }
         static uint32 CalculatePowerCost(SpellEntry const* spellInfo, Unit* caster, Spell const* spell = nullptr, Item* castItem = nullptr);
 
         bool HaveTargetsForEffect(SpellEffectIndex effect) const;
@@ -349,24 +347,24 @@ class Spell
 
         void DoCreateItem(SpellEffectIndex eff_idx, uint32 itemtype);
 
-        void WriteSpellGoTargets(WorldPacket& data);
-        void WriteAmmoToPacket(WorldPacket& data) const;
+        void WriteSpellGoTargets(WorldPacket* data);
+        void WriteAmmoToPacket(WorldPacket* data);
 
         template<typename T> WorldObject* FindCorpseUsing();
 
-        bool CheckTarget(Unit* target, SpellEffectIndex eff) const;
+        bool CheckTarget(Unit* target, SpellEffectIndex eff);
         bool CanAutoCast(Unit* target);
 
         static void MANGOS_DLL_SPEC SendCastResult(Player* caster, SpellEntry const* spellInfo, SpellCastResult result);
-        void SendCastResult(SpellCastResult result) const;
-        void SendSpellStart() const;
+        void SendCastResult(SpellCastResult result);
+        void SendSpellStart();
         void SendSpellGo();
         void SendSpellCooldown();
-        void SendLogExecute() const;
-        void SendInterrupted(uint8 result) const;
-        void SendChannelUpdate(uint32 time) const;
+        void SendLogExecute();
+        void SendInterrupted(uint8 result);
+        void SendChannelUpdate(uint32 time);
         void SendChannelStart(uint32 duration);
-        void SendResurrectRequest(Player* target) const;
+        void SendResurrectRequest(Player* target);
 
         void HandleEffects(Unit* pUnitTarget, Item* pItemTarget, GameObject* pGOTarget, SpellEffectIndex i, float DamageMultiplier = 1.0);
         void HandleThreatSpells();
@@ -380,13 +378,9 @@ class Spell
         Item* m_CastItem;
 
         SpellCastTargets m_targets;
-        
-        // Trigger flag system
-        bool m_ignoreHitResult;
-        bool m_ignoreUnselectableTarget;
 
         int32 GetCastTime() const { return m_casttime; }
-        uint32 GetCastedTime() const { return m_timer; }
+        uint32 GetCastedTime() { return m_timer; }
         bool IsAutoRepeat() const { return m_autoRepeat; }
         void SetAutoRepeat(bool rep) { m_autoRepeat = rep; }
         void ReSetTimer() { m_timer = m_casttime > 0 ? m_casttime : 0; }
@@ -412,7 +406,7 @@ class Spell
         bool IsNeedSendToClient() const;                    // use for hide spell cast for client in case when cast not have client side affect (animation or log entries)
         bool IsTriggeredSpellWithRedundentCastTime() const; // use for ignore some spell data for triggered spells like cast time, some triggered spells have redundent copy data from main spell for client use purpose
 
-        CurrentSpellTypes GetCurrentContainer() const;
+        CurrentSpellTypes GetCurrentContainer();
 
         // caster types:
         // formal spell caster, in game source of spell affects cast
@@ -440,12 +434,10 @@ class Spell
         void CleanupTargetList();
         void ClearCastItem();
 
-        void ProcSpellAuraTriggers();
-
         typedef std::list<Unit*> UnitList;
 
     protected:
-        bool HasGlobalCooldown() const;
+        bool HasGlobalCooldown();
         void TriggerGlobalCooldown();
         void CancelGlobalCooldown();
 
@@ -468,7 +460,7 @@ class Spell
         uint32 m_powerCost;                                 // Calculated spell cost     initialized only in Spell::prepare
         int32 m_casttime;                                   // Calculated spell cast time initialized only in Spell::prepare
         int32 m_duration;
-        bool m_reflectable;                                  // can reflect this spell?
+        bool m_canReflect;                                  // can reflect this spell?
         bool m_autoRepeat;
 
         uint8 m_delayAtDamageCount;
@@ -519,10 +511,9 @@ class Spell
         //*****************************************
         void FillTargetMap();
         void SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList& targetUnitMap);
-        void CheckSpellScriptTargets(SQLMultiStorage::SQLMSIteratorBounds<SpellTargetEntry> &bounds, UnitList &tempTargetUnitMap, UnitList &targetUnitMap, SpellEffectIndex effIndex);
 
         void FillAreaTargets(UnitList& targetUnitMap, float radius, SpellNotifyPushType pushType, SpellTargets spellTargets, WorldObject* originalCaster = nullptr);
-        void FillRaidOrPartyTargets(UnitList& targetUnitMap, Unit* member, float radius, bool raid, bool withPets, bool withcaster) const;
+        void FillRaidOrPartyTargets(UnitList& targetUnitMap, Unit* member, float radius, bool raid, bool withPets, bool withcaster);
 
         // Returns a target that was filled by SPELL_SCRIPT_TARGET (or selected victim) Can return nullptr
         Unit* GetPrefilledUnitTargetOrUnitTarget(SpellEffectIndex effIndex) const;

@@ -34,7 +34,6 @@
 
 #include <chrono>
 #include <functional>
-#include <memory>
 
 #include <boost/asio.hpp>
 
@@ -56,8 +55,13 @@ struct ServerPktHeader
 
 WorldSocket::WorldSocket(boost::asio::io_service &service, std::function<void (Socket *)> closeHandler)
     : Socket(service, closeHandler), m_lastPingTime(std::chrono::system_clock::time_point::min()), m_overSpeedPings(0),
-      m_useExistingHeader(false), m_session(nullptr),m_seed(urand())
+      m_useExistingHeader(false), m_session(nullptr), m_sessionFinalized(false), m_seed(static_cast<uint32>(rand32()))
 {}
+
+WorldSocket::~WorldSocket()
+{
+    delete m_session;
+}
 
 void WorldSocket::SendPacket(const WorldPacket& pct, bool immediate)
 {
@@ -65,7 +69,7 @@ void WorldSocket::SendPacket(const WorldPacket& pct, bool immediate)
         return;
 
     // Dump outgoing packet.
-    sLog.outWorldPacketDump(GetRemoteEndpoint().c_str(), pct.GetOpcode(), pct.GetOpcodeName(), pct, false);
+    //sLog.outWorldPacketDump(uint32(get_handle()), pct.GetOpcode(), pct.GetOpcodeName(), &pct, false);
 
     ServerPktHeader header;
 
@@ -167,15 +171,16 @@ bool WorldSocket::ProcessIncomingData()
     if (IsClosed())
         return false;
 
-    std::unique_ptr<WorldPacket> pct(new WorldPacket(opcode, validBytesRemaining));
+    // Dump received packet.
+    //sLog.outWorldPacketDump(uint32(get_handle()), new_pct->GetOpcode(), new_pct->GetOpcodeName(), new_pct, true);
+
+    WorldPacket *pct = new WorldPacket(opcode, validBytesRemaining);
 
     if (validBytesRemaining)
     {
         pct->append(InPeak(), validBytesRemaining);
         ReadSkip(validBytesRemaining);
     }
-
-    sLog.outWorldPacketDump(GetRemoteEndpoint().c_str(), pct->GetOpcode(), pct->GetOpcodeName(), *pct, true);
 
     try
     {
@@ -206,7 +211,7 @@ bool WorldSocket::ProcessIncomingData()
                     return false;
                 }
 
-                m_session->QueuePacket(std::move(pct));
+                m_session->QueuePacket(pct);
 
                 return true;
             }
@@ -227,6 +232,7 @@ bool WorldSocket::ProcessIncomingData()
         {
             DETAIL_LOG("Disconnecting session [account id %i / address %s] for badly formatted packet.",
                        m_session ? m_session->GetAccountId() : -1, GetRemoteAddress().c_str());
+
             return false;
         }
     }
@@ -433,7 +439,7 @@ bool WorldSocket::HandleAuthSession(WorldPacket &recvPacket)
     sWorld.AddSession(m_session);
 
     // Create and send the Addon packet
-    if (sAddOnHandler.BuildAddonPacket(recvPacket, SendAddonPacked))
+    if (sAddOnHandler.BuildAddonPacket(&recvPacket, &SendAddonPacked))
         SendPacket(SendAddonPacked);
 
     return true;
@@ -469,6 +475,7 @@ bool WorldSocket::HandlePing(WorldPacket &recvPacket)
                     sLog.outError("WorldSocket::HandlePing: Player kicked for "
                                   "overspeeded pings address = %s",
                                   GetRemoteAddress().c_str());
+
                     return false;
                 }
             }

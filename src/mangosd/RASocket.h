@@ -42,22 +42,23 @@ class RASocket : public MaNGOS::Socket
             Authenticated
         };
 
+        static const int InitialBufferSize = 64;
+
         const bool m_secure;
         bool m_restricted;
 
-        std::string m_input;
+        std::vector<char> m_commandBuffer;
 
         AuthLevel m_authLevel;
         AccountTypes m_accountLevel;
         uint32 m_accountId;
 
         virtual bool ProcessIncomingData() override;
-        bool HandleInput();
         void Send(const std::string &message);
 
     public:
         RASocket(boost::asio::io_service &service, std::function<void (Socket *)> closeHandler);
-        virtual ~RASocket();
+        ~RASocket();
 
         virtual bool Open() override;
 };

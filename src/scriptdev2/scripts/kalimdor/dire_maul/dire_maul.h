@@ -7,7 +7,7 @@
 
 enum
 {
-    MAX_ENCOUNTER               = 17,
+    MAX_ENCOUNTER               = 16,
     MAX_GENERATORS              = 5,
 
     // East
@@ -32,9 +32,6 @@ enum
     TYPE_SLIPKIK                = 14,
     TYPE_KROMCRUSH              = 15,
 
-    // Other
-    TYPE_DREADSTEED             = 16,
-
     // East
     GO_CRUMBLE_WALL             = 177220,
     GO_CORRUPT_VINE             = 179502,
@@ -52,7 +49,6 @@ enum
     NPC_ARCANE_ABERRATION       = 11480,
     NPC_MANA_REMNANT            = 11483,
     NPC_HIGHBORNE_SUMMONER      = 11466,
-    NPC_WARLOCK_DUMMY_INFERNAL  = 14501,
 
     GO_PRINCES_CHEST            = 179545,
     GO_PRINCES_CHEST_AURA       = 179563,
@@ -64,8 +60,6 @@ enum
     GO_FORCEFIELD               = 179503,
     GO_WARPWOOD_DOOR            = 177221,
     GO_WEST_LIBRARY_DOOR        = 179550,
-    GO_DREADSTEED_PORTAL        = 179681,
-    GO_WARLOCK_RITUAL_CIRCLE    = 179668,
 
     // North
     NPC_GUARD_MOLDAR            = 14326,
@@ -117,8 +111,6 @@ class instance_dire_maul : public ScriptedInstance
 
         bool CheckConditionCriteriaMeet(Player const* pPlayer, uint32 uiInstanceConditionId, WorldObject const* pConditionSource, uint32 conditionSourceType) const override;
 
-        void Update(uint32 uiDiff) override;
-
     protected:
         bool CheckAllGeneratorsDestroyed();
         void ProcessForceFieldOpening();
@@ -137,10 +129,7 @@ class instance_dire_maul : public ScriptedInstance
 
         GuidList m_luiHighborneSummonerGUIDs;
         GuidList m_lGeneratorGuardGUIDs;
-        GuidList m_lDreadsteedPortalsGUIDs;
         std::set<uint32> m_sSortedGeneratorGuards[MAX_GENERATORS];
-
-        uint32 m_uiDreadsteedEventTimer;
 
         // North
         bool m_bDoNorthBeforeWest;

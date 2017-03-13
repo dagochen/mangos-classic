@@ -40,6 +40,8 @@ RASocket::RASocket(boost::asio::io_service &service, std::function<void(Socket *
     m_secure(sConfig.GetBoolDefault("RA.Secure", true)), MaNGOS::Socket(service, closeHandler),
     m_authLevel(AuthLevel::None), m_accountId(0), m_accountLevel(AccountTypes::SEC_PLAYER)
 {
+    m_commandBuffer.reserve(InitialBufferSize);
+
     if (sConfig.IsSet("RA.Stricted"))
     {
         sLog.outError("Deprecated config option RA.Stricted being used.  Use RA.Restricted instead.");
@@ -74,36 +76,32 @@ bool RASocket::Open()
 /// Read data from the network
 bool RASocket::ProcessIncomingData()
 {
-    DEBUG_LOG("RASocket::ProcessIncomingData");
+    DEBUG_LOG("RASocket::handle_input");
 
-    std::string buffer;
-    buffer.resize(ReadLengthRemaining());
+    std::vector<char> buffer(ReadLengthRemaining());
     Read(&buffer[0], buffer.size());
 
-    static const std::string NEWLINE = "\n\r";
-
-    auto pos = 0;
-
-    while (pos != std::string::npos)
+    bool completeCommand = false;
+    size_t newLine;
+    for (newLine = 0; newLine < buffer.size(); ++newLine)
     {
-        auto newLine = buffer.find_first_of(NEWLINE, pos);
+        if (buffer[newLine] == '\r' || buffer[newLine] == '\n')
+        {
+            if (newLine > 0)
+                std::copy(buffer.cbegin(), buffer.cbegin() + newLine - 1, std::back_inserter(m_commandBuffer));
 
-        m_input += buffer.substr(pos, newLine - pos);
-
-        pos = buffer.find_first_not_of(NEWLINE, newLine);
-
-        if (newLine == std::string::npos)
+            completeCommand = true;
             break;
-
-        if (!HandleInput())
-            return false;
+        }
     }
 
-    return true;
-}
+    // no newline found? save what we have and return
+    if (newLine == buffer.size())
+    {
+        std::copy(buffer.cbegin(), buffer.cend(), std::back_inserter(m_commandBuffer));
+        return true;
+    }
 
-bool RASocket::HandleInput()
-{
     auto const minLevel = static_cast<AccountTypes>(sConfig.GetIntDefault("RA.MinLevel", AccountTypes::SEC_ADMINISTRATOR));
 
     switch (m_authLevel)
@@ -111,13 +109,15 @@ bool RASocket::HandleInput()
         /// <ul> <li> If the input is '<username>'
         case AuthLevel::None:
         {
-            m_accountId = sAccountMgr.GetId(m_input);
+            const std::string username(&m_commandBuffer[0], m_commandBuffer.size());
+
+            m_accountId = sAccountMgr.GetId(username);
 
             ///- If the user is not found, deny access
             if (!m_accountId)
             {
                 Send("-No such user.\r\n");
-                sLog.outRALog("User %s does not exist.", m_input.c_str());
+                sLog.outRALog("User %s does not exist.", username.c_str());
 
                 if (m_secure)
                     return false;
@@ -133,7 +133,7 @@ bool RASocket::HandleInput()
             if (m_accountLevel < minLevel)
             {
                 Send("-Not enough privileges.\r\n");
-                sLog.outRALog("User %s has no privilege.", m_input.c_str());
+                sLog.outRALog("User %s has no privilege.", username.c_str());
 
                 if (m_secure)
                     return false;
@@ -155,7 +155,9 @@ bool RASocket::HandleInput()
         case AuthLevel::HaveUsername:
         {
             // login+pass ok
-            if (sAccountMgr.CheckPassword(m_accountId, m_input))
+            const std::string pw(&m_commandBuffer[0], m_commandBuffer.size());
+
+            if (sAccountMgr.CheckPassword(m_accountId, pw))
             {
                 m_authLevel = AuthLevel::Authenticated;
 
@@ -180,14 +182,16 @@ bool RASocket::HandleInput()
         ///<li> If user is logged, parse and execute the command
         case AuthLevel::Authenticated:
         {
-            if (m_input.length())
-            {
-                sLog.outRALog("Got '%s' cmd.", m_input.c_str());
+            const std::string command(&m_commandBuffer[0], m_commandBuffer.size());
 
-                if (m_input == "quit")
+            if (command.length())
+            {
+                sLog.outRALog("Got '%s' cmd.", command.c_str());
+
+                if (command == "quit")
                     return false;
 
-                sWorld.QueueCliCommand(new CliCommandHolder(m_accountId, m_accountLevel, m_input.c_str(),
+                sWorld.QueueCliCommand(new CliCommandHolder(m_accountId, m_accountLevel, command.c_str(),
                     [this] (const char *buffer) { this->Send(buffer); },
                     [this] (bool) { this->Send("mangos>"); }));
             }
@@ -202,7 +206,17 @@ bool RASocket::HandleInput()
             ///</ul>
     };
 
-    m_input.clear();
+    m_commandBuffer.clear();
+
+    // there might be additional data here, skip any newline characters first
+    for (; newLine < buffer.size(); ++newLine)
+    {
+        if (buffer[newLine] != '\r' && buffer[newLine] != '\n')
+            break;
+    }
+
+    if (newLine < buffer.size())
+        std::copy(buffer.cbegin() + newLine, buffer.cend(), std::back_inserter(m_commandBuffer));
 
     return true;
 }

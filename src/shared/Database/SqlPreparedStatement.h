@@ -356,7 +356,7 @@ class MANGOS_DLL_SPEC SqlPlainPreparedStatement : public SqlPreparedStatement
         virtual bool execute() override;
 
     protected:
-        void DataToString(const SqlStmtFieldData& data, std::ostringstream& fmt) const;
+        void DataToString(const SqlStmtFieldData& data, std::ostringstream& fmt);
 
         std::string m_szPlainRequest;
 };

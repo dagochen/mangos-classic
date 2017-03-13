@@ -31,15 +31,11 @@ class BIHWrap
         {
             const T* const* objects;
             RayCallback& cb;
-            uint32 objectsSize;
 
-            MDLCallback(RayCallback& callback, const T* const* objects_array, uint32 objSize) : objects(objects_array), cb(callback), objectsSize(objSize) {}
+            MDLCallback(RayCallback& callback, const T* const* objects_array) : objects(objects_array), cb(callback) {}
 
             bool operator()(const Ray& r, uint32 Idx, float& MaxDist, bool /*stopAtFirst*/, bool /*checkLOS*/)
             {
-                if (Idx >= objectsSize)
-                    return false;
-
                 if (const T* obj = objects[Idx])
                     return cb(r, *obj, MaxDist/*, stopAtFirst, checkLOS*/);
                 return false;
@@ -47,9 +43,6 @@ class BIHWrap
 
             void operator()(const Vector3& p, uint32 Idx)
             {
-                if (Idx >= objectsSize)
-                    return;
-
                 if (const T* obj = objects[Idx])
                     cb(p, *obj);
             }
@@ -98,18 +91,16 @@ class BIHWrap
         }
 
         template<typename RayCallback>
-        void intersectRay(const Ray& r, RayCallback& intersectCallback, float& maxDist)
+        void intersectRay(const Ray& r, RayCallback& intersectCallback, float& maxDist) const
         {
-            balance();
-            MDLCallback<RayCallback> temp_cb(intersectCallback, m_objects.getCArray(), m_objects.size());
+            MDLCallback<RayCallback> temp_cb(intersectCallback, m_objects.getCArray());
             m_tree.intersectRay(r, temp_cb, maxDist, true);
         }
 
         template<typename IsectCallback>
-        void intersectPoint(const Vector3& p, IsectCallback& intersectCallback)
+        void intersectPoint(const Vector3& p, IsectCallback& intersectCallback) const
         {
-            balance();
-            MDLCallback<IsectCallback> temp_cb(intersectCallback, m_objects.getCArray(), m_objects.size());
+            MDLCallback<IsectCallback> temp_cb(intersectCallback, m_objects.getCArray());
             m_tree.intersectPoint(p, temp_cb);
         }
 };

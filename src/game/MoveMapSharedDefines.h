@@ -20,10 +20,10 @@
 #define _MOVE_MAP_SHARED_DEFINES_H
 
 #include "Platform/Define.h"
-#include "../../dep/recastnavigation/Detour/Include/DetourNavMesh.h"
+#include "../recastnavigation/Detour/Include/DetourNavMesh.h"
 
 #define MMAP_MAGIC 0x4d4d4150   // 'MMAP'
-#define MMAP_VERSION 5
+#define MMAP_VERSION 4
 
 struct MmapTileHeader
 {
@@ -31,10 +31,10 @@ struct MmapTileHeader
     uint32 dtVersion;
     uint32 mmapVersion;
     uint32 size;
-    uint32 usesLiquids;
+    bool usesLiquids : 1;
 
     MmapTileHeader() : mmapMagic(MMAP_MAGIC), dtVersion(DT_NAVMESH_VERSION),
-        mmapVersion(MMAP_VERSION), size(0), usesLiquids(0) {}
+        mmapVersion(MMAP_VERSION), size(0), usesLiquids(true) {}
 };
 
 enum NavTerrain

@@ -17,7 +17,7 @@
  */
 
 #include "Creature.h"
-#include "AI/CreatureAI.h"
+#include "CreatureAI.h"
 #include "FleeingMovementGenerator.h"
 #include "ObjectAccessor.h"
 #include "movement/MoveSplineInit.h"
@@ -138,14 +138,14 @@ void FleeingMovementGenerator<T>::Initialize(T& owner)
 }
 
 template<>
-void FleeingMovementGenerator<Player>::Finalize(Player& owner) const
+void FleeingMovementGenerator<Player>::Finalize(Player& owner)
 {
     owner.clearUnitState(UNIT_STAT_FLEEING | UNIT_STAT_FLEEING_MOVE);
     owner.StopMoving();
 }
 
 template<>
-void FleeingMovementGenerator<Creature>::Finalize(Creature& owner) const
+void FleeingMovementGenerator<Creature>::Finalize(Creature& owner)
 {
     owner.SetWalk(!owner.hasUnitState(UNIT_STAT_RUNNING_STATE), false);
     owner.clearUnitState(UNIT_STAT_FLEEING | UNIT_STAT_FLEEING_MOVE);
@@ -206,8 +206,7 @@ void TimedFleeingMovementGenerator::Finalize(Unit& owner)
         if (owner.isAlive())
         {
             owner.AttackStop(true);
-            if (owner.AI())
-                owner.AI()->AttackStart(victim);
+            ((Creature*)&owner)->AI()->AttackStart(victim);
         }
     }
 }

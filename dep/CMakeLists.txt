@@ -18,8 +18,9 @@
 # disable warnings for dependencies
 add_compile_options(-w)
 
+if(NOT (TBB_USE_EXTERNAL OR USE_STD_MALLOC))
+  add_subdirectory(tbb)
+endif()
+
 add_subdirectory(recastnavigation)
 add_subdirectory(src)
-if (BUILD_VMAP_EXTRACTOR)
-  add_subdirectory(libmpq)
-endif()

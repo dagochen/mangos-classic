@@ -16,8 +16,8 @@
 
 /* ScriptData
 SDName: Boss_Four_Horsemen
-SD%Complete: 99
-SDComment: TODO: Test enrages
+SD%Complete: 80
+SDComment: Lady Blaumeux, Thane Korthazz, Sir Zeliek, Alexandros Mograine; Berserk NYI.
 SDCategory: Naxxramas
 EndScriptData */
 
@@ -95,16 +95,12 @@ struct boss_lady_blaumeuxAI : public ScriptedAI
 
     uint32 m_uiMarkTimer;
     uint32 m_uiVoidZoneTimer;
-    uint32 m_uiMarkCounter;
-    
     float m_fHealthCheck;
 
     void Reset() override
     {
         m_uiMarkTimer       = 20000;
         m_uiVoidZoneTimer   = 15000;
-        m_uiMarkCounter     = 0;
-        
         m_fHealthCheck      = 50.0f;
     }
 
@@ -150,10 +146,7 @@ struct boss_lady_blaumeuxAI : public ScriptedAI
         if (m_uiMarkTimer < uiDiff)
         {
             if (DoCastSpellIfCan(m_creature, SPELL_MARK_OF_BLAUMEUX) == CAST_OK)
-            {
-                m_uiMarkCounter++;
                 m_uiMarkTimer = 12000;
-            }
         }
         else
             m_uiMarkTimer -= uiDiff;
@@ -161,12 +154,7 @@ struct boss_lady_blaumeuxAI : public ScriptedAI
         if (m_uiVoidZoneTimer < uiDiff)
         {
             if (DoCastSpellIfCan(m_creature->getVictim(), SPELL_VOID_ZONE) == CAST_OK)
-            {
-                if (m_uiMarkCounter < 100)
-                    m_uiVoidZoneTimer = 15000;
-                else
-                    m_uiVoidZoneTimer = 1000;
-            }
+                m_uiVoidZoneTimer = 15000;
         }
         else
             m_uiVoidZoneTimer -= uiDiff;
@@ -192,16 +180,12 @@ struct boss_alexandros_mograineAI : public ScriptedAI
 
     uint32 m_uiMarkTimer;
     uint32 m_uiRighteousFireTimer;
-    uint32 m_uiMarkCounter;
-    
     float m_fHealthCheck;
 
     void Reset() override
     {
         m_uiMarkTimer          = 20000;
         m_uiRighteousFireTimer = 15000;
-        m_uiMarkCounter        = 0;
-        
         m_fHealthCheck         = 50.0f;
     }
 
@@ -252,10 +236,7 @@ struct boss_alexandros_mograineAI : public ScriptedAI
         if (m_uiMarkTimer < uiDiff)
         {
             if (DoCastSpellIfCan(m_creature, SPELL_MARK_OF_MOGRAINE) == CAST_OK)
-            {
-                m_uiMarkCounter++;
                 m_uiMarkTimer = 12000;
-            }
         }
         else
             m_uiMarkTimer -= uiDiff;
@@ -263,12 +244,7 @@ struct boss_alexandros_mograineAI : public ScriptedAI
         if (m_uiRighteousFireTimer < uiDiff)
         {
             if (DoCastSpellIfCan(m_creature->getVictim(), SPELL_RIGHTEOUS_FIRE) == CAST_OK)
-            {
-                if (m_uiMarkCounter < 100)
-                    m_uiRighteousFireTimer = 15000;
-                else
-                    m_uiRighteousFireTimer = 1000;
-            }
+                m_uiRighteousFireTimer = 15000;
         }
         else
             m_uiRighteousFireTimer -= uiDiff;
@@ -294,16 +270,12 @@ struct boss_thane_korthazzAI : public ScriptedAI
 
     uint32 m_uiMarkTimer;
     uint32 m_uiMeteorTimer;
-    uint32 m_uiMarkCounter;
-    
     float m_fHealthCheck;
 
     void Reset() override
     {
         m_uiMarkTimer       = 20000;
         m_uiMeteorTimer     = 30000;
-        m_uiMarkCounter     = 0;
-        
         m_fHealthCheck      = 50.0f;
     }
 
@@ -349,10 +321,7 @@ struct boss_thane_korthazzAI : public ScriptedAI
         if (m_uiMarkTimer < uiDiff)
         {
             if (DoCastSpellIfCan(m_creature, SPELL_MARK_OF_KORTHAZZ) == CAST_OK)
-            {
-                m_uiMarkCounter++;
                 m_uiMarkTimer = 12000;
-            }
         }
         else
             m_uiMarkTimer -= uiDiff;
@@ -360,12 +329,7 @@ struct boss_thane_korthazzAI : public ScriptedAI
         if (m_uiMeteorTimer < uiDiff)
         {
             if (DoCastSpellIfCan(m_creature->getVictim(), SPELL_METEOR) == CAST_OK)
-            {
-                if (m_uiMarkCounter < 100)
-                    m_uiMeteorTimer = 20000;
-                else
-                    m_uiMeteorTimer = 1000;
-            }
+                m_uiMeteorTimer = 20000;
         }
         else
             m_uiMeteorTimer -= uiDiff;
@@ -391,16 +355,12 @@ struct boss_sir_zeliekAI : public ScriptedAI
 
     uint32 m_uiMarkTimer;
     uint32 m_uiHolyWrathTimer;
-    uint32 m_uiMarkCounter;
-    
     float m_fHealthCheck;
 
     void Reset() override
     {
         m_uiMarkTimer       = 20000;
         m_uiHolyWrathTimer  = 12000;
-        m_uiMarkCounter     = 0;
-        
         m_fHealthCheck      = 50.0f;
     }
 
@@ -446,10 +406,7 @@ struct boss_sir_zeliekAI : public ScriptedAI
         if (m_uiMarkTimer < uiDiff)
         {
             if (DoCastSpellIfCan(m_creature, SPELL_MARK_OF_ZELIEK) == CAST_OK)
-            {
-                m_uiMarkCounter++;
                 m_uiMarkTimer = 12000;
-            }
         }
         else
             m_uiMarkTimer -= uiDiff;
@@ -457,12 +414,7 @@ struct boss_sir_zeliekAI : public ScriptedAI
         if (m_uiHolyWrathTimer < uiDiff)
         {
             if (DoCastSpellIfCan(m_creature->getVictim(), SPELL_HOLY_WRATH) == CAST_OK)
-            {
-                if (m_uiMarkCounter < 100)
-                    m_uiHolyWrathTimer = 15000;
-                else
-                    m_uiHolyWrathTimer = 1000;
-             }
+                m_uiHolyWrathTimer = 15000;
         }
         else
             m_uiHolyWrathTimer -= uiDiff;

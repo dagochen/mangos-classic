@@ -28,7 +28,7 @@
 #include "movement/MoveSpline.h"
 #include "movement/MoveSplineInit.h"
 #include "Map.h"
-#include "AI/CreatureAISelector.h"
+#include "CreatureAISelector.h"
 #include "Creature.h"
 #include "CreatureLinkingMgr.h"
 #include "Pet.h"
@@ -507,7 +507,7 @@ void MotionMaster::GetWaypointPathInformation(std::ostringstream& oss) const
     }
 }
 
-bool MotionMaster::GetDestination(float& x, float& y, float& z) const
+bool MotionMaster::GetDestination(float& x, float& y, float& z)
 {
     if (m_owner->movespline->Finalized())
         return false;

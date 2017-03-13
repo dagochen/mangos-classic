@@ -52,7 +52,6 @@ struct boss_patchwerkAI : public ScriptedAI
 
     uint32 m_uiHatefulStrikeTimer;
     uint32 m_uiBerserkTimer;
-    uint32 m_uiBerserkSlimeBoltTimer;
     uint32 m_uiSlimeboltTimer;
     bool   m_bEnraged;
     bool   m_bBerserk;
@@ -60,8 +59,7 @@ struct boss_patchwerkAI : public ScriptedAI
     void Reset() override
     {
         m_uiHatefulStrikeTimer = 1000;                      // 1 second
-        m_uiBerserkTimer = MINUTE * 7 * IN_MILLISECONDS;    // 7 minutes
-        m_uiBerserkSlimeBoltTimer = m_uiBerserkTimer + 30 * IN_MILLISECONDS; // Slime Bolt Enrage
+        m_uiBerserkTimer = MINUTE * 6 * IN_MILLISECONDS;    // 6 minutes
         m_uiSlimeboltTimer = 10000;
         m_bEnraged = false;
         m_bBerserk = false;
@@ -162,7 +160,7 @@ struct boss_patchwerkAI : public ScriptedAI
             }
         }
 
-        // Berserk after 7 minutes
+        // Berserk after 6 minutes
         if (!m_bBerserk)
         {
             if (m_uiBerserkTimer < uiDiff)
@@ -176,13 +174,13 @@ struct boss_patchwerkAI : public ScriptedAI
             else
                 m_uiBerserkTimer -= uiDiff;
         }
-        else if (m_uiBerserkSlimeBoltTimer < uiDiff)
+        else
         {
-            // Slimebolt - casted only 30 seconds after Berserking to prevent kiting
+            // Slimebolt - casted only while Berserking to prevent kiting
             if (m_uiSlimeboltTimer < uiDiff)
             {
                 DoCastSpellIfCan(m_creature->getVictim(), SPELL_SLIMEBOLT);
-                m_uiSlimeboltTimer = 1000;
+                m_uiSlimeboltTimer = 5000;
             }
             else
                 m_uiSlimeboltTimer -= uiDiff;

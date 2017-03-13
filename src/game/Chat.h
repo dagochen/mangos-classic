@@ -93,8 +93,8 @@ class MANGOS_DLL_SPEC ChatHandler
         bool ParseCommands(const char* text);
         ChatCommand const* FindCommand(char const* text);
 
-        bool isValidChatMessage(const char* msg) const;
-        bool HasSentErrorMessage() const { return sentErrorMessage;}
+        bool isValidChatMessage(const char* msg);
+        bool HasSentErrorMessage() { return sentErrorMessage;}
 
         /**
         * \brief Prepare SMSG_GM_MESSAGECHAT/SMSG_MESSAGECHAT
@@ -125,7 +125,7 @@ class MANGOS_DLL_SPEC ChatHandler
         explicit ChatHandler() : m_session(nullptr), sentErrorMessage(false)
         {}      // for CLI subclass
 
-        bool hasStringAbbr(const char* name, const char* part) const;
+        bool hasStringAbbr(const char* name, const char* part);
 
         // function with different implementation for chat/console
         virtual uint32 GetAccountId() const;
@@ -139,17 +139,17 @@ class MANGOS_DLL_SPEC ChatHandler
         bool HasLowerSecurity(Player* target, ObjectGuid guid = ObjectGuid(), bool strong = false);
         bool HasLowerSecurityAccount(WorldSession* target, uint32 account, bool strong = false);
 
-        void SendGlobalSysMessage(const char* str) const;
+        void SendGlobalSysMessage(const char* str);
 
         bool SetDataForCommandInTable(ChatCommand* table, const char* text, uint32 security, std::string const& help);
         void ExecuteCommand(const char* text);
-        void LogCommand(char const* fullcmd) const;
+        void LogCommand(char const* fullcmd);
 
         bool ShowHelpForCommand(ChatCommand* table, const char* cmd);
         bool ShowHelpForSubCommands(ChatCommand* table, char const* cmd);
-        ChatCommandSearchResult FindCommand(ChatCommand* table, char const*& text, ChatCommand*& command, ChatCommand** parentCommand = nullptr, std::string* cmdNamePtr = nullptr, bool allAvailable = false, bool exactlyName = false) const;
+        ChatCommandSearchResult FindCommand(ChatCommand* table, char const*& text, ChatCommand*& command, ChatCommand** parentCommand = nullptr, std::string* cmdNamePtr = nullptr, bool allAvailable = false, bool exactlyName = false);
 
-        void CheckIntegrity(ChatCommand* table, ChatCommand* parentCommand) const;
+        void CheckIntegrity(ChatCommand* table, ChatCommand* parentCommand);
         ChatCommand* getCommandTable();
 
         bool HandleAccountCommand(char* args);
@@ -595,32 +595,32 @@ class MANGOS_DLL_SPEC ChatHandler
         //! Development Commands
         bool HandleSaveAllCommand(char* args);
 
-        Player*   getSelectedPlayer() const;
-        Creature* getSelectedCreature() const;
-        Unit*     getSelectedUnit() const;
+        Player*   getSelectedPlayer();
+        Creature* getSelectedCreature();
+        Unit*     getSelectedUnit();
 
         // extraction different type params from args string, all functions update (char** args) to first unparsed tail symbol at return
-        static void  SkipWhiteSpaces(char** args);
-        bool  ExtractInt32(char** args, int32& val) const;
-        bool  ExtractOptInt32(char** args, int32& val, int32 defVal) const;
-        bool  ExtractUInt32Base(char** args, uint32& val, uint32 base) const;
-        bool  ExtractUInt32(char** args, uint32& val) const { return ExtractUInt32Base(args, val, 10); }
-        bool  ExtractOptUInt32(char** args, uint32& val, uint32 defVal) const;
-        static bool  ExtractFloat(char** args, float& val);
-        static bool  ExtractOptFloat(char** args, float& val, float defVal);
-        static char* ExtractQuotedArg(char** args, bool asis = false);
+        void  SkipWhiteSpaces(char** args);
+        bool  ExtractInt32(char** args, int32& val);
+        bool  ExtractOptInt32(char** args, int32& val, int32 defVal);
+        bool  ExtractUInt32Base(char** args, uint32& val, uint32 base);
+        bool  ExtractUInt32(char** args, uint32& val) { return ExtractUInt32Base(args, val, 10); }
+        bool  ExtractOptUInt32(char** args, uint32& val, uint32 defVal);
+        bool  ExtractFloat(char** args, float& val);
+        bool  ExtractOptFloat(char** args, float& val, float defVal);
+        char* ExtractQuotedArg(char** args, bool asis = false);
         // string with " or [] or ' around
-        static char* ExtractLiteralArg(char** args, char const* lit = nullptr);
+        char* ExtractLiteralArg(char** args, char const* lit = nullptr);
         // literal string (until whitespace and not started from "['|), any or 'lit' if provided
-        static char* ExtractQuotedOrLiteralArg(char** args, bool asis = false);
-        static bool  ExtractOnOff(char** args, bool& value);
-        static char* ExtractLinkArg(char** args, char const* const* linkTypes = nullptr, int* foundIdx = nullptr, char** keyPair = nullptr, char** somethingPair = nullptr);
+        char* ExtractQuotedOrLiteralArg(char** args, bool asis = false);
+        bool  ExtractOnOff(char** args, bool& value);
+        char* ExtractLinkArg(char** args, char const* const* linkTypes = nullptr, int* foundIdx = nullptr, char** keyPair = nullptr, char** somethingPair = nullptr);
         // shift-link like arg (with aditional info if need)
-        static char* ExtractArg(char** args, bool asis = false);   // any name/number/quote/shift-link strings
-        static char* ExtractOptNotLastArg(char** args);            // extract name/number/quote/shift-link arg only if more data in args for parse
+        char* ExtractArg(char** args, bool asis = false);   // any name/number/quote/shift-link strings
+        char* ExtractOptNotLastArg(char** args);            // extract name/number/quote/shift-link arg only if more data in args for parse
 
         char* ExtractKeyFromLink(char** text, char const* linkType, char** something1 = nullptr);
-        static char* ExtractKeyFromLink(char** text, char const* const* linkTypes, int* found_idx = nullptr, char** something1 = nullptr);
+        char* ExtractKeyFromLink(char** text, char const* const* linkTypes, int* found_idx = nullptr, char** something1 = nullptr);
         bool  ExtractUint32KeyFromLink(char** text, char const* linkType, uint32& value);
 
         uint32 ExtractAccountId(char** args, std::string* accountName = nullptr, Player** targetIfNullArg = nullptr);
@@ -637,7 +637,7 @@ class MANGOS_DLL_SPEC ChatHandler
         std::string playerLink(std::string const& name) const { return m_session ? "|cffffffff|Hplayer:" + name + "|h[" + name + "]|h|r" : name; }
         std::string GetNameLink(Player* chr) const;
 
-        GameObject* GetGameObjectWithGuid(uint32 lowguid, uint32 entry) const;
+        GameObject* GetGameObjectWithGuid(uint32 lowguid, uint32 entry);
 
         // Utility methods for commands
         bool ShowAccountListHelper(QueryResult* result, uint32* limit = nullptr, bool title = true, bool error = true);
@@ -669,7 +669,7 @@ class MANGOS_DLL_SPEC ChatHandler
         template<typename T>
         void ShowNpcOrGoSpawnInformation(uint32 guid);
         template <typename T>
-        std::string PrepareStringNpcOrGoSpawnInformation(uint32 guid) const;
+        std::string PrepareStringNpcOrGoSpawnInformation(uint32 guid);
 
         /**
          * Stores informations about a deleted character

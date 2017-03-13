@@ -44,16 +44,16 @@ namespace VMAP
     }
 
     // declared in src/shared/vmap/WorldModel.h
-    void WorldModel::getGroupModels(vector<GroupModel>& outGroupModels)
+    void WorldModel::getGroupModels(vector<GroupModel>& groupModels)
     {
-        outGroupModels = groupModels;
+        groupModels = this->groupModels;
     }
 
     // declared in src/shared/vmap/WorldModel.h
-    void GroupModel::getMeshData(vector<Vector3>& outVertices, vector<MeshTriangle>& outTriangles, WmoLiquid*& liquid)
+    void GroupModel::getMeshData(vector<Vector3>& vertices, vector<MeshTriangle>& triangles, WmoLiquid*& liquid)
     {
-        outVertices = vertices;
-        outTriangles = triangles;
+        vertices = this->vertices;
+        triangles = this->triangles;
         liquid = iLiquid;
     }
 

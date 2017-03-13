@@ -106,7 +106,7 @@ struct boss_scarlet_commander_mograineAI : public ScriptedAI
             pWhitemane->Respawn();
     }
 
-    void DamageTaken(Unit* /*pDoneBy*/, uint32& uiDamage, DamageEffectType /*damagetype*/) override
+    void DamageTaken(Unit* /*pDoneBy*/, uint32& uiDamage) override
     {
         if (uiDamage < m_creature->GetHealth() || m_bHasDied)
             return;
@@ -258,7 +258,7 @@ struct boss_high_inquisitor_whitemaneAI : public ScriptedAI
         // This needs to be empty because Whitemane should NOT aggro while fighting Mograine. Mograine will give us a target.
     }
 
-    void DamageTaken(Unit* /*pDoneBy*/, uint32& uiDamage, DamageEffectType /*damagetype*/) override
+    void DamageTaken(Unit* /*pDoneBy*/, uint32& uiDamage) override
     {
         if (uiDamage < m_creature->GetHealth())
             return;

@@ -632,7 +632,7 @@ namespace MMAP
                         uint8 type = NAV_EMPTY;
 
                         // convert liquid type to NavTerrain
-                        switch (liquid->GetType() & 3)
+                        switch (liquid->GetType())
                         {
                             case 0:
                             case 1:

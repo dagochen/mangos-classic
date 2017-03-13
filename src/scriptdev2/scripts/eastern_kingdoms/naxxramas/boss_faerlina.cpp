@@ -28,9 +28,9 @@ enum
 {
     SAY_GREET                   = -1533009,
     SAY_AGGRO_1                 = -1533010,
-    SAY_ENRAGE_1                = -1533011,
-    SAY_ENRAGE_2                = -1533012,
-    SAY_ENRAGE_3                = -1533013,
+    SAY_AGGRO_2                 = -1533011,
+    SAY_AGGRO_3                 = -1533012,
+    SAY_AGGRO_4                 = -1533013,
     SAY_SLAY_1                  = -1533014,
     SAY_SLAY_2                  = -1533015,
     SAY_DEATH                   = -1533016,
@@ -70,8 +70,13 @@ struct boss_faerlinaAI : public ScriptedAI
 
     void Aggro(Unit* /*pWho*/) override
     {
-
-        DoScriptText(SAY_AGGRO_1, m_creature);
+        switch (urand(0, 3))
+        {
+            case 0: DoScriptText(SAY_AGGRO_1, m_creature); break;
+            case 1: DoScriptText(SAY_AGGRO_2, m_creature); break;
+            case 2: DoScriptText(SAY_AGGRO_3, m_creature); break;
+            case 3: DoScriptText(SAY_AGGRO_4, m_creature); break;
+        }
 
         if (m_pInstance)
             m_pInstance->SetData(TYPE_FAERLINA, IN_PROGRESS);
@@ -163,12 +168,7 @@ struct boss_faerlinaAI : public ScriptedAI
         {
             if (DoCastSpellIfCan(m_creature, SPELL_ENRAGE) == CAST_OK)
             {
-                switch (urand(0,2))
-                {
-                    case 0: DoScriptText(SAY_ENRAGE_1, m_creature); break;
-                    case 1: DoScriptText(SAY_ENRAGE_2, m_creature); break;
-                    case 2: DoScriptText(SAY_ENRAGE_3, m_creature); break;
-                }
+                DoScriptText(EMOTE_BOSS_GENERIC_FRENZY, m_creature);
                 m_uiEnrageTimer = 60000;
             }
         }

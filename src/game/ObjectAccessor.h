@@ -105,7 +105,7 @@ class ObjectAccessor : public MaNGOS::Singleton<ObjectAccessor, MaNGOS::ClassLev
             return HashMapHolder<Player>::GetContainer();
         }
 
-        void SaveAllPlayers() const;
+        void SaveAllPlayers();
 
         // Corpse access
         Corpse* GetCorpseForPlayerGUID(ObjectGuid guid);

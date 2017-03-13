@@ -291,7 +291,7 @@ bool scan_patches(char* scanmatch, std::vector<std::string>& pArchiveNames)
         {
             sprintf(path, "%s.MPQ", scanmatch);
         }
-#ifndef _WIN32
+#ifdef __linux__
         if (FILE* h = fopen64(path, "rb"))
 #else
         if (FILE* h = fopen(path, "rb"))
@@ -344,7 +344,7 @@ bool processArgv(int argc, char** argv)
 {
     bool result = true;
     hasInputPathParam = false;
-    preciseVectorData = false;
+    bool preciseVectorData = false;
 
     for (int i = 1; i < argc; ++i)
     {
@@ -431,7 +431,7 @@ int main(int argc, char** argv)
     //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     // Create the working directory
     if (mkdir(szWorkDirWmo
-#ifndef _WIN32
+#ifdef __linux__
               , 0711
 #endif
              ))

@@ -178,7 +178,7 @@ void WorldSession::HandleQuestgiverAcceptQuestOpcode(WorldPacket& recv_data)
             _player->PlayerTalkClass->CloseGossip();
 
             if (qInfo->GetSrcSpell() > 0)
-                _player->CastSpell(_player, qInfo->GetSrcSpell(), TRIGGERED_OLD_TRIGGERED);
+                _player->CastSpell(_player, qInfo->GetSrcSpell(), true);
 
             return;
         }
@@ -475,7 +475,7 @@ void WorldSession::HandleQuestPushResult(WorldPacket& recvPacket)
         data << ObjectGuid(guid);
         data << uint32(msg);                             // valid values: 0-8
         data << uint8(0);
-        pPlayer->GetSession()->SendPacket(data);
+        pPlayer->GetSession()->SendPacket(&data);
         _player->ClearDividerGuid();
     }
 }
@@ -486,7 +486,7 @@ void WorldSession::HandleQuestPushResult(WorldPacket& recvPacket)
  * @param questgiver - from whom
  * @param defstatus - initial set status (usually it will be called with DIALOG_STATUS_NONE) - must not be DIALOG_STATUS_UNDEFINED
  */
-uint32 WorldSession::getDialogStatus(const Player* pPlayer, const Object* questgiver, uint32 defstatus) const
+uint32 WorldSession::getDialogStatus(Player* pPlayer, Object* questgiver, uint32 defstatus)
 {
     MANGOS_ASSERT(defstatus != DIALOG_STATUS_UNDEFINED);
 
@@ -527,10 +527,14 @@ uint32 WorldSession::getDialogStatus(const Player* pPlayer, const Object* questg
 
         QuestStatus status = pPlayer->GetQuestStatus(quest_id);
 
-        if (status == QUEST_STATUS_COMPLETE && !pPlayer->GetQuestRewardStatus(quest_id))
-            dialogStatusNew = pQuest->IsRepeatable() ? DIALOG_STATUS_REWARD_REP : DIALOG_STATUS_REWARD2;
-        else if (pQuest->IsAutoComplete() && pPlayer->CanTakeQuest(pQuest, false))
-            dialogStatusNew = pQuest->IsRepeatable() ? DIALOG_STATUS_REWARD_REP : DIALOG_STATUS_AVAILABLE;
+        if ((status == QUEST_STATUS_COMPLETE && !pPlayer->GetQuestRewardStatus(quest_id)) ||
+                (pQuest->IsAutoComplete() && pPlayer->CanTakeQuest(pQuest, false)))
+        {
+            if (pQuest->IsAutoComplete() && pQuest->IsRepeatable())
+                dialogStatusNew = DIALOG_STATUS_REWARD_REP;
+            else
+                dialogStatusNew = DIALOG_STATUS_REWARD2;
+        }
         else if (status == QUEST_STATUS_INCOMPLETE)
             dialogStatusNew = DIALOG_STATUS_INCOMPLETE;
 
@@ -557,8 +561,7 @@ uint32 WorldSession::getDialogStatus(const Player* pPlayer, const Object* questg
                 if (pPlayer->SatisfyQuestLevel(pQuest, false))
                 {
                     int32 lowLevelDiff = sWorld.getConfig(CONFIG_INT32_QUEST_LOW_LEVEL_HIDE_DIFF);
-
-                    if (pQuest->IsAutoComplete())
+                    if (pQuest->IsAutoComplete() || (pQuest->IsRepeatable() && pPlayer->getQuestStatusMap()[quest_id].m_rewarded))
                     {
                         dialogStatusNew = DIALOG_STATUS_REWARD_REP;
                     }
@@ -585,10 +588,59 @@ void WorldSession::HandleQuestgiverStatusMultipleQuery(WorldPacket& /*recvPacket
 {
     DEBUG_LOG("WORLD: Received opcode CMSG_QUESTGIVER_STATUS_MULTIPLE_QUERY");
 
-    _player->SendQuestGiverStatusMultiple();
+    uint32 count = 0;
+
+    WorldPacket data(SMSG_QUESTGIVER_STATUS_MULTIPLE, 4);
+    data << uint32(count);                                  // placeholder
+
+    for (GuidSet::const_iterator itr = _player->m_clientGUIDs.begin(); itr != _player->m_clientGUIDs.end(); ++itr)
+    {
+        if (itr->IsAnyTypeCreature())
+        {
+            // need also pet quests case support
+            Creature* questgiver = GetPlayer()->GetMap()->GetAnyTypeCreature(*itr);
+
+            if (!questgiver || questgiver->IsHostileTo(_player))
+                continue;
+
+            if (!questgiver->HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER))
+                continue;
+
+            uint8 dialogStatus = sScriptMgr.GetDialogStatus(_player, questgiver);
+
+            if (dialogStatus == DIALOG_STATUS_UNDEFINED)
+                dialogStatus = getDialogStatus(_player, questgiver, DIALOG_STATUS_NONE);
+
+            data << questgiver->GetObjectGuid();
+            data << uint8(dialogStatus);
+            ++count;
+        }
+        else if (itr->IsGameObject())
+        {
+            GameObject* questgiver = GetPlayer()->GetMap()->GetGameObject(*itr);
+
+            if (!questgiver)
+                continue;
+
+            if (questgiver->GetGoType() != GAMEOBJECT_TYPE_QUESTGIVER)
+                continue;
+
+            uint8 dialogStatus = sScriptMgr.GetDialogStatus(_player, questgiver);
+
+            if (dialogStatus == DIALOG_STATUS_UNDEFINED)
+                dialogStatus = getDialogStatus(_player, questgiver, DIALOG_STATUS_NONE);
+
+            data << questgiver->GetObjectGuid();
+            data << uint8(dialogStatus);
+            ++count;
+        }
+    }
+
+    data.put<uint32>(0, count);                             // write real count
+    SendPacket(&data);
 }
 
-bool WorldSession::CanInteractWithQuestGiver(ObjectGuid guid, char const* descr) const
+bool WorldSession::CanInteractWithQuestGiver(ObjectGuid guid, char const* descr)
 {
     if (guid.IsCreature())
     {

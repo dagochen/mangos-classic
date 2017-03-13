@@ -10,6 +10,7 @@
 # MaNGOS generated files
 #
 
+tbb*
 Recast*
 Detour*
 DebugUtils*

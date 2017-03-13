@@ -82,7 +82,7 @@ struct npc_aged_dying_ancient_kodoAI : public ScriptedAI
                 }
 
                 // spell have no implemented effect (dummy), so useful to notify spellHit
-                m_creature->CastSpell(m_creature, SPELL_KODO_KOMBO_GOSSIP, TRIGGERED_OLD_TRIGGERED);
+                m_creature->CastSpell(m_creature, SPELL_KODO_KOMBO_GOSSIP, true);
             }
         }
     }
@@ -136,10 +136,10 @@ bool EffectDummyCreature_npc_aged_dying_ancient_kodo(Unit* pCaster, uint32 spell
                 pCreatureTarget->GetEntry() == NPC_DYING_KODO ||
                 pCreatureTarget->GetEntry() == NPC_ANCIENT_KODO)
         {
-            pCaster->CastSpell(pCaster, SPELL_KODO_KOMBO_PLAYER_BUFF, TRIGGERED_OLD_TRIGGERED);
+            pCaster->CastSpell(pCaster, SPELL_KODO_KOMBO_PLAYER_BUFF, true);
 
             pCreatureTarget->UpdateEntry(NPC_TAMED_KODO);
-            pCreatureTarget->CastSpell(pCreatureTarget, SPELL_KODO_KOMBO_DESPAWN_BUFF, TRIGGERED_NONE);
+            pCreatureTarget->CastSpell(pCreatureTarget, SPELL_KODO_KOMBO_DESPAWN_BUFF, false);
 
             if (pCreatureTarget->GetMotionMaster()->GetCurrentMovementGeneratorType() == WAYPOINT_MOTION_TYPE)
                 pCreatureTarget->GetMotionMaster()->MoveIdle();

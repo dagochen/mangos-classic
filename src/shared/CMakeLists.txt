@@ -87,6 +87,7 @@ set(SRC_GRP_UTIL
     ByteBuffer.cpp
     ByteBuffer.h
     Errors.h
+    # dep/include/mersennetwister/MersenneTwister.h is part of this group in the VC 2012 file but it is not part of src/shared, so it is omitted here
     ProgressBar.cpp
     ProgressBar.h
     Timer.h
@@ -175,6 +176,8 @@ if(POSTGRESQL)
 else()
   include_directories(${MYSQL_INCLUDE_DIR})
 endif()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SystemConfig.h.in ${CMAKE_CURRENT_BINARY_DIR}/SystemConfig.h)
 
 add_library(${LIBRARY_NAME} STATIC
   ${LIBRARY_SRCS}

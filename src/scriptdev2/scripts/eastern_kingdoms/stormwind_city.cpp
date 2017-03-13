@@ -63,7 +63,7 @@ struct npc_bartlebyAI : public ScriptedAI
         AttackStart(pAttacker);
     }
 
-    void DamageTaken(Unit* pDoneBy, uint32& uiDamage, DamageEffectType /*damagetype*/) override
+    void DamageTaken(Unit* pDoneBy, uint32& uiDamage) override
     {
         if (uiDamage > m_creature->GetHealth() || ((m_creature->GetHealth() - uiDamage) * 100 / m_creature->GetMaxHealth() < 15))
         {
@@ -122,7 +122,7 @@ struct npc_dashel_stonefistAI : public ScriptedAI
         AttackStart(pAttacker);
     }
 
-    void DamageTaken(Unit* pDoneBy, uint32& uiDamage, DamageEffectType /*damagetype*/) override
+    void DamageTaken(Unit* pDoneBy, uint32& uiDamage) override
     {
         if (uiDamage > m_creature->GetHealth() || ((m_creature->GetHealth() - uiDamage) * 100 / m_creature->GetMaxHealth() < 15))
         {
@@ -857,7 +857,7 @@ struct npc_reginald_windsorAI : public npc_escortAI, private DialogueHelper
                 break;
             case SPELL_WINDSOR_DEATH:
                 if (Creature* pOnyxia = m_pScriptedMap->GetSingleCreatureFromStorage(NPC_PRESTOR))
-                    pOnyxia->CastSpell(m_creature, SPELL_WINDSOR_DEATH, TRIGGERED_NONE);
+                    pOnyxia->CastSpell(m_creature, SPELL_WINDSOR_DEATH, false);
                 break;
             case SAY_WINDSOR_KEEP_12:
                 if (Creature* pOnyxia = m_pScriptedMap->GetSingleCreatureFromStorage(NPC_PRESTOR))
@@ -881,7 +881,7 @@ struct npc_reginald_windsorAI : public npc_escortAI, private DialogueHelper
                 {
                     pOnyxia->ForcedDespawn(1000);
                     pOnyxia->HandleEmote(EMOTE_ONESHOT_LIFTOFF);
-                    pOnyxia->CastSpell(pOnyxia, SPELL_ONYXIA_DESPAWN, TRIGGERED_NONE);
+                    pOnyxia->CastSpell(pOnyxia, SPELL_ONYXIA_DESPAWN, false);
                 }
                 break;
             case NPC_GUARD_ONYXIA:
