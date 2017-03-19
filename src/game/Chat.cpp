@@ -773,6 +773,7 @@ ChatCommand* ChatHandler::getCommandTable()
         { "report",         SEC_PLAYER,         false, &ChatHandler::HandleReportAFKCommand,           "", reportCommandTable },
         { "refund",         SEC_GAMEMASTER,     false, &ChatHandler::HandleRefundQuestItem,           "", nullptr },
         { "joinbg",         SEC_PLAYER,         false, &ChatHandler::HandleJoinBGQueue,               "", nullptr },
+        { "charstats",      SEC_PLAYER,         false, &ChatHandler::HandlePlayerStatsCommand,        "", nullptr },
         { nullptr,          0,                  false, nullptr,                                        "", nullptr }
     };
 

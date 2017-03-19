@@ -2156,6 +2156,10 @@ bool ChatHandler::HandleRefundQuestItem(char* args)
         return false;
     }
 
+    if (target)
+       target->SaveToDB();
+    
+
     // Quest
     uint32 entry;
     if (!ExtractUint32KeyFromLink(&args, "Hquest", entry))
@@ -2183,13 +2187,13 @@ bool ChatHandler::HandleRefundQuestItem(char* args)
         return false;
     }
 
-    uint8 rewarded;
+    uint8 rewarded = 0;
     uint32 choiceItem;
     uint32 rewardItem1;
     uint32 rewardItem2;
     uint32 rewardItem3;
     uint32 rewardItem4;
-    uint8 refunded;
+    uint8 refunded = 0;
 
     QueryResult* result = CharacterDatabase.PQuery("SELECT rewarded, choiceItem, rewardItem1, rewardItem2, rewardItem3, rewardItem4, refunded FROM character_queststatus WHERE quest = %u and guid = %u", entry, target_guid);
     if (result)
@@ -2303,7 +2307,7 @@ bool ChatHandler::HandleRefundQuestItem(char* args)
 
         MailDraft draft;
         std::string msgSubject = "Item-Wiederherstellung";
-        std::string msgText = "Hallo!$B$BDu hast uns gebeten, einen verlorenen Gegenstand aus dem wirbelnden Nether zur\303\274ckzuholen. Bitte bedenke, dass wir dies nur ein einziges mal vornehmen k\303\266nnen.$B$BViele Gr\303\274ße$B$BDein Classic-WoW-Team";
+        std::string msgText = "Hallo!$B$BDu hast uns gebeten, einen verlorenen Gegenstand aus dem wirbelnden Nether zur\303\274ckzuholen. Bitte bedenke, dass wir dies nur ein einziges mal vornehmen k\303\266nnen.$B$BViele Gr\303\274\303\237e$B$BDein Classic-WoW-Team";
         draft.SetSubjectAndBody(msgSubject, msgText);
 
         if (Item* item = Item::CreateItem(itemId, 1, m_session ? m_session->GetPlayer() : 0))
@@ -6883,37 +6887,88 @@ bool ChatHandler::HandlePlayerStatsCommand(char* args)
     Player* player = m_session->GetPlayer();
     Unit* target = getSelectedUnit();
 
+    if (!player)
+        return false;
+
+    if (!target)
+        return false;
+
     // Melee Miss Chance
     float miss_chance = player->MeleeMissChanceCalc(target, BASE_ATTACK);
+    PSendSysMessage("Mainhand Miss Chance vs. %s : %f", target->GetName(), miss_chance);
+
+    miss_chance = player->MeleeMissChanceCalc(target, OFF_ATTACK);
+    PSendSysMessage("Offhand Miss Chance vs. %s : %f", target->GetName(), miss_chance);
+    
+    miss_chance = player->MeleeMissChanceCalc(target, RANGED_ATTACK);
+    PSendSysMessage("Ranged Miss Chance vs. %s : %f", target->GetName(), miss_chance);
+
+
     // Melee Crit Chance
     float crit_chance = player->GetUnitCriticalChance(BASE_ATTACK, target);
+    PSendSysMessage("Mainhand Crit Chance vs. %s : %f", target->GetName(), crit_chance);
+
+    crit_chance = player->GetUnitCriticalChance(OFF_ATTACK, target);
+    PSendSysMessage("Offhand Crit Chance vs. %s : %f", target->GetName(), crit_chance);
+
+    crit_chance = player->GetUnitCriticalChance(RANGED_ATTACK, target);
+    PSendSysMessage("Ranged Crit Chance vs. %s : %f", target->GetName(), crit_chance);
 
     // Parry Chance
     float parry_chance = player->GetUnitParryChance();
-   
+    PSendSysMessage("Parry Chance: %f", parry_chance);
+
     // Dodge Chance
     float dodge_chance = player->GetUnitDodgeChance();
- 
+    PSendSysMessage("Dodge Chance: %f", dodge_chance);
+
     // Block Chance
     float block_chance = player->GetUnitBlockChance();
+    PSendSysMessage("Block Chance: %f", block_chance);
 
-    // SPell Bonus Dmg
+
+    // Spell Bonus Dmg
     
-    float fire_bonus_dmg = player->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
-    float frost_bonus_dmg = player->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FROST);
-    float arcane_bonus_dmg = player->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_ARCANE);
-    float shadow_bonus_dmg = player->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
-    float nature_bonus_dmg = player->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_NATURE);
-    float holy_bonus_dmg = player->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY);
+    uint32 fire_bonus_dmg = player->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE);
+    uint32 frost_bonus_dmg = player->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FROST);
+    uint32 arcane_bonus_dmg = player->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_ARCANE);
+    uint32 shadow_bonus_dmg = player->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SHADOW);
+    uint32 nature_bonus_dmg = player->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_NATURE);
+    uint32 holy_bonus_dmg = player->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_HOLY);
    
+    PSendSysMessage("Fire Bonus: %u", fire_bonus_dmg);
+    PSendSysMessage("Frost Bonus: %u", frost_bonus_dmg);
+    PSendSysMessage("Arcane Bonus: %u", arcane_bonus_dmg);
+    PSendSysMessage("Shadow Bonus: %u", shadow_bonus_dmg);
+    PSendSysMessage("Nature Bonus: %u", nature_bonus_dmg);
+    PSendSysMessage("Holy Bonus: %u", holy_bonus_dmg);
+
+   
+    float fire_crit = player->m_SpellCritPercentage[SPELL_SCHOOL_FIRE];
+    float frost_crit = player->m_SpellCritPercentage[SPELL_SCHOOL_FROST];
+    float arcane_crit = player->m_SpellCritPercentage[SPELL_SCHOOL_ARCANE];
+    float shadow_crit = player->m_SpellCritPercentage[SPELL_SCHOOL_SHADOW];
+    float nature_crit = player->m_SpellCritPercentage[SPELL_SCHOOL_NATURE];
+    float holy_crit = player->m_SpellCritPercentage[SPELL_SCHOOL_HOLY];
+
+
+    PSendSysMessage("Fire Crit: %f", fire_crit);
+    PSendSysMessage("Frost Crit: %f", frost_crit);
+    PSendSysMessage("Arcane Crit: %f", arcane_crit);
+    PSendSysMessage("Shadow Crit: %f", shadow_crit);
+    PSendSysMessage("Nature Crit: %f", nature_crit);
+    PSendSysMessage("Holy Crit: %f", holy_crit);
 
     // Spell Bonus Heal
-    float heal_bonus = player->SpellBaseHealingBonusDone(SPELL_SCHOOL_MASK_SPELL);
+    uint32 heal_bonus = player->SpellBaseHealingBonusDone(SPELL_SCHOOL_MASK_SPELL);
+    PSendSysMessage("Heal Bonus: %u", heal_bonus);
 
     // Manaregen
     float mana_regen = player->m_modManaRegen;
-
+    PSendSysMessage("Mana Regen: %f", mana_regen);
+    
     float mana_regen_interrupt = player->m_modManaRegenInterrupt;
+    PSendSysMessage("Mana Regen Interrupt: %f", mana_regen_interrupt);
 
     return true;
 
