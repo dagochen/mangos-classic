@@ -2155,20 +2155,16 @@ bool ChatHandler::HandleRefundQuestItem(char* args)
         SetSentErrorMessage(true);
         return false;
     }
-
-    if (target)
-       target->SaveToDB();
     
-
     // Quest
-    uint32 entry;
-    if (!ExtractUint32KeyFromLink(&args, "Hquest", entry))
+    uint32 questId;
+    if (!ExtractUint32KeyFromLink(&args, "Hquest", questId))
         return false;
 
-    Quest const* pQuest = sObjectMgr.GetQuestTemplate(entry);
+    Quest const* pQuest = sObjectMgr.GetQuestTemplate(questId);
     if (!pQuest)
     {
-        PSendSysMessage(LANG_COMMAND_QUEST_NOTFOUND, entry);
+        PSendSysMessage(LANG_COMMAND_QUEST_NOTFOUND, questId);
         SetSentErrorMessage(true);
         return false;
     }
@@ -2195,18 +2191,35 @@ bool ChatHandler::HandleRefundQuestItem(char* args)
     uint32 rewardItem4;
     uint8 refunded = 0;
 
-    QueryResult* result = CharacterDatabase.PQuery("SELECT rewarded, choiceItem, rewardItem1, rewardItem2, rewardItem3, rewardItem4, refunded FROM character_queststatus WHERE quest = %u and guid = %u", entry, target_guid);
-    if (result)
+    if (target)
     {
-        Field* fields = result->Fetch();
-        rewarded = fields[0].GetUInt8();
-        choiceItem = fields[1].GetUInt32();
-        rewardItem1 = fields[2].GetUInt32();
-        rewardItem2 = fields[3].GetUInt32();
-        rewardItem3 = fields[4].GetUInt32();
-        rewardItem4 = fields[5].GetUInt32();
-        refunded = fields[6].GetUInt8();
-        delete result;
+        rewarded = target->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE;
+        QuestStatusMap::const_iterator itr = target->getQuestStatusMap().find(questId);
+        if (itr != target->getQuestStatusMap().end())
+        {
+            choiceItem = itr->second.m_choiceItem;
+            rewardItem1 = itr->second.m_rewardItems[0];
+            rewardItem2 = itr->second.m_rewardItems[1];
+            rewardItem3 = itr->second.m_rewardItems[2];
+            rewardItem4 = itr->second.m_rewardItems[3];
+            refunded = itr->second.m_wasRefunded;
+        }
+    }
+    else
+    {
+        QueryResult* result = CharacterDatabase.PQuery("SELECT rewarded, choiceItem, rewardItem1, rewardItem2, rewardItem3, rewardItem4, refunded FROM character_queststatus WHERE quest = %u and guid = %u", questId, target_guid);
+        if (result)
+        {
+            Field* fields = result->Fetch();
+            rewarded = fields[0].GetUInt8();
+            choiceItem = fields[1].GetUInt32();
+            rewardItem1 = fields[2].GetUInt32();
+            rewardItem2 = fields[3].GetUInt32();
+            rewardItem3 = fields[4].GetUInt32();
+            rewardItem4 = fields[5].GetUInt32();
+            refunded = fields[6].GetUInt8();
+            delete result;
+        }
     }
 
     if (!rewarded)
@@ -2290,13 +2303,22 @@ bool ChatHandler::HandleRefundQuestItem(char* args)
         }
 
         uint32 count = 0;
-        QueryResult* result2 = CharacterDatabase.PQuery("SELECT count(*) FROM character_inventory WHERE guid = %u AND item_template in (%s)", target_guid, items.str());
-        if (result2)
+        if (target)
         {
-            Field* fields = result2->Fetch();
-            count = fields[0].GetUInt32();
-            delete result2;
+            if (target->HasItemCount(itemId, 1, true))
+                count = 1;
         }
+        else
+        {
+            QueryResult* result2 = CharacterDatabase.PQuery("SELECT count(*) FROM character_inventory WHERE guid = %u AND item_template in (%s)", target_guid, items.str().c_str());
+            if (result2)
+            {
+                Field* fields = result2->Fetch();
+                count = fields[0].GetUInt32();
+                delete result2;
+            }
+        }
+       
 
         if (count > 0)
         {
@@ -2329,7 +2351,7 @@ bool ChatHandler::HandleRefundQuestItem(char* args)
         stmt.addUInt32(rewardItem3);
         stmt.addUInt32(rewardItem4);
         stmt.addUInt32(target_guid);
-        stmt.addUInt32(entry);
+        stmt.addUInt32(questId);
         stmt.Execute();
     }
     else
@@ -2339,6 +2361,7 @@ bool ChatHandler::HandleRefundQuestItem(char* args)
         return false;
     }
    
+
     return true;
 }
 
