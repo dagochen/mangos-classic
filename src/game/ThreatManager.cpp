@@ -488,28 +488,12 @@ void ThreatManager::tauntApply(Unit* pTaunter)
 {
     if (HostileReference* ref = iThreatContainer.getReferenceByTarget(pTaunter))
     {
-        if (getCurrentVictim() && (ref->getThreat() < getCurrentVictim()->getThreat()))
-        {
-            // Ok, temp threat is unused
-            if (ref->getTempThreatModifyer() == 0.0f)
-            {
-                ref->setTempThreat(getCurrentVictim()->getThreat());
-            }
-        }
+        getOwner()->getThreatManager().setCurrentVictim(ref);  
     }
 }
 
 //============================================================
 
-void ThreatManager::tauntFadeOut(Unit* pTaunter)
-{
-    if (HostileReference* ref = iThreatContainer.getReferenceByTarget(pTaunter))
-    {
-        ref->resetTempThreat();
-    }
-}
-
-//============================================================
 
 void ThreatManager::setCurrentVictim(HostileReference* pHostileReference)
 {

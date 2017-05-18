@@ -36,15 +36,26 @@ HostileRefManager::~HostileRefManager()
 // The pVictim is hated than by them as well
 // use for buffs and healing threat functionality
 
-void HostileRefManager::threatAssist(Unit* pVictim, float pThreat, SpellEntry const* pThreatSpell, bool pSingleTarget)
+void HostileRefManager::threatAssist(Unit* pVictim, float pThreat, SpellEntry const* pThreatSpell, bool pSingleTarget, bool apply)
 {
     uint32 size = pSingleTarget ? 1 : getSize();            // if pSingleTarget do not devide threat
     float threat = pThreat / size;
     HostileReference* ref = getFirst();
     while (ref)
     {
-        ref->getSource()->addThreat(pVictim, threat, false, (pThreatSpell ? GetSpellSchoolMask(pThreatSpell) : SPELL_SCHOOL_MASK_NORMAL), pThreatSpell);
-
+        if (pThreatSpell && pThreatSpell->EffectApplyAuraName[0] == SPELL_AURA_MOD_TOTAL_THREAT || pThreatSpell->EffectApplyAuraName[1] == SPELL_AURA_MOD_TOTAL_THREAT || pThreatSpell->EffectApplyAuraName[2] == SPELL_AURA_MOD_TOTAL_THREAT)
+        {
+            if (apply)
+            {
+                float targetthreat = (ref->getThreat() <= abs(threat) && threat < 0) ? -ref->getThreat() : threat;
+                ref->setTempThreat(targetthreat);
+            }
+            else
+                 ref->resetTempThreat();
+        }
+        else
+            ref->getSource()->addThreat(pVictim, threat, false, (pThreatSpell ? GetSpellSchoolMask(pThreatSpell) : SPELL_SCHOOL_MASK_NORMAL), pThreatSpell);
+        
         ref = ref->next();
     }
 }

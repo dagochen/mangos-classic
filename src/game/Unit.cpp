@@ -7252,7 +7252,6 @@ void Unit::TauntFadeOut(Unit* taunter)
         return;
     }
 
-    m_ThreatManager.tauntFadeOut(taunter);
     target = m_ThreatManager.getHostileTarget();
 
     if (target && target != taunter)
