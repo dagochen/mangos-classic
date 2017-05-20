@@ -25,6 +25,8 @@
 #include "GroupRefManager.h"
 #include "BattleGround/BattleGround.h"
 #include "DBCEnums.h"
+#include "LFGHandler.h"
+#include "LFGMgr.h"
 #include "SharedDefines.h"
 
 class WorldSession;
@@ -85,6 +87,12 @@ enum GroupUpdateFlags
     GROUP_UPDATE_FULL                   = 0x0007FFFF,       // all known flags
 };
 
+enum InviteMethod
+{
+    GROUP_JOIN = 0,
+    GROUP_LFG = 1
+};
+
 #define GROUP_UPDATE_FLAGS_COUNT          20
 // 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,11,12,13,14,15,16,17,18,19
 static const uint8 GroupUpdateLength[GROUP_UPDATE_FLAGS_COUNT] = { 0, 2, 2, 2, 1, 2, 2, 2, 2, 4, 8, 8, 1, 2, 2, 2, 1, 2, 2, 8};
@@ -130,7 +138,7 @@ class MANGOS_DLL_SPEC Group
         uint32 RemoveInvite(Player* player);
         void   RemoveAllInvites();
         bool   AddLeaderInvite(Player* player);
-        bool   AddMember(ObjectGuid guid, const char* name);
+        bool   AddMember(ObjectGuid guid, const char* name, uint8 joinMethod = GROUP_JOIN);
         uint32 RemoveMember(ObjectGuid guid, uint8 method); // method: 0=just remove, 1=kick
         void   ChangeLeader(ObjectGuid guid);
         void   Disband(bool hideDestroy = false);
@@ -238,6 +246,31 @@ class MANGOS_DLL_SPEC Group
 
         void RewardGroupAtKill(Unit* pVictim, Player* player_tap);
 
+
+        /*********************************************************/
+        /***                   LFG SYSTEM                      ***/
+        /*********************************************************/
+
+        void SetLFGAreaId(uint32 areaId) { m_LFGAreaId = areaId; }
+        uint32 GetLFGAreaId() { return m_LFGAreaId; }
+        bool isInLFG() { return (m_LFGAreaId > 0) ? true : false; }
+
+        void CalculateLFGRoles(LFGGroupQueueInfo& data);
+        void FillPremadeLFG(ObjectGuid plrGuid, ClassRoles requiredRole, uint32& InitRoles, uint32& DpsCount, std::vector<ObjectGuid>& playersProcessed);
+
+        bool inLFGGroup(std::vector<ObjectGuid> processed, ObjectGuid plr)
+        {
+            for (uint32 i = 0; i < processed.size(); ++i)
+            {
+                if (processed[i] == plr)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         // Loot
         void SetLootMethod(LootMethod method) { m_lootMethod = method; }
         void SetMasterLooterGuid(ObjectGuid guid) { m_masterLooterGuid = guid; }
@@ -328,5 +361,6 @@ class MANGOS_DLL_SPEC Group
         ObjectGuid          m_currentLooterGuid;
         BoundInstancesMap   m_boundInstances;
         uint8*              m_subGroupsCounts;
+        uint32              m_LFGAreaId;
 };
 #endif

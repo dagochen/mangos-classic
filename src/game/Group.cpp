@@ -29,6 +29,8 @@
 #include "BattleGround/BattleGround.h"
 #include "MapManager.h"
 #include "MapPersistentStateMgr.h"
+#include "LFGMgr.h"
+#include "LFGHandler.h"
 
 //===================================================
 //============== Group ==============================
@@ -36,7 +38,7 @@
 
 Group::Group() : m_Id(0), m_groupType(GROUPTYPE_NORMAL),
     m_bgGroup(nullptr), m_lootMethod(FREE_FOR_ALL), m_lootThreshold(ITEM_QUALITY_UNCOMMON),
-    m_subGroupsCounts(nullptr)
+    m_subGroupsCounts(nullptr), m_LFGAreaId(0)
 {
 }
 
@@ -240,7 +242,7 @@ Player* Group::GetInvited(const std::string& name) const
     return nullptr;
 }
 
-bool Group::AddMember(ObjectGuid guid, const char* name)
+bool Group::AddMember(ObjectGuid guid, const char* name, uint8 joinMethod)
 {
     if (!_addMember(guid, name))
         return false;
@@ -261,6 +263,21 @@ bool Group::AddMember(ObjectGuid guid, const char* name)
         // quest related GO state dependent from raid membership
         if (isRaidGroup())
             player->UpdateForQuestWorldObjects();
+    
+        if (isInLFG())
+        {
+            if (joinMethod == GROUP_LFG)
+            {
+
+            }
+            else
+            {
+                player->GetSession()->SendMeetingstoneSetqueue(m_LFGAreaId, MEETINGSTONE_STATUS_JOINED_QUEUE);
+
+                sLFGMgr.UpdateGroup(m_Id);
+            }
+        }
+    
     }
 
     return true;
@@ -285,6 +302,27 @@ uint32 Group::RemoveMember(ObjectGuid guid, uint8 method)
             {
                 data.Initialize(SMSG_GROUP_UNINVITE, 0);
                 player->GetSession()->SendPacket(&data);
+
+                if (isInLFG())
+                {
+                    data.Initialize(SMSG_MEETINGSTONE_SETQUEUE, 5);
+                    data << 0 << uint8(MEETINGSTONE_STATUS_PARTY_MEMBER_REMOVED_PARTY_REMOVED);
+
+                    BroadcastPacket(&data, true);
+                    sLFGMgr.RemoveGroupFromQueue(m_Id);
+
+                    player->GetSession()->SendMeetingstoneSetqueue(m_LFGAreaId, MEETINGSTONE_STATUS_LOOKING_FOR_NEW_PARTY_IN_QUEUE);
+                    sLFGMgr.AddToQueue(player, m_LFGAreaId);
+                }
+            }
+
+            if (method == 0 && isInLFG())
+            {
+                player->GetSession()->SendMeetingstoneSetqueue(0, MEETINGSTONE_STATUS_NONE);
+
+                data.Initialize(SMSG_MEETINGSTONE_SETQUEUE, 5);
+                data << m_LFGAreaId << uint8(MEETINGSTONE_STATUS_PARTY_MEMBER_LEFT_LFG);
+                BroadcastPacket(&data, true);
             }
 
             // we already removed player from group and in player->GetGroup() is his original group!
@@ -307,6 +345,13 @@ uint32 Group::RemoveMember(ObjectGuid guid, uint8 method)
             WorldPacket data(SMSG_GROUP_SET_LEADER, (m_memberSlots.front().name.size() + 1));
             data << m_memberSlots.front().name;
             BroadcastPacket(&data, true);
+
+            sLFGMgr.RemoveGroupFromQueue(m_Id);
+        }
+
+        if (isInLFG())
+        {
+            sLFGMgr.UpdateGroup(m_Id);
         }
 
         SendUpdate();
@@ -379,6 +424,16 @@ void Group::Disband(bool hideDestroy)
             data.Initialize(SMSG_GROUP_LIST, 24);
             data << uint64(0) << uint64(0) << uint64(0);
             player->GetSession()->SendPacket(&data);
+
+            if (isInLFG())
+            {
+                sLFGMgr.RemoveGroupFromQueue(m_Id);
+
+                data.Initialize(SMSG_MEETINGSTONE_SETQUEUE, 5);
+                data << 0 << MEETINGSTONE_STATUS_NONE;
+
+                player->GetSession()->SendPacket(&data);
+            }
         }
 
         _homebindIfInstance(player);
@@ -755,6 +810,132 @@ void Group::_setLeader(ObjectGuid guid)
 
     m_leaderGuid = slot->guid;
     m_leaderName = slot->name;
+}
+
+/*********************************************************/
+/***                   LFG SYSTEM                      ***/
+/*********************************************************/
+
+void Group::CalculateLFGRoles(LFGGroupQueueInfo& data)
+{
+    uint32 m_initRoles = (LFG_ROLE_TANK | LFG_ROLE_DPS | LFG_ROLE_HEALER);
+    std::vector<ObjectGuid> m_processed;
+    uint32 dpsCount = 0;
+
+    for (member_citerator citr = GetMemberSlots().begin(); citr != GetMemberSlots().end(); ++citr)
+    {
+        ClassRoles lfgRole;
+
+        lfgRole = sLFGMgr.CalculateRoles((Classes)sObjectMgr.GetPlayerClassByGUID(citr->guid));
+
+        if ((sLFGMgr.canPerformRole(lfgRole, LFG_ROLE_TANK) & m_initRoles) == LFG_ROLE_TANK && !inLFGGroup(m_processed, citr->guid))
+        {
+            FillPremadeLFG(citr->guid, LFG_ROLE_TANK, m_initRoles, dpsCount, m_processed);
+        }
+
+        if ((sLFGMgr.canPerformRole(lfgRole, LFG_ROLE_HEALER) & m_initRoles) == LFG_ROLE_HEALER && !inLFGGroup(m_processed, citr->guid))
+        {
+            FillPremadeLFG(citr->guid, LFG_ROLE_HEALER, m_initRoles, dpsCount, m_processed);
+        }
+
+        if ((sLFGMgr.canPerformRole(lfgRole, LFG_ROLE_DPS) & m_initRoles) == LFG_ROLE_DPS && !inLFGGroup(m_processed, citr->guid))
+        {
+            FillPremadeLFG(citr->guid, LFG_ROLE_DPS, m_initRoles, dpsCount, m_processed);
+        }
+    }
+
+    data.availableRoles = (ClassRoles)m_initRoles;
+    data.dpsCount = dpsCount;
+}
+
+void Group::FillPremadeLFG(ObjectGuid plrGuid, ClassRoles requiredRole, uint32& InitRoles, uint32& DpsCount, std::vector<ObjectGuid>& playersProcessed)
+{
+    Classes plrClass = (Classes)sObjectMgr.GetPlayerClassByGUID(plrGuid);
+
+    if (sLFGMgr.getPriority(plrClass, requiredRole) >= LFG_PRIORITY_HIGH && !inLFGGroup(playersProcessed, plrGuid))
+    {
+        switch (requiredRole)
+        {
+        case LFG_ROLE_TANK:
+        {
+            InitRoles &= ~LFG_ROLE_TANK;
+            break;
+        }
+
+        case LFG_ROLE_HEALER:
+        {
+            InitRoles &= ~LFG_ROLE_HEALER;
+            break;
+        }
+
+        case LFG_ROLE_DPS:
+        {
+            if (DpsCount < 3)
+            {
+                ++DpsCount;
+
+                if (DpsCount >= 3)
+                    InitRoles &= ~LFG_ROLE_DPS;
+            }
+            break;
+        }
+        default:
+            break;
+        }
+        playersProcessed.push_back(plrGuid);
+    }
+    else if (sLFGMgr.getPriority(plrClass, requiredRole) < LFG_PRIORITY_HIGH && !inLFGGroup(playersProcessed, plrGuid))
+    {
+        bool hasFoundPriority = false;
+
+        for (member_citerator citr = GetMemberSlots().begin(); citr != GetMemberSlots().end(); ++citr)
+        {
+            if (plrGuid == citr->guid)
+                continue;
+
+            Classes memberClass = (Classes)sObjectMgr.GetPlayerClassByGUID(plrGuid);
+
+            if (sLFGMgr.getPriority(plrClass, requiredRole) < sLFGMgr.getPriority(memberClass, requiredRole) && !inLFGGroup(playersProcessed, plrGuid))
+            {
+                hasFoundPriority = true;
+            }
+        }
+
+        if (!hasFoundPriority)
+        {
+            switch (requiredRole)
+            {
+            case LFG_ROLE_TANK:
+            {
+                InitRoles &= ~LFG_ROLE_TANK;
+                break;
+            }
+
+            case LFG_ROLE_HEALER:
+            {
+                InitRoles &= ~LFG_ROLE_HEALER;
+                break;
+
+            }
+
+            case LFG_ROLE_DPS:
+            {
+                if (DpsCount < 3)
+                {
+                    ++DpsCount;
+
+                    if (DpsCount >= 3)
+                        InitRoles &= ~LFG_ROLE_DPS;
+                }
+                break;
+            }
+            default:
+                break;
+            }
+
+            playersProcessed.push_back(plrGuid);
+        }
+    }
 }
 
 bool Group::_setMembersGroup(ObjectGuid guid, uint8 group)

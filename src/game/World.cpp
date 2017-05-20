@@ -43,6 +43,7 @@
 #include "ItemEnchantmentMgr.h"
 #include "MapManager.h"
 #include "ScriptMgr.h"
+#include "LFGMgr.h"
 #include "CreatureAIRegistry.h"
 #include "Policies/Singleton.h"
 #include "BattleGround/BattleGroundMgr.h"
@@ -1381,6 +1382,7 @@ void World::Update(uint32 diff)
     ///- Update objects (maps, transport, creatures,...)
     sMapMgr.Update(diff);
     sBattleGroundMgr.Update(diff);
+    sLFGMgr.Update(diff);
     sOutdoorPvPMgr.Update(diff);
 
     ///- Delete all characters which have been deleted X days before
