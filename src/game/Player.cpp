@@ -18972,3 +18972,9 @@ void Player::DoInteraction(ObjectGuid const& interactObjGuid)
     }
     SendForcedObjectUpdate();
 }
+
+void Player::SetRefundStatus(uint32 questid)
+{
+    QuestStatusData& questStatusData = mQuestStatus[questid];
+    questStatusData.m_wasRefunded = true;
+}

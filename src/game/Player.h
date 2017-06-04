@@ -2069,6 +2069,9 @@ class MANGOS_DLL_SPEC Player : public Unit
         GridReference<Player>& GetGridRef() { return m_gridRef; }
         MapReference& GetMapRef() { return m_mapRef; }
 
+        void SetRefundStatus(uint32 questid);
+
+
     protected:
 
         uint32 m_contestedPvPTimer;

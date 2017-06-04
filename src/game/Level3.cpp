@@ -2352,7 +2352,13 @@ bool ChatHandler::HandleRefundQuestItem(char* args)
         stmt.addUInt32(rewardItem4);
         stmt.addUInt32(target_guid);
         stmt.addUInt32(questId);
-        stmt.Execute();
+        stmt.Execute();        
+        
+        target->SetRefundStatus(questId);
+
+
+        PSendSysMessage(LANG_REFUND_SUCCESS);
+
     }
     else
     {

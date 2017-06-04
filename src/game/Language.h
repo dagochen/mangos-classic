@@ -1041,6 +1041,8 @@ enum MangosStrings
     LANG_NOREFUND_ALREADYREFUNDED       = 1704,
     LANG_NOREFUND_WRONGITEM             = 1705,
     LANG_NOREFUND_HASITEM               = 1706,
+    LANG_REFUND_SUCCESS                 = 1708,
+
     // Use for not-in-official-sources patches
     //                                    10000-10999
 
