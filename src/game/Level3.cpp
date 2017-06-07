@@ -2336,11 +2336,12 @@ bool ChatHandler::HandleRefundQuestItem(char* args)
         {
             item->SaveToDB();                               // save for prevent lost at next mail load, if send fail then item will deleted
             draft.AddItem(item);
+            draft.SetCOD(item->GetProto()->SellPrice);
         }
 
         MailSender sender(MAIL_NORMAL, m_session ? m_session->GetPlayer()->GetObjectGuid().GetCounter() : 0, MAIL_STATIONERY_GM);
-        draft.SendMailTo(MailReceiver(target, target_guid), sender);
-
+        draft.SendMailTo(MailReceiver(target, target_guid), sender, MAIL_CHECK_MASK_COD_PAYMENT);
+       
         static SqlStatementID updStatmt;
         SqlStatement stmt = CharacterDatabase.CreateStatement(updStatmt, "UPDATE character_queststatus SET refunded = ?, choiceItem = ?, rewardItem1 = ?, rewardItem2 = ?, rewardItem3 = ?,rewardItem4 = ? WHERE guid = ? AND quest = ?");
 
