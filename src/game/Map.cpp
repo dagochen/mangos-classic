@@ -37,6 +37,7 @@
 #include "Chat.h"
 #include "Weather.h"
 #include "ObjectGridLoader.h"
+#include "SpellMgr.h"
 
 Map::~Map()
 {
