@@ -1452,6 +1452,39 @@ bool BattleGroundMgr::IsBGWeekend(BattleGroundTypeId bgTypeId)
     return sGameEventMgr.IsActiveHoliday(BGTypeToWeekendHolidayId(bgTypeId));
 }
 
+bool BattleGroundQueue::IPAlreadyInQueue(std::string ip, Team team)
+{
+    for (QueuedPlayersMap::iterator itr = m_QueuedPlayers.begin(); itr != m_QueuedPlayers.end(); itr++)
+    {
+        ObjectGuid guid = itr->first;
+        Player* pPlayer = sObjectAccessor.FindPlayer(guid);
+        if (pPlayer && pPlayer->GetTeam() != team && pPlayer->GetSession()->GetRemoteAddress() == ip)
+              return true;
+    }
+
+   
+    return false;
+}
+
+bool BattleGroundMgr::IPAlreadyInBG(std::string ip, Team team)
+{
+
+    for (uint32 i = 0; i < MAX_BATTLEGROUND_TYPE_ID; ++i)
+    {
+        for (BattleGroundSet::iterator itr = m_BattleGrounds[i].begin(); itr != m_BattleGrounds[i].end(); ++itr)
+        {
+            BattleGround* bg = itr->second;
+            if (bg)
+            {
+                if (bg->IPAlreadyInBG(ip, team))
+                    return true;
+            }
+        }
+    }
+    return false;
+}
+
+
 void BattleGroundMgr::LoadBattleEventIndexes()
 {
     BattleGroundEventIdx events;

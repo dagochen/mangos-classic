@@ -1042,7 +1042,10 @@ enum MangosStrings
     LANG_NOREFUND_WRONGITEM             = 1705,
     LANG_NOREFUND_HASITEM               = 1706,
     LANG_REFUND_SUCCESS                 = 1708,
-
+        // 1709 used for bg-brief in deutsch
+    LANG_ACCOUNT_LIST_PVP_QUEUE         = 1710,
+    LANG_IP_ALREADY_IN_QUEUE_OR_BG      = 1711,
+    LANG_IP_ALREADY_IN_QUEUE_OR_BG_GROUP = 1712,
     // Use for not-in-official-sources patches
     //                                    10000-10999
 

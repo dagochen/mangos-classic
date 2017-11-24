@@ -164,7 +164,68 @@ void WorldSession::HandleBattlemasterJoinOpcode(WorldPacket& recv_data)
     // if we're here, then the conditions to join a bg are met. We can proceed in joining.
 
     // _player->GetGroup() was already checked, grp is already initialized
+   
+
+    if (joinAsGroup)
+    {
+        for (GroupReference* itr = grp->GetFirstMember(); itr != nullptr; itr = itr->next())
+        {
+            Player* member = itr->getSource();
+            if (member)
+            {
+                WorldSession* session = member->GetSession();
+                for (uint32 bgtype = 1; bgtype <= 3; bgtype++)
+                {
+                    BattleGroundQueue& queue = sBattleGroundMgr.m_BattleGroundQueues[bgQueueTypeId];
+                
+                    if (session && queue.IPAlreadyInQueue(session->GetRemoteAddress(), member->GetTeam()))
+                    {
+                        ChatHandler(member).PSendSysMessage(LANG_IP_ALREADY_IN_QUEUE_OR_BG);
+                        if (Player* leader = sObjectAccessor.FindPlayer(grp->GetLeaderGuid()))
+                        {
+                            ChatHandler(leader).PSendSysMessage(LANG_IP_ALREADY_IN_QUEUE_OR_BG_GROUP, member->GetName());
+                        }
+                        return;
+                    }
+                }
+                if (session && sBattleGroundMgr.IPAlreadyInBG(session->GetRemoteAddress(), member->GetTeam()))
+                {
+                    ChatHandler(member).PSendSysMessage(LANG_IP_ALREADY_IN_QUEUE_OR_BG);
+                    if (Player* leader = sObjectAccessor.FindPlayer(grp->GetLeaderGuid()))
+                    {
+                        ChatHandler(leader).PSendSysMessage(LANG_IP_ALREADY_IN_QUEUE_OR_BG_GROUP, member->GetName());
+                    }
+                    return;
+                }
+            }
+        }
+    }
+    else
+    {
+        Player* member = _player;
+        if (member)
+        {
+            WorldSession* session = member->GetSession();
+            for (uint32 bgtype = 1; bgtype <= 3; bgtype++)
+            {
+                BattleGroundQueue& queue = sBattleGroundMgr.m_BattleGroundQueues[bgQueueTypeId];
+
+                if (session && queue.IPAlreadyInQueue(session->GetRemoteAddress(), member->GetTeam()))
+                {
+                    ChatHandler(member).PSendSysMessage(LANG_IP_ALREADY_IN_QUEUE_OR_BG);
+                    return;
+                }
+            }
+            if (session && sBattleGroundMgr.IPAlreadyInBG(session->GetRemoteAddress(), member->GetTeam()))
+            {
+                ChatHandler(member).PSendSysMessage(LANG_IP_ALREADY_IN_QUEUE_OR_BG);
+                return;
+            }
+        }
+    }
+
     BattleGroundQueue& bgQueue = sBattleGroundMgr.m_BattleGroundQueues[bgQueueTypeId];
+
     if (joinAsGroup)
     {
         DEBUG_LOG("Battleground: the following players are joining as group:");

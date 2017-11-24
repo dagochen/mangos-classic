@@ -83,6 +83,9 @@ class BattleGroundQueue
         void PlayerInvitedToBGUpdateAverageWaitTime(GroupQueueInfo* ginfo, BattleGroundBracketId bracket_id);
         uint32 GetAverageQueueWaitTime(GroupQueueInfo* ginfo, BattleGroundBracketId bracket_id);
 
+        bool IPAlreadyInQueue(std::string ip, Team team);
+
+
     private:
         // mutex that should not allow changing private data, nor allowing to update Queue during private data change.
         std::recursive_mutex m_Lock;
@@ -249,6 +252,8 @@ class BattleGroundMgr
                 return itr->second;
             return m_GameObjectBattleEventIndexMap.find(-1)->second;
         }
+
+        bool IPAlreadyInBG(std::string ip, Team team);
 
         bool isTesting() const { return m_Testing; }
 
