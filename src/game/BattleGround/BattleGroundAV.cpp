@@ -39,6 +39,25 @@ void BattleGroundAV::HandleKillPlayer(Player* player, Player* killer)
     if (GetStatus() != STATUS_IN_PROGRESS)
         return;
 
+    for (BattleGroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
+    {
+        Player* plr = sObjectMgr.GetPlayer(itr->first);
+
+        if (!plr)
+            continue;
+
+        if (plr->GetTeam() == killer->GetTeam() && plr != killer && plr->IsAtGroupRewardDistance(player))
+        {
+            uint32 faction_id = plr->GetTeam() == HORDE ? 729 : 730;
+            FactionEntry const* factionEntry = sFactionStore.LookupEntry(faction_id);
+
+            if (!factionEntry)
+                return;
+
+             plr->GetReputationMgr().ModifyReputation(factionEntry, 1);
+        }
+    }
+
     BattleGround::HandleKillPlayer(player, killer);
     UpdateScore(GetTeamIndexByTeamId(player->GetTeam()), -1);
 }
@@ -56,14 +75,14 @@ void BattleGroundAV::HandleKillUnit(Creature* creature, Player* killer)
         case BG_AV_BOSS_A:
             CastSpellOnTeam(BG_AV_BOSS_KILL_QUEST_SPELL, HORDE);   // this is a spell which finishes a quest where a player has to kill the boss
             RewardReputationToTeam(BG_AV_FACTION_H, m_RepBoss, HORDE);
-            RewardHonorToTeam(GetBonusHonorFromKill(BG_AV_KILL_BOSS), HORDE);
+            RewardHonorToTeam(BG_AV_KILL_BOSS, HORDE);
             SendYellToAll(LANG_BG_AV_A_GENERAL_DEAD, LANG_UNIVERSAL, GetSingleCreatureGuid(BG_AV_HERALD, 0));
             EndBattleGround(HORDE);
             break;
         case BG_AV_BOSS_H:
             CastSpellOnTeam(BG_AV_BOSS_KILL_QUEST_SPELL, ALLIANCE); // this is a spell which finishes a quest where a player has to kill the boss
             RewardReputationToTeam(BG_AV_FACTION_A, m_RepBoss, ALLIANCE);
-            RewardHonorToTeam(GetBonusHonorFromKill(BG_AV_KILL_BOSS), ALLIANCE);
+            RewardHonorToTeam(BG_AV_KILL_BOSS, ALLIANCE);
             SendYellToAll(LANG_BG_AV_H_GENERAL_DEAD, LANG_UNIVERSAL, GetSingleCreatureGuid(BG_AV_HERALD, 0));
             EndBattleGround(ALLIANCE);
             break;
@@ -71,26 +90,109 @@ void BattleGroundAV::HandleKillUnit(Creature* creature, Player* killer)
             if (IsActiveEvent(BG_AV_NodeEventCaptainDead_A, 0))
                 return;
             RewardReputationToTeam(BG_AV_FACTION_H, m_RepCaptain, HORDE);
-            RewardHonorToTeam(GetBonusHonorFromKill(BG_AV_KILL_CAPTAIN), HORDE);
+            RewardHonorToTeam(BG_AV_KILL_CAPTAIN, HORDE);
             UpdateScore(TEAM_INDEX_ALLIANCE, (-1) * BG_AV_RES_CAPTAIN);
             // spawn destroyed aura
             SpawnEvent(BG_AV_NodeEventCaptainDead_A, 0, true);
+            UpdatePlayerScore(killer, SCORE_SECONDARY_OBJECTIVES, 1);
             break;
         case BG_AV_CAPTAIN_H:
             if (IsActiveEvent(BG_AV_NodeEventCaptainDead_H, 0))
                 return;
             RewardReputationToTeam(BG_AV_FACTION_A, m_RepCaptain, ALLIANCE);
-            RewardHonorToTeam(GetBonusHonorFromKill(BG_AV_KILL_CAPTAIN), ALLIANCE);
+            RewardHonorToTeam(BG_AV_KILL_CAPTAIN, ALLIANCE);
             UpdateScore(TEAM_INDEX_HORDE, (-1) * BG_AV_RES_CAPTAIN);
             // spawn destroyed aura
             SpawnEvent(BG_AV_NodeEventCaptainDead_H, 0, true);
+            UpdatePlayerScore(killer, SCORE_SECONDARY_OBJECTIVES, 1);
             break;
         case BG_AV_MINE_BOSSES_NORTH:
-            ChangeMineOwner(BG_AV_NORTH_MINE, GetAVTeamIndexByTeamId(killer->GetTeam()));
+            if (killer->GetTeam() == ALLIANCE)
+            {
+                ChangeMineOwner(BG_AV_NORTH_MINE, GetAVTeamIndexByTeamId(killer->GetTeam()));
+                CompleteQuestForPlayersNearTarget(7122, creature, killer);
+            }
+            else if (killer->GetTeam() == HORDE)
+            {
+                ChangeMineOwner(BG_AV_NORTH_MINE, GetAVTeamIndexByTeamId(killer->GetTeam()));
+                CompleteQuestForPlayersNearTarget(7124, creature, killer);
+            }
+            UpdatePlayerScore(killer, SCORE_SECONDARY_OBJECTIVES, 1);
             break;
         case BG_AV_MINE_BOSSES_SOUTH:
-            ChangeMineOwner(BG_AV_SOUTH_MINE, GetAVTeamIndexByTeamId(killer->GetTeam()));
+            if (killer->GetTeam() == ALLIANCE)
+            {
+                ChangeMineOwner(BG_AV_SOUTH_MINE, GetAVTeamIndexByTeamId(killer->GetTeam()));
+                CompleteQuestForPlayersNearTarget(7122, creature, killer);
+            }
+            else if (killer->GetTeam() == HORDE)
+            {
+                ChangeMineOwner(BG_AV_SOUTH_MINE, GetAVTeamIndexByTeamId(killer->GetTeam()));
+                CompleteQuestForPlayersNearTarget(7124, creature, killer);
+            }
+            UpdatePlayerScore(killer, SCORE_SECONDARY_OBJECTIVES, 1);
             break;
+        case BG_AV_COMMANDER_A_KARLPHILIPS:
+            CompleteQuestForPlayersNearTarget(7281, creature, killer);
+        case BG_AV_COMMANDER_A_MORTIMER:
+        case BG_AV_COMMANDER_A_DUFFY:
+        case BG_AV_COMMANDER_A_RANDOLPH:
+            RewardHonorToTeam(BG_AV_KILL_CAPTAIN, HORDE);
+            UpdatePlayerScore(killer, SCORE_SECONDARY_OBJECTIVES, 1);
+            break;
+        case BG_AV_COMMANDER_H_LOUISPHILIP:
+            CompleteQuestForPlayersNearTarget(7282, creature, killer);
+        case BG_AV_COMMANDER_H_DARDOSH:
+        case BG_AV_COMMANDER_H_MULFORT:
+        case BG_AV_COMMANDER_H_MALGOR:
+            RewardHonorToTeam(BG_AV_KILL_CAPTAIN, ALLIANCE);
+            UpdatePlayerScore(killer, SCORE_SECONDARY_OBJECTIVES, 1);
+            break;
+    }
+}
+
+void BattleGroundAV::CompleteQuestForPlayersNearTarget(uint32 questid, WorldObject* pSource, Player* killer)
+{
+    for (BattleGroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
+    {
+        Player* plr = sObjectMgr.GetPlayer(itr->first);
+
+        if (!plr)
+            continue;
+
+        if (plr->GetTeam() == killer->GetTeam() && plr->IsAtGroupRewardDistance(pSource))
+        {
+            const Quest* pQuest = sObjectMgr.GetQuestTemplate(questid);
+            if (pQuest)
+            {
+                if (CreatureInfo const* cInfo = ObjectMgr::GetCreatureTemplate(pQuest->ReqCreatureOrGOId[0]))
+                    plr->KilledMonster(cInfo, ObjectGuid());
+                plr->SendQuestUpdateAddCreatureOrGo(pQuest, ObjectGuid(), 0, 1);
+            }
+        }
+    }
+}
+
+
+void BattleGroundAV::CompleteQuestForPlayersNearTarget(uint32 questid, Position pos, Player* killer)
+{
+    for (BattleGroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
+    {
+        Player* plr = sObjectMgr.GetPlayer(itr->first);
+
+        if (!plr)
+            continue;
+
+        if (plr->GetTeam() == killer->GetTeam() && plr->IsAtGroupRewardDistance(pos))
+        {
+            const Quest* pQuest = sObjectMgr.GetQuestTemplate(questid);
+            if (pQuest)
+            {
+                if (CreatureInfo const* cInfo = ObjectMgr::GetCreatureTemplate(pQuest->ReqCreatureOrGOId[0]))
+                    plr->KilledMonster(cInfo, ObjectGuid());
+                plr->SendQuestUpdateAddCreatureOrGo(pQuest, ObjectGuid(), 0, 1);
+            }
+        }
     }
 }
 
@@ -201,7 +303,7 @@ void BattleGroundAV::HandleQuestComplete(uint32 questid, Player* player)
             return;
     }
     if (reputation)
-        RewardReputationToTeam((player->GetTeam() == ALLIANCE) ? BG_AV_FACTION_A : BG_AV_FACTION_H, reputation, player->GetTeam());
+        RewardReputationToRestOfTeam((player->GetTeam() == ALLIANCE) ? BG_AV_FACTION_A : BG_AV_FACTION_H, reputation, player);
 }
 
 void BattleGroundAV::UpdateScore(PvpTeamIndex teamIdx, int32 points)
@@ -332,9 +434,9 @@ void BattleGroundAV::EndBattleGround(Team winner)
         if (tower_survived[i])
         {
             RewardReputationToTeam(faction[i], tower_survived[i] * m_RepSurviveTower, team[i]);
-            RewardHonorToTeam(GetBonusHonorFromKill(tower_survived[i] * BG_AV_KILL_SURVIVING_TOWER), team[i]);
+            RewardHonorToTeam(tower_survived[i] * BG_AV_KILL_SURVIVING_TOWER, team[i]);
         }
-        DEBUG_LOG("BattleGroundAV: EndbattleGround: bgteam: %u towers:%u honor:%u rep:%u", i, tower_survived[i], GetBonusHonorFromKill(tower_survived[i] * BG_AV_KILL_SURVIVING_TOWER), tower_survived[i] * BG_AV_REP_SURVIVING_TOWER);
+        DEBUG_LOG("BattleGroundAV: EndbattleGround: bgteam: %u towers:%u honor:%u rep:%u", i, tower_survived[i], tower_survived[i] * BG_AV_KILL_SURVIVING_TOWER, tower_survived[i] * BG_AV_REP_SURVIVING_TOWER);
         if (graves_owned[i])
             RewardReputationToTeam(faction[i], graves_owned[i] * m_RepOwnedGrave, team[i]);
         if (mines_owned[i])
@@ -343,8 +445,17 @@ void BattleGroundAV::EndBattleGround(Team winner)
         if (!IsActiveEvent(BG_AV_NodeEventCaptainDead_A + GetTeamIndexByTeamId(team[i]), 0))
         {
             RewardReputationToTeam(faction[i], m_RepSurviveCaptain, team[i]);
-            RewardHonorToTeam(GetBonusHonorFromKill(BG_AV_KILL_SURVIVING_CAPTAIN), team[i]);
+            RewardHonorToTeam(BG_AV_KILL_SURVIVING_CAPTAIN, team[i]);
         }
+    }
+
+    if (winner == ALLIANCE)
+    {
+        RewardHonorToTeam(m_WinmatchHonor, ALLIANCE);
+    }
+    else if (winner == HORDE)
+    {
+        RewardHonorToTeam(m_WinmatchHonor, HORDE);
     }
 
     // both teams:
@@ -416,7 +527,10 @@ void BattleGroundAV::EventPlayerDestroyedPoint(BG_AV_Nodes node)
 
     MANGOS_ASSERT(m_Nodes[node].Owner != BG_AV_TEAM_NEUTRAL)
     PvpTeamIndex ownerTeamIdx = PvpTeamIndex(m_Nodes[node].Owner);
+    PvpTeamIndex prevOwnerTeamIdx = PvpTeamIndex(m_Nodes[node].PrevOwner);
+
     Team ownerTeam = ownerTeamIdx == TEAM_INDEX_ALLIANCE ? ALLIANCE : HORDE;
+    Team prevOwnerTeam = prevOwnerTeamIdx == TEAM_INDEX_ALLIANCE ? ALLIANCE : HORDE;
 
     // despawn banner
     DestroyNode(node);
@@ -431,8 +545,17 @@ void BattleGroundAV::EventPlayerDestroyedPoint(BG_AV_Nodes node)
 
         UpdateScore(GetOtherTeamIndex(ownerTeamIdx), (-1) * BG_AV_RES_TOWER);
         RewardReputationToTeam((ownerTeam == ALLIANCE) ? BG_AV_FACTION_A : BG_AV_FACTION_H, m_RepTowerDestruction, ownerTeam);
-        RewardHonorToTeam(GetBonusHonorFromKill(BG_AV_KILL_TOWER), ownerTeam);
+        RewardHonorToTeam(BG_AV_KILL_TOWER, ownerTeam);
         SendYell2ToAll(LANG_BG_AV_TOWER_TAKEN, LANG_UNIVERSAL, GetSingleCreatureGuid(BG_AV_HERALD, 0), GetNodeName(node), (ownerTeam == ALLIANCE) ? LANG_BG_ALLY : LANG_BG_HORDE);
+        
+        Player* plr = sObjectMgr.GetPlayer(m_Nodes[node].Assaulter);
+        Position pos = m_Nodes[node].Pos;
+
+        if (!plr && !plr->InBattleGround())
+            return;
+
+        Team team = plr->GetTeam();
+        CompleteQuestForPlayersNearTarget(team == ALLIANCE ? BG_AV_QUEST_A_TOWER : BG_AV_QUEST_H_TOWER, pos, plr);
     }
     else
     {
@@ -580,7 +703,9 @@ void BattleGroundAV::EventPlayerAssaultsPoint(Player* player, BG_AV_Nodes node)
     if (m_Nodes[node].Owner == BattleGroundAVTeamIndex(teamIdx) || BattleGroundAVTeamIndex(teamIdx) == m_Nodes[node].TotalOwner)
         return;
 
-    AssaultNode(node, teamIdx);                             // update nodeinfo variables
+    PvpTeamIndex ownerTeamIdx = PvpTeamIndex(m_Nodes[node].Owner);
+
+    AssaultNode(node, teamIdx, player);                             // update nodeinfo variables
     UpdateNodeWorldState(node);                             // send mapicon
     PopulateNode(node);
 
@@ -598,6 +723,8 @@ void BattleGroundAV::EventPlayerAssaultsPoint(Player* player, BG_AV_Nodes node)
                        (teamIdx == TEAM_INDEX_ALLIANCE) ? LANG_BG_ALLY : LANG_BG_HORDE);
         // update the statistic for the assaulting player
         UpdatePlayerScore(player, SCORE_GRAVEYARDS_ASSAULTED, 1);
+        if (ownerTeamIdx != TEAM_INDEX_NEUTRAL)
+            CompleteQuestForPlayersNearTarget((teamIdx == TEAM_INDEX_ALLIANCE) ? BG_AV_QUEST_A_GRAVEYARD : BG_AV_QUEST_H_GRAVEYARD, player, player);
     }
 
     PlaySoundToAll((teamIdx == TEAM_INDEX_ALLIANCE) ? BG_AV_SOUND_ALLIANCE_ASSAULTS : BG_AV_SOUND_HORDE_ASSAULTS);
@@ -716,13 +843,18 @@ uint32 BattleGroundAV::GetNodeName(BG_AV_Nodes node) const
     }
 }
 
-void BattleGroundAV::AssaultNode(BG_AV_Nodes node, PvpTeamIndex teamIdx)
+void BattleGroundAV::AssaultNode(BG_AV_Nodes node, PvpTeamIndex teamIdx, Player* player)
 {
     MANGOS_ASSERT(m_Nodes[node].TotalOwner != BattleGroundAVTeamIndex(teamIdx));
     MANGOS_ASSERT(m_Nodes[node].Owner != BattleGroundAVTeamIndex(teamIdx));
     // only assault an assaulted node if no totalowner exists:
     MANGOS_ASSERT(m_Nodes[node].State != POINT_ASSAULTED || m_Nodes[node].TotalOwner == BG_AV_TEAM_NEUTRAL);
     // the timer gets another time, if the previous owner was 0 == Neutral
+    m_Nodes[node].Assaulter = player->GetObjectGuid();
+    m_Nodes[node].Pos = Position();
+    m_Nodes[node].Pos.x = player->GetPositionX();
+    m_Nodes[node].Pos.y = player->GetPositionY();
+    m_Nodes[node].Pos.z = player->GetPositionZ();
     m_Nodes[node].Timer      = (m_Nodes[node].PrevOwner != BG_AV_TEAM_NEUTRAL) ? BG_AV_CAPTIME : BG_AV_SNOWFALL_FIRSTCAP;
     m_Nodes[node].PrevOwner  = m_Nodes[node].Owner;
     m_Nodes[node].Owner      = BattleGroundAVTeamIndex(teamIdx);
@@ -782,6 +914,7 @@ void BattleGroundAV::Reset()
     m_RepSurviveCaptain   = (isBGWeekend) ? BG_AV_REP_SURVIVING_CAPTAIN_HOLIDAY : BG_AV_REP_SURVIVING_CAPTAIN;
     m_RepSurviveTower     = (isBGWeekend) ? BG_AV_REP_SURVIVING_TOWER_HOLIDAY : BG_AV_REP_SURVIVING_TOWER;
     m_RepOwnedMine        = (isBGWeekend) ? BG_AV_REP_OWNED_MINE_HOLIDAY    : BG_AV_REP_OWNED_MINE;
+    m_WinmatchHonor       = (isBGWeekend) ? BG_AV_KILL_WINNING_MATCH_HOLIDAY : BG_AV_KILL_WINNING_MATCH;
 
     for (uint8 i = 0; i < PVP_TEAM_COUNT; ++i)
     {

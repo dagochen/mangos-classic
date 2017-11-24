@@ -651,6 +651,36 @@ void BattleGround::RewardReputationToTeam(uint32 faction_id, uint32 Reputation, 
     }
 }
 
+void BattleGround::RewardReputationToRestOfTeam(uint32 faction_id, uint32 Reputation, Player* player)
+{
+    FactionEntry const* factionEntry = sFactionStore.LookupEntry(faction_id);
+
+    if (!factionEntry)
+        return;
+
+    for (BattleGroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
+    {
+        if (itr->second.OfflineRemoveTime)
+            continue;
+
+        Player* plr = sObjectMgr.GetPlayer(itr->first);
+
+        if (!plr)
+        {
+            sLog.outError("BattleGround:RewardReputationToTeam: %s not found!", itr->first.GetString().c_str());
+            continue;
+        }
+
+        Team team = itr->second.PlayerTeam;
+        if (!team) team = plr->GetTeam();
+
+        if (team == player->GetTeam() && player != plr)
+            plr->GetReputationMgr().ModifyReputation(factionEntry, Reputation);
+    }
+}
+
+
+
 void BattleGround::UpdateWorldState(uint32 Field, uint32 Value)
 {
     WorldPacket data;

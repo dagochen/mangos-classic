@@ -336,6 +336,7 @@ class BattleGround
         BattleGroundScoreMap::const_iterator GetPlayerScoresBegin() const { return m_PlayerScores.begin(); }
         BattleGroundScoreMap::const_iterator GetPlayerScoresEnd() const { return m_PlayerScores.end(); }
         uint32 GetPlayerScoresSize() const { return m_PlayerScores.size(); }
+        uint32 GetPlayerScoresSize(Team team) const { return m_PlayersCount[(team == 469 ? 0 : 1)]; }
 
         void StartBattleGround();
 
@@ -378,6 +379,7 @@ class BattleGround
         void CastSpellOnTeam(uint32 SpellID, Team team);
         void RewardHonorToTeam(uint32 Honor, Team team);
         void RewardReputationToTeam(uint32 faction_id, uint32 Reputation, Team team);
+        void RewardReputationToRestOfTeam(uint32 faction_id, uint32 Reputation, Player* player);
         void RewardMark(Player* plr, uint32 count);
         void SendRewardMarkByMail(Player* plr, uint32 mark, uint32 count);
         void RewardItem(Player* plr, uint32 item_id, uint32 count);

@@ -34,39 +34,42 @@
 
 // description: KILL = bonushonor kill one kill is 21honor worth at 0
 // REP reputation, RES = ressources a team will lose
-#define BG_AV_KILL_BOSS                     4
+#define BG_AV_KILL_BOSS                     792
 #define BG_AV_REP_BOSS                      350
 #define BG_AV_REP_BOSS_HOLIDAY              525
 
-#define BG_AV_KILL_CAPTAIN                  3
+#define BG_AV_KILL_CAPTAIN                  198
 #define BG_AV_REP_CAPTAIN                   125
 #define BG_AV_REP_CAPTAIN_HOLIDAY           185
 #define BG_AV_RES_CAPTAIN                   100
 
-#define BG_AV_KILL_TOWER                    3
+#define BG_AV_KILL_TOWER                    198
 #define BG_AV_REP_TOWER                     12
 #define BG_AV_REP_TOWER_HOLIDAY             18
 #define BG_AV_RES_TOWER                     75
 
-#define BG_AV_KILL_GET_COMMANDER            1               // for a safely returned wingcommander TODO implement it
+#define BG_AV_KILL_GET_COMMANDER            198               // for a safely returned wingcommander TODO implement it
 
 // bonushonor at the end
-#define BG_AV_KILL_SURVIVING_TOWER          2
+#define BG_AV_KILL_SURVIVING_TOWER          198
 #define BG_AV_REP_SURVIVING_TOWER           12
 #define BG_AV_REP_SURVIVING_TOWER_HOLIDAY   18
 
-#define BG_AV_KILL_SURVIVING_CAPTAIN        2
+#define BG_AV_KILL_SURVIVING_CAPTAIN        198
 #define BG_AV_REP_SURVIVING_CAPTAIN         125
 #define BG_AV_REP_SURVIVING_CAPTAIN_HOLIDAY 175
 
 #define BG_AV_KILL_MAP_COMPLETE             0
-#define BG_AV_KILL_MAP_COMPLETE_HOLIDAY     4
+#define BG_AV_KILL_MAP_COMPLETE_HOLIDAY     1584
 
 #define BG_AV_REP_OWNED_GRAVE               12
 #define BG_AV_REP_OWNED_GRAVE_HOLIDAY       18
 
 #define BG_AV_REP_OWNED_MINE                24
 #define BG_AV_REP_OWNED_MINE_HOLIDAY        36
+
+#define BG_AV_KILL_WINNING_MATCH            198
+#define BG_AV_KILL_WINNING_MATCH_HOLIDAY    594
 
 enum BG_AV_Sounds
 {
@@ -158,6 +161,15 @@ enum BG_AV_Nodes
 #define BG_AV_BOSS_H            62
 #define BG_AV_NodeEventCaptainDead_A 63
 #define BG_AV_NodeEventCaptainDead_H 64
+
+#define BG_AV_COMMANDER_A_MORTIMER 65
+#define BG_AV_COMMANDER_A_DUFFY    66
+#define BG_AV_COMMANDER_A_KARLPHILIPS  67
+#define BG_AV_COMMANDER_A_RANDOLPH 68
+#define BG_AV_COMMANDER_H_DARDOSH  69
+#define BG_AV_COMMANDER_H_LOUISPHILIP  70
+#define BG_AV_COMMANDER_H_MULFORT  71
+#define BG_AV_COMMANDER_H_MALGOR   72
 
 enum BG_AV_Graveyards
 {
@@ -280,7 +292,11 @@ enum BG_AV_QuestIds
     BG_AV_QUEST_A_RIDER_HIDE    = 7026,
     BG_AV_QUEST_H_RIDER_HIDE    = 7002,
     BG_AV_QUEST_A_RIDER_TAME    = 7027,
-    BG_AV_QUEST_H_RIDER_TAME    = 7001
+    BG_AV_QUEST_H_RIDER_TAME    = 7001,
+    BG_AV_QUEST_A_TOWER         = 7102,
+    BG_AV_QUEST_A_GRAVEYARD     = 7081,
+    BG_AV_QUEST_H_TOWER         = 7101,
+    BG_AV_QUEST_H_GRAVEYARD     = 7082,
 };
 
 struct BG_AV_NodeInfo
@@ -288,6 +304,8 @@ struct BG_AV_NodeInfo
     BattleGroundAVTeamIndex TotalOwner;
     BattleGroundAVTeamIndex Owner;
     BattleGroundAVTeamIndex PrevOwner;
+    ObjectGuid Assaulter;
+    Position Pos;
     BG_AV_States State;
     BG_AV_States PrevState;
     uint32       Timer;
@@ -349,6 +367,9 @@ class BattleGroundAV : public BattleGround
         void HandleKillPlayer(Player* player, Player* killer) override;
         void HandleKillUnit(Creature* creature, Player* killer) override;
         void HandleQuestComplete(uint32 questid, Player* player);
+        void CompleteQuestForPlayersNearTarget(uint32 questid, WorldObject* pSource, Player* killer);
+        void CompleteQuestForPlayersNearTarget(uint32 questid, Position poos, Player* killer);
+
         bool PlayerCanDoMineQuest(int32 GOId, Team team);
 
         void EndBattleGround(Team winner) override;
@@ -365,7 +386,7 @@ class BattleGroundAV : public BattleGround
         void EventPlayerDefendsPoint(Player* player, BG_AV_Nodes node);
         void EventPlayerDestroyedPoint(BG_AV_Nodes node);
 
-        void AssaultNode(BG_AV_Nodes node, PvpTeamIndex teamIdx);
+        void AssaultNode(BG_AV_Nodes node, PvpTeamIndex teamIdx, Player* player);
         void DestroyNode(BG_AV_Nodes node);
         void InitNode(BG_AV_Nodes node, BattleGroundAVTeamIndex teamIdx, bool tower);
         void DefendNode(BG_AV_Nodes node, PvpTeamIndex teamIdx);
@@ -405,6 +426,7 @@ class BattleGroundAV : public BattleGround
         uint32 m_RepOwnedMine;
         uint32 m_RepSurviveCaptain;
         uint32 m_RepSurviveTower;
+        uint32 m_WinmatchHonor;
 };
 
 #endif

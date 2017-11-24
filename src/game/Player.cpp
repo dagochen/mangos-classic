@@ -17961,6 +17961,22 @@ bool Player::IsAtGroupRewardDistance(WorldObject const* pRewardSource) const
     return pRewardSource->IsWithinDistInMap(corpse, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE));
 }
 
+bool Player::IsAtGroupRewardDistance(Position pos) const
+{
+    float dist2compare = sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE);
+
+    float dx = GetPositionX() - pos.x;
+    float dy = GetPositionY() - pos.y;
+    float dz = GetPositionZ() - pos.z;
+    float distsq = dx * dx + dy * dy + dz * dz;;
+     
+   
+    float sizefactor = 2 * GetObjectBoundingRadius();
+    float maxdist = dist2compare + sizefactor;
+
+    return distsq < maxdist * maxdist;
+}
+
 uint32 Player::GetBaseWeaponSkillValue(WeaponAttackType attType) const
 {
     Item* item = GetWeaponForAttack(attType, true, true);
