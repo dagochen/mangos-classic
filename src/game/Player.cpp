@@ -117,9 +117,9 @@ enum CharacterFlags
 
 // corpse reclaim times
 #define DEATH_EXPIRE_STEP (5*MINUTE)
-#define MAX_DEATH_COUNT 3
+#define MAX_DEATH_COUNT 4
 
-static const uint32 corpseReclaimDelay[MAX_DEATH_COUNT] = {30, 60, 120};
+static const uint32 corpseReclaimDelay[MAX_DEATH_COUNT] = {0, 30, 60, 120};
 
 //== PlayerTaxi ================================================
 
