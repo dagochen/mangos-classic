@@ -2340,7 +2340,7 @@ bool ChatHandler::HandleRefundQuestItem(char* args)
         }
 
         MailSender sender(MAIL_NORMAL, m_session ? m_session->GetPlayer()->GetObjectGuid().GetCounter() : 0, MAIL_STATIONERY_GM);
-        draft.SendMailTo(MailReceiver(target, target_guid), sender, MAIL_CHECK_MASK_COD_PAYMENT);
+        draft.SendMailTo(MailReceiver(target, target_guid), sender, MAIL_CHECK_MASK_COD_PAYMENT, 0, 30 * DAY);
        
         static SqlStatementID updStatmt;
         SqlStatement stmt = CharacterDatabase.CreateStatement(updStatmt, "UPDATE character_queststatus SET refunded = ?, choiceItem = ?, rewardItem1 = ?, rewardItem2 = ?, rewardItem3 = ?,rewardItem4 = ? WHERE guid = ? AND quest = ?");
