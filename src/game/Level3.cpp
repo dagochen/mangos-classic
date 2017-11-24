@@ -5664,16 +5664,29 @@ bool ChatHandler::HandleGMFlyCommand(char* args)
         return false;
     }
 
-    Player* target = getSelectedPlayer();
+    Player *target = getSelectedPlayer();
     if (!target)
         target = m_session->GetPlayer();
 
-    // [-ZERO] Need reimplement in another way
+    if (value)
     {
-        SendSysMessage(LANG_USE_BOL);
-        return false;
+        SendSysMessage("WARNING: Do not jump or flying mode will be removed.");
+        target->m_movementInfo.moveFlags = (MOVEFLAG_LEVITATING | MOVEFLAG_SWIMMING | MOVEFLAG_CAN_FLY | MOVEFLAG_FLYING);
     }
-    target->SetCanFly(value);
+    else
+        target->m_movementInfo.moveFlags = (MOVEFLAG_NONE);
+
+    //if (m_session->IsReplaying())
+    //{
+    //    MovementInfo movementInfo = m_session->GetPlayer()->m_movementInfo;
+    //    movementInfo.UpdateTime(WorldTimer::getMSTime());
+    //    WorldPacket data(MSG_MOVE_HEARTBEAT, 31);
+    //    data << m_session->GetRecorderGuid().WriteAsPacked();
+    //    data << movementInfo;
+    //    m_session->SendPacket(&data);
+    //}
+    //else
+        target->SendHeartBeat();
     PSendSysMessage(LANG_COMMAND_FLYMODE_STATUS, GetNameLink(target).c_str(), args);
     return true;
 }
