@@ -616,11 +616,12 @@ class MovementInfo
             JumpInfo() : velocity(0.f), sinAngle(0.f), cosAngle(0.f), xyspeed(0.f) {}
             float   velocity, sinAngle, cosAngle, xyspeed;
         };
-
-        JumpInfo const& GetJumpInfo() const { return jump; }
+        
+        JumpInfo const& GetJumpInfo() const { return jump; 
+        uint32   moveFlags;
     private:
         // common
-        uint32   moveFlags;                                 // see enum MovementFlags
+                                         // see enum MovementFlags
         uint32   time;
         Position pos;
         // transport
