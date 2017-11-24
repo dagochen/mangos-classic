@@ -4049,6 +4049,14 @@ SpellCastResult Spell::CheckCast(bool strict)
         }
     }
 
+    if (IsSpellHaveAura(m_spellInfo, SPELL_AURA_MOD_POSSESS) || IsSpellHaveAura(m_spellInfo, SPELL_AURA_MOD_CHARM))
+    {
+        if (m_caster->GetTypeId() != TYPEID_PLAYER && m_caster->getThreatManager().getThreatList().size() == 1)
+            return SPELL_FAILED_BAD_TARGETS;
+    }
+
+
+
     if (Unit* target = m_targets.getUnitTarget())
     {
         // Swiftmend
