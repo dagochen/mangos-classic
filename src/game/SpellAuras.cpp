@@ -1141,6 +1141,15 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
             {
                 switch (GetId())
                 {
+                    case 26013:
+                        if (Unit* target = GetTarget())
+                        {
+                            while (((Player*)target)->HasItemCount(8838, 1, true))
+                            {
+                                ((Player*)target)->DestroyItemCount(8838,1, true);
+                            }
+                        }
+
                     case 7057:                              // Haunting Spirits
                         // expected to tick with 30 sec period (tick part see in Aura::PeriodicTick)
                         m_isPeriodic = true;
