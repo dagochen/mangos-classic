@@ -4841,8 +4841,11 @@ float Player::OCTRegenMPPerSpirit()
 
 void Player::SetRegularAttackTime()
 {
+ 	uint32 timeSinceLastAttack;
+
     for (int i = 0; i < MAX_ATTACK; ++i)
     {
+		timeSinceLastAttack = GetAttackTime(WeaponAttackType(i)) - getAttackTimer(WeaponAttackType(i));
         Item* tmpitem = GetWeaponForAttack(WeaponAttackType(i), true, false);
         if (tmpitem)
         {
@@ -4851,6 +4854,11 @@ void Player::SetRegularAttackTime()
                 SetAttackTime(WeaponAttackType(i), proto->Delay);
             else
                 SetAttackTime(WeaponAttackType(i), BASE_ATTACK_TIME);
+
+			if (proto->Delay - timeSinceLastAttack >= 100)
+				setAttackTimer(WeaponAttackType(i), proto->Delay - timeSinceLastAttack);
+            else
+                setAttackTimer(WeaponAttackType(i), 100);
         }
     }
 }
@@ -16268,14 +16276,19 @@ void Player::ProhibitSpellSchool(SpellSchoolMask idSchoolMask, uint32 unTimeMs)
 void Player::InitDataForForm(bool reapplyMods)
 {
     ShapeshiftForm form = GetShapeshiftForm();
+    uint32 timeSinceLastAttack;
 
     switch (form)
     {
         case FORM_CAT:
         {
+            timeSinceLastAttack = GetAttackTime(BASE_ATTACK) - getAttackTimer(BASE_ATTACK);
             SetAttackTime(BASE_ATTACK, 1000);               // Speed 1
             SetAttackTime(OFF_ATTACK, 1000);                // Speed 1
-
+            if (1000 - timeSinceLastAttack >= 100)
+				setAttackTimer(BASE_ATTACK, 1000 - timeSinceLastAttack);
+            else
+                setAttackTimer(BASE_ATTACK, 100);
             if (GetPowerType() != POWER_ENERGY)
                 SetPowerType(POWER_ENERGY);
             break;
@@ -16283,9 +16296,13 @@ void Player::InitDataForForm(bool reapplyMods)
         case FORM_BEAR:
         case FORM_DIREBEAR:
         {
+            timeSinceLastAttack = GetAttackTime(BASE_ATTACK) - getAttackTimer(BASE_ATTACK);
             SetAttackTime(BASE_ATTACK, 2500);               // Speed 2.5
             SetAttackTime(OFF_ATTACK, 2500);                // Speed 2.5
-
+            if (2500 - timeSinceLastAttack >= 100)
+                setAttackTimer(BASE_ATTACK, 2500 - timeSinceLastAttack);
+            else
+                setAttackTimer(BASE_ATTACK, 100);
             if (GetPowerType() != POWER_RAGE)
                 SetPowerType(POWER_RAGE);
             break;
