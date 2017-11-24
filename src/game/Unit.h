@@ -468,7 +468,7 @@ enum UnitFlags
     UNIT_FLAG_PVP_ATTACKABLE        = 0x00000008,           // allow apply pvp rules to attackable state in addition to faction dependent state, UNIT_FLAG_UNKNOWN1 in pre-bc mangos
     UNIT_FLAG_RENAME                = 0x00000010,           // rename creature
     UNIT_FLAG_RESTING               = 0x00000020,
-    UNIT_FLAG_UNK_6                 = 0x00000040,
+    UNIT_FLAG_TAUNT_IMMUNE          = 0x00000040,
     UNIT_FLAG_OOC_NOT_ATTACKABLE    = 0x00000100,           // (OOC Out Of Combat) Can not be attacked when not in combat. Removed if unit for some reason enter combat (flag probably removed for the attacked and it's party/group only)
     UNIT_FLAG_PASSIVE               = 0x00000200,           // makes you unable to attack everything. Almost identical to our "civilian"-term. Will ignore it's surroundings and not engage in combat unless "called upon" or engaged by another unit.
     UNIT_FLAG_PVP                   = 0x00001000,
