@@ -316,7 +316,7 @@ void Unit::Update(uint32 update_diff, uint32 p_time)
         {
             // m_CombatTimer set at aura start and it will be freeze until aura removing
             if (m_CombatTimer <= update_diff)
-                CombatStop();
+                CombatStop(false, false);
             else
                 m_CombatTimer -= update_diff;
         }
@@ -576,6 +576,41 @@ uint32 Unit::DealDamage(Unit* pVictim, uint32 damage, CleanDamage const* cleanDa
             pVictim->SetStandState(UNIT_STAND_STATE_STAND);
     }
 
+    if (!damage && cleanDamage->hitOutCome != MELEE_HIT_MISS  && (damagetype == DIRECT_DAMAGE || damagetype == SPELL_DIRECT_DAMAGE) && pVictim->GetTypeId() == TYPEID_PLAYER)
+    {
+        for (uint32 i = CURRENT_FIRST_NON_MELEE_SPELL; i < CURRENT_MAX_SPELL; ++i)
+        {
+            // skip channeled spell (processed differently below)
+
+            if (Spell* spell = pVictim->GetCurrentSpell(CurrentSpellTypes(i)))
+            {
+                uint32 channelInterruptFlags = spell->m_spellInfo->ChannelInterruptFlags;
+
+                if (spell->getState() == SPELL_STATE_PREPARING)
+                {
+                    if (spell->m_spellInfo->InterruptFlags & SPELL_INTERRUPT_FLAG_ABORT_ON_DMG)
+                        pVictim->InterruptSpell(CurrentSpellTypes(i));
+                }
+                else if (spell->getState() == SPELL_STATE_CASTING)
+                {
+                    if ((channelInterruptFlags & (CHANNEL_FLAG_DAMAGE | CHANNEL_FLAG_DAMAGE2)))
+                        pVictim->InterruptSpell(CurrentSpellTypes(i));
+                }
+            }
+        }
+    }
+    
+
+    // Get in CombatState
+    if (pVictim != this && damagetype != DOT)
+    {
+        SetInCombatWith(pVictim);
+        pVictim->SetInCombatWith(this);
+
+        if (Player* attackedPlayer = pVictim->GetCharmerOrOwnerPlayerOrPlayerItself())
+            SetContestedPvP(attackedPlayer);
+    }
+
     if (!damage)
     {
         // Rage from physical damage received .
@@ -635,15 +670,7 @@ uint32 Unit::DealDamage(Unit* pVictim, uint32 damage, CleanDamage const* cleanDa
         duel_hasEnded = true;
     }
 
-    // Get in CombatState
-    if (pVictim != this && damagetype != DOT)
-    {
-        SetInCombatWith(pVictim);
-        pVictim->SetInCombatWith(this);
 
-        if (Player* attackedPlayer = pVictim->GetCharmerOrOwnerPlayerOrPlayerItself())
-            SetContestedPvP(attackedPlayer);
-    }
 
     if (pVictim->GetTypeId() == TYPEID_UNIT && !((Creature*)pVictim)->IsPet() && !((Creature*)pVictim)->HasLootRecipient())
         ((Creature*)pVictim)->SetLootRecipient(this);
@@ -5702,13 +5729,14 @@ bool Unit::AttackStop(bool targetSwitch /*=false*/)
     return true;
 }
 
-void Unit::CombatStop(bool includingCast)
+void Unit::CombatStop(bool includingCast, bool withAttackers)
 {
     if (includingCast && IsNonMeleeSpellCasted(false))
         InterruptNonMeleeSpells(false);
 
     AttackStop();
-    RemoveAllAttackers();
+    if (withAttackers)
+        RemoveAllAttackers();
 
     if (GetTypeId() == TYPEID_PLAYER)
         ((Player*)this)->SendAttackSwingCancelAttack();     // melee and ranged forced attack cancel

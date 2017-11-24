@@ -5761,18 +5761,21 @@ bool Player::IsEnemyFaction(Unit* unit)
     if (unit->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP))
         return true;
 
-    if (unit->getFactionTemplateEntry()->factionFlags & FACTION_TEMPLATE_FLAG_PVP)
-        return true;
-
-    if (GetTeam() == HORDE)
+    if (FactionTemplateEntry const* factionTemplate = sFactionTemplateStore.LookupEntry(unit->getFaction()))
     {
-        if ((unit->getFactionTemplateEntry()->hostileMask & FACTION_MASK_HORDE) != 0 && (unit->getFactionTemplateEntry()->friendlyMask & FACTION_MASK_ALLIANCE) != 0)
+        if (factionTemplate->factionFlags & FACTION_TEMPLATE_FLAG_PVP)
             return true;
-    }
-    else if (GetTeam() == ALLIANCE)
-    {
-        if ((unit->getFactionTemplateEntry()->hostileMask & FACTION_MASK_ALLIANCE) != 0 && (unit->getFactionTemplateEntry()->friendlyMask & FACTION_MASK_HORDE) != 0)
-            return true;
+        
+        if (GetTeam() == HORDE)
+        {
+            if ((factionTemplate->hostileMask & FACTION_MASK_HORDE) != 0 && (factionTemplate->friendlyMask & FACTION_MASK_ALLIANCE) != 0)
+                return true;
+        }
+        else if (GetTeam() == ALLIANCE)
+        {
+            if ((factionTemplate->hostileMask & FACTION_MASK_ALLIANCE) != 0 && (factionTemplate->friendlyMask & FACTION_MASK_HORDE) != 0)
+                return true;
+        }
     }
     
     return false; 
