@@ -6793,6 +6793,9 @@ void Player::ApplyEquipSpell(SpellEntry const* spellInfo, Item* item, bool apply
             RemoveAurasDueToItemSpell(item, spellInfo->Id); // un-apply all spells , not only at-equipped
         else
             RemoveAurasDueToSpell(spellInfo->Id);           // un-apply spell (item set case)
+
+        if (spellInfo->Id == 26463)
+            RemoveAurasDueToItemSpell(item, 26464); // un-apply all spells , not only at-equipped
     }
 }
 
