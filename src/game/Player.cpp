@@ -6903,6 +6903,24 @@ void Player::CastItemCombatSpell(Unit* Target, WeaponAttackType attType)
                     CastSpell(this, spellInfo->Id, true, item);
                 else
                     CastSpell(Target, spellInfo->Id, true, item);
+                
+                if (e_slot != TEMP_ENCHANTMENT_SLOT)
+                    continue;
+                if (item->GetEnchantmentId(TEMP_ENCHANTMENT_SLOT))
+                {
+                    uint32 charges = item->GetEnchantmentCharges(TEMP_ENCHANTMENT_SLOT);
+                    if (charges == 0)
+                        continue;
+                    if (charges > 1)
+                        item->SetEnchantmentCharges(TEMP_ENCHANTMENT_SLOT, charges - 1);
+                    else if (charges <= 1)
+                    {
+                        ApplyEnchantment(item, TEMP_ENCHANTMENT_SLOT, false);
+                        item->ClearEnchantment(TEMP_ENCHANTMENT_SLOT);
+                    }
+                }
+            
+
             }
         }
     }
@@ -7242,7 +7260,7 @@ void Player::SetVirtualItemSlot(uint8 i, Item* item)
     MANGOS_ASSERT(i < 3);
     if (i < 2 && item)
     {
-        if (!item->GetEnchantmentId(TEMP_ENCHANTMENT_SLOT))
+       /* if (!item->GetEnchantmentId(TEMP_ENCHANTMENT_SLOT))
             return;
         uint32 charges = item->GetEnchantmentCharges(TEMP_ENCHANTMENT_SLOT);
         if (charges == 0)
@@ -7305,7 +7323,7 @@ uint8 Player::FindEquipSlot(ItemPrototype const* proto, uint32 slot, bool swap) 
                 if (slots[i] == slot)
                     return slot;
             }
-        }
+        }*/
     }
     else
     {
