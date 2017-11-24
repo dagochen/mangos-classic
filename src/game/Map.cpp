@@ -310,6 +310,25 @@ bool Map::Add(Player* player)
     if (i_data)
         i_data->OnPlayerEnter(player);
 
+    if (player->GetSession()->GetSecurity() > SEC_PLAYER)
+    {
+        bool value = player->isGMVisible();
+        SpellEntry const* invisibleAuraInfo = sSpellStore.LookupEntry(sWorld.getConfig(CONFIG_UINT32_GM_INVISIBLE_AURA));
+        if (!invisibleAuraInfo || !IsSpellAppliesAura(invisibleAuraInfo))
+            invisibleAuraInfo = nullptr;
+
+        if (value)
+        {
+            if (invisibleAuraInfo)
+                player->RemoveAurasDueToSpell(invisibleAuraInfo->Id);
+        }
+        else
+        {
+            if (invisibleAuraInfo)
+                player->CastSpell(player, invisibleAuraInfo, true);
+        }
+    }
+
     return true;
 }
 
