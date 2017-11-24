@@ -398,6 +398,7 @@ ChatCommand* ChatHandler::getCommandTable()
         { "standstate",     SEC_GAMEMASTER,     false, &ChatHandler::HandleModifyStandStateCommand,    "", nullptr },
         { "morph",          SEC_GAMEMASTER,     false, &ChatHandler::HandleModifyMorphCommand,         "", nullptr },
         { "gender",         SEC_GAMEMASTER,     false, &ChatHandler::HandleModifyGenderCommand,        "", nullptr },
+        { "resistance",     SEC_MODERATOR,      false, &ChatHandler::HandleModifyResistanceCommand,    "", nullptr },
         { nullptr,          0,                  false, nullptr,                                        "", nullptr }
     };
 
@@ -774,6 +775,7 @@ ChatCommand* ChatHandler::getCommandTable()
         { "refund",         SEC_GAMEMASTER,     false, &ChatHandler::HandleRefundQuestItem,           "", nullptr },
         { "joinbg",         SEC_PLAYER,         false, &ChatHandler::HandleJoinBGQueue,               "", nullptr },
         { "charstats",      SEC_PLAYER,         false, &ChatHandler::HandlePlayerStatsCommand,        "", nullptr },
+        { "resistmode",     SEC_GAMEMASTER,     false, &ChatHandler::HandleResistanceModeCommand,        "", nullptr },
         { nullptr,          0,                  false, nullptr,                                        "", nullptr }
     };
 

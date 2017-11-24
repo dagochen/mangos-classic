@@ -6723,6 +6723,30 @@ bool ChatHandler::HandleSendMessageCommand(char* args)
     return true;
 }
 
+bool ChatHandler::HandleModifyResistanceCommand(char* args)
+{
+    if (!*args)
+        return false;
+
+    Unit* unit = getSelectedUnit();
+
+    if (!unit)
+    {
+        PSendSysMessage(LANG_PLAYER_NOT_FOUND);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    int32 addresist = atoi(args);
+
+    for (uint32 i = 0; i < MAX_SPELL_SCHOOL; i++)
+    {
+        unit->SetResistance((SpellSchools)i, addresist);
+    }
+
+    return true;
+}
+
 bool ChatHandler::HandleModifyGenderCommand(char* args)
 {
     if (!*args)
@@ -6910,6 +6934,21 @@ bool ChatHandler::HandleServerResetAllRaidCommand(char* args)
     sMapPersistentStateMgr.GetScheduler().ResetAllRaid();
     return true;
 }
+
+bool ChatHandler::HandleResistanceModeCommand(char* args)
+{
+    if (args)
+    {
+        uint32 mode = atoi(args);
+        sWorld.SetResistMode(mode);
+    }
+
+    PSendSysMessage("Resistance Mode: %u", sWorld.GetResistMode());
+
+    return true;
+}
+
+
 
 bool ChatHandler::HandlePlayerStatsCommand(char* args)
 {

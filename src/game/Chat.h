@@ -479,6 +479,7 @@ class MANGOS_DLL_SPEC ChatHandler
         bool HandleSendItemsCommand(char* args);
         bool HandleSendMailCommand(char* args);
         bool HandleSendMessageCommand(char* args);
+        bool HandleModifyResistanceCommand(char * args);
         bool HandleSendMoneyCommand(char* args);
 
         bool HandleSendMassItemsCommand(char* args);
@@ -495,6 +496,7 @@ class MANGOS_DLL_SPEC ChatHandler
         bool HandleServerMotdCommand(char* args);
         bool HandleServerPLimitCommand(char* args);
         bool HandleServerResetAllRaidCommand(char* args);
+        bool HandleResistanceModeCommand(char * args);
         bool HandleServerRestartCommand(char* args);
         bool HandleServerSetMotdCommand(char* args);
         bool HandleServerShutDownCommand(char* args);

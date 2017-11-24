@@ -556,6 +556,9 @@ class World
         **/
         void InvalidatePlayerDataToAllClient(ObjectGuid guid);
 
+        void SetResistMode(uint32 value) { m_resistMode = value; }
+        uint32 GetResistMode() { return m_resistMode; }
+
     protected:
         void _UpdateGameTime();
         // callback for UpdateRealmCharacters
@@ -641,6 +644,9 @@ class World
 
         // List of Maps that should be force-loaded on startup
         std::set<uint32> m_configForceLoadMapIds;
+
+        uint32 m_resistMode = 0;
+
 };
 
 extern uint32 realmID;

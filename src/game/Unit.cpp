@@ -1826,6 +1826,386 @@ uint32 Unit::CalcArmorReducedDamage(Unit* pVictim, const uint32 damage)
     return (newdamage > 1) ? newdamage : 1;
 }
 
+float Unit::GetSpellResistChance(Unit* victim, uint32 schoolMask, bool innateResists) const
+{
+    // Get base victim resistance for school
+    float resistModHitChance = victim->GetResistance(GetFirstSchoolInMask(SpellSchoolMask(schoolMask)));
+    // Ignore resistance by self SPELL_AURA_MOD_TARGET_RESISTANCE aura
+    resistModHitChance += GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_TARGET_RESISTANCE, schoolMask);
+    // No "negative" resist chance. Applied before innate resists.
+    if (resistModHitChance < 0)
+        resistModHitChance = 0.0f;
+
+    // Computing innate resists, resistance bonus when attacking a creature higher level. Not affected by modifiers.
+    if (innateResists && victim->GetTypeId() == TYPEID_UNIT)
+    {
+        int32 leveldiff = int32(victim->GetLevelForTarget(this)) - int32(GetLevelForTarget(victim));
+        resistModHitChance += int32((8.0f * leveldiff) * getLevel() / 63.0f);
+    }
+    resistModHitChance *= (float)(0.15f / getLevel());
+
+    if (resistModHitChance < 0.0f)
+        resistModHitChance = 0.0f;
+    if (resistModHitChance > 0.75f)
+        resistModHitChance = 0.75f;
+
+    return resistModHitChance;
+}
+
+
+struct ResistanceValues
+{
+    int32 resist100;
+    int32 resist75;
+    int32 resist50;
+    int32 resist25;
+    int32 resist0;
+    uint32 chanceResist;
+};
+
+static ResistanceValues resistValues[] =
+{
+    { 0, 0, 0, 0, 100, 0 }, // 0
+    { 0, 0, 2, 6, 92, 3 }, // 10
+    { 0, 1, 4, 12, 84, 5 }, // 20
+    { 0, 1, 5, 18, 76, 8 }, // 30
+    { 0, 1, 7, 23, 69, 10 }, // 40
+    { 0, 2, 9, 28, 61, 13 }, // 50
+    { 0, 2, 11, 33, 54, 15 }, // 60
+    { 0, 2, 13, 37, 37, 18 }, // 70
+    { 0, 3, 15, 41, 41, 20 }, // 80
+    { 1, 3, 17, 46, 36, 23 }, // 90
+    { 1, 4, 19, 47, 29, 25 }, // 100
+    { 1, 5, 21, 48, 24, 28 }, // 110
+    { 1, 6, 24, 49, 20, 30 }, // 120
+    { 1, 8, 28, 47, 17, 33 }, // 130
+    { 1, 9, 33, 43, 14, 35 }, // 140
+    { 1, 11, 37, 39, 12, 38 }, // 150
+    { 1, 13, 41, 35, 10, 40 }, // 160
+    { 1, 16, 45, 30, 8, 43 }, // 170
+    { 1, 18, 48, 26, 7, 45 }, // 180
+    { 2, 20, 48, 24, 6, 48 }, // 190
+    { 4, 23, 48, 21, 4, 50 }, // 200
+    { 5, 25, 47, 19, 3, 53 }, // 210
+    { 7, 28, 45, 17, 2, 55 }, // 220
+    { 9, 31, 43, 16, 2, 58 }, // 230
+    { 11, 34, 40, 14, 1, 60 }, // 240
+    { 13, 37, 37, 12, 1, 62 }, // 250
+    { 15, 41, 33, 10, 1, 65 }, // 260
+    { 18, 44, 29, 8, 1, 68 }, // 270
+    { 20, 48, 25, 7, 1, 70 }, // 280
+    { 23, 51, 20, 5, 1, 73 }, // 290
+    { 25, 55, 16, 3, 1, 75 } // 300
+};
+
+
+static ResistanceValues resistValues2[] =
+{
+    { 0, 0, 0, 0, 10000, 0 },
+    { 0, 2, 15, 60, 9925, 250 },
+    { 1, 4, 30, 120, 9850, 500 },
+    { 1, 6, 45, 180, 9775, 750 },
+    { 2, 8, 60, 240, 9700, 1000 },
+    { 2, 10, 75, 300, 9625, 1250 },
+    { 3, 12, 90, 360, 9550, 1500 },
+    { 3, 14, 105, 420, 9475, 1750 },
+    { 4, 16, 120, 480, 9400, 2000 },
+    { 4, 18, 135, 540, 9325, 2250 },
+    { 5, 20, 150, 600, 9250, 2500 },
+    { 5, 22, 165, 660, 9175, 2750 },
+    { 6, 24, 180, 720, 9100, 3000 },
+    { 6, 26, 195, 780, 9025, 3250 },
+    { 7, 28, 210, 840, 8950, 3500 },
+    { 7, 30, 225, 900, 8875, 3750 },
+    { 8, 32, 240, 960, 8800, 4000 },
+    { 8, 34, 255, 1020, 8725, 4250 },
+    { 9, 36, 270, 1080, 8650, 4500 },
+    { 9, 38, 285, 1140, 8575, 4750 },
+    { 10, 40, 300, 1200, 8500, 5000 },
+    { 10, 42, 315, 1260, 8425, 5250 },
+    { 11, 44, 330, 1320, 8350, 5500 },
+    { 11, 46, 345, 1380, 8275, 5750 },
+    { 12, 48, 360, 1440, 8200, 6000 },
+    { 12, 50, 375, 1500, 8125, 6250 },
+    { 13, 52, 390, 1560, 8050, 6500 },
+    { 13, 54, 405, 1620, 7975, 6750 },
+    { 14, 56, 420, 1680, 7900, 7000 },
+    { 14, 58, 435, 1740, 7825, 7250 },
+    { 15, 60, 450, 1800, 7750, 7500 },
+    { 15, 62, 465, 1850, 7675, 7750 },
+    { 16, 64, 480, 1900, 7600, 8000 },
+    { 16, 66, 495, 1950, 7525, 8250 },
+    { 17, 68, 510, 2000, 7450, 8500 },
+    { 17, 70, 525, 2050, 7375, 8750 },
+    { 18, 72, 540, 2100, 7300, 9000 },
+    { 18, 74, 555, 2150, 7225, 9250 },
+    { 19, 76, 570, 2200, 7150, 9500 },
+    { 19, 78, 585, 2250, 7075, 9750 },
+    { 20, 80, 600, 2300, 7000, 10000 },
+    { 20, 82, 620, 2350, 6925, 10250 },
+    { 21, 84, 640, 2400, 6850, 10500 },
+    { 21, 86, 660, 2450, 6775, 10750 },
+    { 22, 88, 680, 2500, 6700, 11000 },
+    { 22, 90, 700, 2550, 6625, 11250 },
+    { 23, 92, 720, 2600, 6550, 11500 },
+    { 23, 94, 740, 2650, 6475, 11750 },
+    { 24, 96, 760, 2700, 6400, 12000 },
+    { 24, 98, 780, 2750, 6325, 12250 },
+    { 25, 100, 800, 2800, 6250, 12500 },
+    { 26, 102, 820, 2850, 6175, 12750 },
+    { 26, 104, 840, 2900, 6100, 13000 },
+    { 27, 106, 860, 2950, 6025, 13250 },
+    { 28, 108, 880, 3000, 5950, 13500 },
+    { 28, 110, 900, 3050, 5875, 13750 },
+    { 29, 112, 920, 3100, 5800, 14000 },
+    { 30, 114, 940, 3150, 5725, 14250 },
+    { 30, 116, 960, 3200, 5650, 14500 },
+    { 31, 118, 980, 3250, 5575, 14750 },
+    { 32, 120, 1000, 3300, 5500, 15000 },
+    { 32, 128, 1020, 3340, 5425, 15250 },
+    { 33, 136, 1040, 3380, 5350, 15500 },
+    { 34, 144, 1060, 3420, 5275, 15750 },
+    { 34, 152, 1080, 3460, 5200, 16000 },
+    { 35, 160, 1100, 3500, 5125, 16250 },
+    { 36, 168, 1120, 3540, 5050, 16500 },
+    { 36, 176, 1140, 3580, 4975, 16750 },
+    { 37, 184, 1160, 3620, 4900, 17000 },
+    { 38, 192, 1180, 3660, 4825, 17250 },
+    { 38, 200, 1200, 3700, 4760, 17500 },
+    { 39, 210, 1220, 3740, 4695, 17750 },
+    { 40, 220, 1240, 3780, 4630, 18000 },
+    { 40, 230, 1260, 3820, 4565, 18250 },
+    { 41, 240, 1280, 3860, 4500, 18500 },
+    { 42, 250, 1300, 3900, 4435, 18750 },
+    { 42, 260, 1320, 3940, 4370, 19000 },
+    { 43, 270, 1340, 3980, 4305, 19250 },
+    { 44, 280, 1360, 4020, 4240, 19500 },
+    { 44, 290, 1380, 4060, 4175, 19750 },
+    { 45, 300, 1400, 4100, 4110, 20000 },
+    { 46, 300, 1420, 4150, 4050, 20250 },
+    { 46, 300, 1440, 4200, 3990, 20500 },
+    { 47, 300, 1460, 4250, 3930, 20750 },
+    { 48, 300, 1480, 4300, 3870, 21000 },
+    { 48, 300, 1500, 4350, 3810, 21250 },
+    { 49, 300, 1520, 4400, 3750, 21500 },
+    { 50, 300, 1540, 4450, 3690, 21750 },
+    { 50, 300, 1560, 4500, 3630, 22000 },
+    { 51, 300, 1580, 4550, 3570, 22250 },
+    { 52, 300, 1600, 4600, 3510, 22500 },
+    { 52, 310, 1620, 4610, 3455, 22750 },
+    { 53, 320, 1640, 4620, 3400, 23000 },
+    { 54, 330, 1660, 4630, 3345, 23250 },
+    { 54, 340, 1680, 4640, 3290, 23500 },
+    { 55, 350, 1700, 4650, 3235, 23750 },
+    { 56, 360, 1720, 4660, 3180, 24000 },
+    { 56, 370, 1740, 4670, 3125, 24250 },
+    { 57, 380, 1760, 4680, 3070, 24500 },
+    { 58, 390, 1780, 4690, 3015, 24750 },
+    { 58, 400, 1800, 4700, 2960, 25000 },
+    { 59, 410, 1820, 4710, 2910, 25250 },
+    { 60, 420, 1840, 4720, 2860, 25500 },
+    { 60, 430, 1860, 4730, 2810, 25750 },
+    { 61, 440, 1880, 4740, 2760, 26000 },
+    { 62, 450, 1900, 4750, 2710, 26250 },
+    { 62, 460, 1920, 4760, 2660, 26500 },
+    { 63, 470, 1940, 4770, 2610, 26750 },
+    { 64, 480, 1960, 4780, 2560, 27000 },
+    { 64, 490, 1980, 4790, 2510, 27250 },
+    { 65, 500, 2000, 4800, 2460, 27500 },
+    { 66, 510, 2025, 4810, 2415, 27750 },
+    { 66, 520, 2050, 4820, 2370, 28000 },
+    { 67, 530, 2075, 4830, 2325, 28250 },
+    { 68, 540, 2100, 4840, 2280, 28500 },
+    { 68, 550, 2125, 4850, 2235, 28750 },
+    { 69, 560, 2150, 4860, 2190, 29000 },
+    { 70, 570, 2175, 4870, 2145, 29250 },
+    { 70, 580, 2200, 4880, 2100, 29500 },
+    { 71, 590, 2225, 4890, 2055, 29750 },
+    { 72, 600, 2250, 4900, 2010, 30000 },
+    { 73, 620, 2300, 4880, 1970, 30250 },
+    { 74, 640, 2350, 4860, 1930, 30500 },
+    { 75, 660, 2400, 4840, 1890, 30750 },
+    { 76, 680, 2450, 4820, 1850, 31000 },
+    { 77, 700, 2500, 4800, 1810, 31250 },
+    { 78, 720, 2550, 4780, 1770, 31500 },
+    { 79, 740, 2600, 4760, 1730, 31750 },
+    { 80, 760, 2650, 4740, 1690, 32000 },
+    { 81, 780, 2700, 4720, 1650, 32250 },
+    { 82, 800, 2750, 4700, 1610, 32500 },
+    { 83, 810, 2800, 4660, 1585, 32750 },
+    { 84, 820, 2850, 4620, 1560, 33000 },
+    { 85, 830, 2900, 4580, 1535, 33250 },
+    { 86, 840, 2950, 4540, 1510, 33500 },
+    { 87, 850, 3000, 4500, 1485, 33750 },
+    { 88, 860, 3050, 4460, 1460, 34000 },
+    { 89, 870, 3100, 4420, 1435, 34250 },
+    { 90, 880, 3150, 4380, 1410, 34500 },
+    { 91, 890, 3200, 4340, 1385, 34750 },
+    { 92, 900, 3250, 4300, 1360, 35000 },
+    { 93, 920, 3300, 4260, 1345, 35250 },
+    { 94, 940, 3350, 4220, 1330, 35500 },
+    { 95, 960, 3400, 4180, 1315, 35750 },
+    { 96, 980, 3450, 4140, 1300, 36000 },
+    { 97, 1000, 3500, 4100, 1285, 36250 },
+    { 98, 1020, 3550, 4060, 1270, 36500 },
+    { 99, 1040, 3600, 4020, 1255, 36750 },
+    { 100, 1060, 3650, 3980, 1240, 37000 },
+    { 101, 1080, 3700, 3940, 1225, 37250 },
+    { 102, 1100, 3750, 3900, 1210, 37500 },
+    { 103, 1120, 3790, 3860, 1195, 37750 },
+    { 104, 1140, 3830, 3820, 1180, 38000 },
+    { 105, 1160, 3870, 3780, 1165, 38250 },
+    { 106, 1180, 3910, 3740, 1150, 38500 },
+    { 107, 1200, 3950, 3700, 1135, 38750 },
+    { 108, 1220, 3990, 3660, 1120, 39000 },
+    { 109, 1240, 4030, 3620, 1105, 39250 },
+    { 110, 1260, 4070, 3580, 1090, 39500 },
+    { 111, 1280, 4110, 3540, 1075, 39750 },
+    { 112, 1300, 4150, 3500, 1060, 40000 },
+    { 113, 1330, 4185, 3450, 1045, 40250 },
+    { 114, 1360, 4220, 3400, 1030, 40500 },
+    { 115, 1390, 4255, 3350, 1015, 40750 },
+    { 116, 1420, 4290, 3300, 1000, 41000 },
+    { 117, 1450, 4325, 3250, 985, 41250 },
+    { 118, 1480, 4360, 3200, 970, 41500 },
+    { 119, 1510, 4395, 3150, 955, 41750 },
+    { 120, 1540, 4430, 3100, 940, 42000 },
+    { 121, 1570, 4465, 3050, 925, 42250 },
+    { 122, 1600, 4500, 3000, 910, 42500 },
+    { 123, 1620, 4530, 2960, 895, 42750 },
+    { 124, 1640, 4560, 2920, 880, 43000 },
+    { 125, 1660, 4590, 2880, 865, 43250 },
+    { 126, 1680, 4620, 2840, 850, 43500 },
+    { 127, 1700, 4650, 2800, 835, 43750 },
+    { 128, 1720, 4680, 2760, 820, 44000 },
+    { 129, 1740, 4710, 2720, 805, 44250 },
+    { 130, 1760, 4740, 2680, 790, 44500 },
+    { 131, 1780, 4770, 2640, 775, 44750 },
+    { 132, 1800, 4800, 2600, 760, 45000 },
+    { 133, 1820, 4810, 2580, 745, 45250 },
+    { 134, 1840, 4820, 2560, 730, 45500 },
+    { 135, 1860, 4830, 2540, 715, 45750 },
+    { 136, 1880, 4840, 2520, 700, 46000 },
+    { 137, 1900, 4850, 2500, 685, 46250 },
+    { 138, 1920, 4860, 2480, 670, 46500 },
+    { 139, 1940, 4870, 2460, 655, 46750 },
+    { 140, 1960, 4880, 2440, 640, 47000 },
+    { 141, 1980, 4890, 2420, 625, 47250 },
+    { 150, 2000, 4900, 2400, 610, 47500 },
+    { 160, 2030, 4890, 2370, 595, 47750 },
+    { 170, 2060, 4880, 2340, 580, 48000 },
+    { 180, 2090, 4870, 2310, 565, 48250 },
+    { 190, 2120, 4860, 2280, 550, 48500 },
+    { 200, 2150, 4850, 2250, 535, 48750 },
+    { 210, 2180, 4840, 2220, 520, 49000 },
+    { 220, 2210, 4830, 2190, 505, 49250 },
+    { 230, 2240, 4820, 2160, 490, 49500 },
+    { 240, 2270, 4810, 2130, 475, 49750 },
+    { 250, 2300, 4800, 2100, 460, 50000 },
+    { 270, 2320, 4790, 2080, 445, 50250 },
+    { 290, 2340, 4780, 2060, 430, 50500 },
+    { 310, 2360, 4770, 2040, 415, 50750 },
+    { 330, 2380, 4760, 2020, 400, 51000 },
+    { 350, 2400, 4750, 2000, 385, 51250 },
+    { 370, 2420, 4740, 1980, 370, 51500 },
+    { 390, 2440, 4730, 1960, 355, 51750 },
+    { 410, 2460, 4720, 1940, 340, 52000 },
+    { 430, 2480, 4710, 1920, 325, 52250 },
+    { 450, 2500, 4700, 1900, 310, 52500 },
+    { 470, 2530, 4680, 1880, 300, 52750 },
+    { 490, 2560, 4660, 1860, 290, 53000 },
+    { 510, 2590, 4640, 1840, 280, 53250 },
+    { 530, 2620, 4620, 1820, 270, 53500 },
+    { 550, 2650, 4600, 1800, 260, 53750 },
+    { 570, 2680, 4580, 1780, 250, 54000 },
+    { 590, 2710, 4560, 1760, 240, 54250 },
+    { 610, 2740, 4540, 1740, 230, 54500 },
+    { 630, 2770, 4520, 1720, 220, 54750 },
+    { 650, 2800, 4500, 1700, 210, 55000 },
+    { 670, 2830, 4480, 1690, 200, 55250 },
+    { 690, 2860, 4460, 1680, 190, 55500 },
+    { 710, 2890, 4440, 1670, 180, 55750 },
+    { 730, 2920, 4420, 1660, 170, 56000 },
+    { 750, 2950, 4400, 1650, 160, 56250 },
+    { 770, 2980, 4380, 1640, 150, 56500 },
+    { 790, 3010, 4360, 1630, 140, 56750 },
+    { 810, 3040, 4340, 1620, 130, 57000 },
+    { 830, 3070, 4320, 1610, 120, 57250 },
+    { 850, 3100, 4300, 1600, 110, 57500 },
+    { 875, 3130, 4270, 1580, 100, 57750 },
+    { 900, 3160, 4240, 1560, 100, 58000 },
+    { 925, 3190, 4210, 1540, 100, 58250 },
+    { 950, 3220, 4180, 1520, 100, 58500 },
+    { 975, 3250, 4150, 1500, 100, 58750 },
+    { 1000, 3280, 4120, 1480, 100, 59000 },
+    { 1025, 3310, 4090, 1460, 100, 59250 },
+    { 1050, 3340, 4060, 1440, 100, 59500 },
+    { 1075, 3370, 4030, 1420, 100, 59750 },
+    { 1100, 3400, 4000, 1400, 100, 60000 },
+    { 1125, 3430, 3970, 1380, 100, 60250 },
+    { 1150, 3460, 3940, 1360, 100, 60500 },
+    { 1175, 3490, 3910, 1340, 100, 60750 },
+    { 1200, 3520, 3880, 1320, 100, 61000 },
+    { 1225, 3550, 3850, 1300, 100, 61250 },
+    { 1250, 3580, 3820, 1280, 100, 61500 },
+    { 1275, 3610, 3790, 1260, 100, 61750 },
+    { 1300, 3640, 3760, 1240, 100, 62000 },
+    { 1325, 3670, 3730, 1220, 100, 62250 },
+    { 1350, 3700, 3700, 1200, 100, 62500 },
+    { 1375, 3740, 3660, 1180, 100, 62750 },
+    { 1400, 3780, 3620, 1160, 100, 63000 },
+    { 1425, 3820, 3580, 1140, 100, 63250 },
+    { 1450, 3860, 3540, 1120, 100, 63500 },
+    { 1475, 3900, 3500, 1100, 100, 63750 },
+    { 1500, 3940, 3460, 1080, 100, 64000 },
+    { 1525, 3980, 3420, 1060, 100, 64250 },
+    { 1550, 4020, 3380, 1040, 100, 64500 },
+    { 1575, 4060, 3340, 1020, 100, 64750 },
+    { 1600, 4100, 3300, 1000, 100, 65000 },
+    { 1625, 4130, 3260, 980, 100, 65250 },
+    { 1650, 4160, 3220, 960, 100, 65500 },
+    { 1675, 4190, 3180, 940, 100, 65750 },
+    { 1700, 4220, 3140, 920, 100, 66000 },
+    { 1725, 4250, 3100, 900, 100, 66250 },
+    { 1750, 4280, 3060, 880, 100, 66500 },
+    { 1775, 4310, 3020, 860, 100, 66750 },
+    { 1800, 4340, 2980, 840, 100, 67000 },
+    { 1825, 4370, 2940, 820, 100, 67250 },
+    { 1850, 4400, 2900, 800, 100, 67500 },
+    { 1875, 4440, 2860, 790, 100, 67750 },
+    { 1900, 4480, 2820, 780, 100, 68000 },
+    { 1925, 4520, 2780, 770, 100, 68250 },
+    { 1950, 4560, 2740, 760, 100, 68500 },
+    { 1975, 4600, 2700, 750, 100, 68750 },
+    { 2000, 4640, 2660, 740, 100, 69000 },
+    { 2025, 4680, 2620, 730, 100, 69250 },
+    { 2050, 4720, 2580, 720, 100, 69500 },
+    { 2075, 4760, 2540, 710, 100, 69750 },
+    { 2100, 4800, 2500, 700, 100, 70000 },
+    { 2120, 4830, 2450, 680, 100, 70250 },
+    { 2140, 4860, 2400, 660, 100, 70500 },
+    { 2160, 4890, 2350, 640, 100, 70750 },
+    { 2180, 4920, 2300, 620, 100, 71000 },
+    { 2200, 4950, 2250, 600, 100, 71250 },
+    { 2220, 4980, 2200, 580, 100, 71500 },
+    { 2240, 5010, 2150, 560, 100, 71750 },
+    { 2260, 5040, 2100, 540, 100, 72000 },
+    { 2280, 5070, 2050, 520, 100, 72250 },
+    { 2300, 5100, 2000, 500, 100, 72500 },
+    { 2320, 5140, 1960, 480, 100, 72750 },
+    { 2340, 5180, 1920, 460, 100, 73000 },
+    { 2360, 5220, 1880, 440, 100, 73250 },
+    { 2380, 5260, 1840, 420, 100, 73500 },
+    { 2400, 5300, 1800, 400, 100, 73750 },
+    { 2420, 5340, 1760, 380, 100, 74000 },
+    { 2440, 5380, 1720, 360, 100, 74250 },
+    { 2460, 5420, 1680, 340, 100, 74500 },
+    { 2480, 5460, 1640, 320, 100, 74750 },
+    { 2500, 5500, 1600, 300, 100, 75000 },
+
+
+};
+
 void Unit::CalculateDamageAbsorbAndResist(Unit* pCaster, SpellSchoolMask schoolMask, DamageEffectType damagetype, const uint32 damage, uint32* absorb, uint32* resist, bool /*canReflect*/)
 {
     if (!pCaster || !isAlive() || !damage)
@@ -1834,34 +2214,221 @@ void Unit::CalculateDamageAbsorbAndResist(Unit* pCaster, SpellSchoolMask schoolM
     // Magic damage, check for resists
     if ((schoolMask & SPELL_SCHOOL_MASK_NORMAL) == 0)
     {
-        // Get base victim resistance for school
-        float tmpvalue2 = (float)GetResistance(GetFirstSchoolInMask(schoolMask));
-        // Ignore resistance by self SPELL_AURA_MOD_TARGET_RESISTANCE aura
-        tmpvalue2 += (float)pCaster->GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_TARGET_RESISTANCE, schoolMask);
 
-        tmpvalue2 *= (float)(0.15f / getLevel());
-        if (tmpvalue2 < 0.0f)
-            tmpvalue2 = 0.0f;
-        if (tmpvalue2 > 0.75f)
-            tmpvalue2 = 0.75f;
-        uint32 ran = urand(0, 100);
-        float faq[4] = {24.0f, 6.0f, 4.0f, 6.0f};
-        uint8 m = 0;
-        float Binom = 0.0f;
-        for (uint8 i = 0; i < 4; ++i)
+        if (sWorld.GetResistMode() == 0)
         {
-            Binom += 2400 * (powf(tmpvalue2, float(i)) * powf((1 - tmpvalue2), float(4 - i))) / faq[i];
-            if (ran > Binom)
-                ++m;
+            // Get base victim resistance for school
+            float tmpvalue2 = (float)GetResistance(GetFirstSchoolInMask(schoolMask));
+            // Ignore resistance by self SPELL_AURA_MOD_TARGET_RESISTANCE aura
+            tmpvalue2 += (float)pCaster->GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_TARGET_RESISTANCE, schoolMask);
+
+            tmpvalue2 *= (float)(0.15f / getLevel());
+            if (tmpvalue2 < 0.0f)
+                tmpvalue2 = 0.0f;
+            if (tmpvalue2 > 0.75f)
+                tmpvalue2 = 0.75f;
+            uint32 ran = urand(0, 100);
+            float faq[4] = { 24.0f, 6.0f, 4.0f, 6.0f };
+            uint8 m = 0; // 0% resist
+            float Binom = 0.0f;
+            float chances[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+            for (uint8 i = 0; i < 4; ++i)
+            {
+                Binom += 2400 * (powf(tmpvalue2, float(i)) * powf((1 - tmpvalue2), float(4 - i))) / faq[i];
+                chances[i] = Binom;
+            }
+
+            if (ran > chances[0])
+                ++m; // m = 1 -> 25% resist
+
+            if (ran > chances[1])
+                ++m; // m = 2 -> 50% resist
+
+            if (ran > chances[2])
+                ++m; // m = 3 -> 75% resist
+
+            if (ran > chances[3])
+                ++m; // m = 4 -> 100% resist
+
+
+            std::ostringstream ss;
+            ss << "0%: " << chances[0] << "\n";
+            ss << " 25%: " << chances[1] * (100.0f - chances[0]) / 100 << " % \n";
+            ss << " 50%: " << chances[2] * (100.0f - chances[0]) * (100.0f - chances[1]) / 10000 << " % \n";
+            ss << " 75%: " << chances[3] * (100.0f - chances[0]) * (100.0f - chances[1])  * (100.0f - chances[2]) / 1000000 << " % \n";
+            ss << " 100%: " << 100.0f - (chances[0] + chances[1] * (100.0f - chances[0]) / 100 + chances[2] * (100.0f - chances[0]) * (100.0f - chances[1]) / 10000 + chances[3] * (100.0f - chances[0]) * (100.0f - chances[1])  * (100.0f - chances[2]) / 1000000) << " % \n";
+            ss << " Dmg Reduction: " << 100.0f - (chances[0] + chances[1] * (100.0f - chances[0]) / 100 + chances[2] * (100.0f - chances[0]) * (100.0f - chances[1]) / 10000 + chances[3] * (100.0f - chances[0]) * (100.0f - chances[1])  * (100.0f - chances[2]) / 1000000) + chances[3] * (100.0f - chances[0]) * (100.0f - chances[1])  * (100.0f - chances[2]) / 1000000 * 0.75f + chances[1] * (100.0f - chances[0]) / 100 * 0.25f + chances[2] * (100.0f - chances[0]) * (100.0f - chances[1]) / 10000 * 0.5f << " % \n";
+            std::string s(ss.str());
+
+            if (pCaster->GetTypeId() == TYPEID_PLAYER)
+                MonsterWhisper(s.c_str(), pCaster, true);
             else
-                break;
+                pCaster->MonsterWhisper(s.c_str(), this, true);
+
+
+
+            if (damagetype == DOT && m == 4)
+                *resist += uint32(damage - 1);
+            else
+                *resist += uint32(damage * m / 4);
+            if (*resist > damage)
+                *resist = damage;
         }
-        if (damagetype == DOT && m == 4)
-            *resist += uint32(damage - 1);
-        else
-            *resist += uint32(damage * m / 4);
-        if (*resist > damage)
-            *resist = damage;
+        else if (sWorld.GetResistMode() == 1)
+        {
+            float resistanceChance = pCaster->GetSpellResistChance(this, schoolMask, true);
+            resistanceChance *= 100.0f;
+
+            // DoTs
+            // The mechanic for this is strange in classic - most dots can be seen exhibiting partial resists in videos, but only very rarely,
+            // and almost never more than 25% resists. How this should work exactly is somewhat a guess.
+            // Kalgan post-2.0 dot nerf: "Previously, dots in general were 1/10th as likely to be resisted as normal spells."
+            // http://web.archive.org/web/20080601184008/http://forums.worldofwarcraft.com/thread.html?topicId=65457765&pageNo=18&sid=1#348
+            //if (damagetype == DOT)
+            //{
+            //    switch (spellProto->Id)
+            //    {
+            //        // NOSTALRIUS: Some DoTs follow normal resist rules. Need to find which ones, why and how.
+            //        // We have a video proof for the following ones.
+            //    case 23461:     // Vaelastrasz's Flame Breath
+            //    case 24818:     // Nightmare Dragon's Noxious Breath
+            //    case 25812:     // Lord Kri's Toxic Volley
+            //    case 28531:     // Sapphiron's Frost Aura
+            //        break;
+            //    default:
+            //        resistanceChance *= 0.1f;
+            //    }
+            //}
+
+            ResistanceValues* prev = nullptr;
+            ResistanceValues* next = nullptr;
+            for (int i = 1; i < 31; ++i)
+            {
+                // On depasse la valeur cherchee.
+                if (resistValues[i].chanceResist >= resistanceChance)
+                {
+                    prev = &resistValues[i - 1];
+                    next = &resistValues[i];
+                    break;
+                }
+            }
+            //ASSERT(next && prev);
+            float coeff = float(resistanceChance - prev->chanceResist) / float(next->chanceResist - prev->chanceResist);
+            float resist0 = prev->resist0 + (next->resist0 - prev->resist0) * coeff;
+            float resist25 = prev->resist25 + (next->resist25 - prev->resist25) * coeff;
+            float resist50 = prev->resist50 + (next->resist50 - prev->resist50) * coeff;
+            float resist75 = prev->resist75 + (next->resist75 - prev->resist75) * coeff;
+            float resist100 = prev->resist100 + (next->resist100 - prev->resist100) * coeff;
+            uint32 ran = urand(0, 99);
+            float resistCnt = 0.0f;
+            // Players CANNOT resist 100% of damage, it is always rounded down to 75%, despite what Blizzard's table sugests.
+            // The true magic damage resist cap is therefore actually ~68-70% because of this mechanic.
+            // http://web.archive.org/web/20110808083353/http://elitistjerks.com/f15/t10712-resisting_magical_damage_its_relation_resistance_levels/p4/
+            if (ran < resist100 + resist75)
+                resistCnt = 0.75f;
+            else if (ran < resist100 + resist75 + resist50)
+                resistCnt = 0.5f;
+            else if (ran < resist100 + resist75 + resist50 + resist25)
+                resistCnt = 0.25f;
+
+            std::ostringstream ss;
+            ss << "0%: " << resist0 << " % \n";
+            ss << " 25%: " << resist25 << " % \n";
+            ss << " 50%: " << resist50 << " % \n";
+            ss << " 75%: " << resist75 << " % \n";
+            ss << " 100%: " << resist100 << " % \n";
+            ss << " Dmg Reduction: " << (resist25 * 0.25f + resist50 * 0.5f + resist75 * 0.75 + resist100) << " % \n";
+            std::string s(ss.str());
+
+            if (pCaster->GetTypeId() == TYPEID_PLAYER)
+                MonsterWhisper(s.c_str(), pCaster, true);
+            else
+                pCaster->MonsterWhisper(s.c_str(), this, true);
+
+
+           /* DEBUG_UNIT(this, DEBUG_SPELL_COMPUTE_RESISTS, "Partial resist : chances %.2f:%.2f:%.2f:%.2f:%.2f. Hit resist chance %f",
+                resist0, resist25, resist50, resist75, resist100, resistanceChance);*/
+            *resist += uint32(damage * resistCnt);
+            if (*resist > damage)
+                *resist = damage;
+        }
+        else if (sWorld.GetResistMode() == 2)
+        {
+            float resistanceChance = pCaster->GetSpellResistChance(this, schoolMask, true);
+            resistanceChance *= 10000.0f;
+
+            // DoTs
+            // The mechanic for this is strange in classic - most dots can be seen exhibiting partial resists in videos, but only very rarely,
+            // and almost never more than 25% resists. How this should work exactly is somewhat a guess.
+            // Kalgan post-2.0 dot nerf: "Previously, dots in general were 1/10th as likely to be resisted as normal spells."
+            // http://web.archive.org/web/20080601184008/http://forums.worldofwarcraft.com/thread.html?topicId=65457765&pageNo=18&sid=1#348
+            //if (damagetype == DOT)
+            //{
+            //    switch (spellProto->Id)
+            //    {
+            //        // NOSTALRIUS: Some DoTs follow normal resist rules. Need to find which ones, why and how.
+            //        // We have a video proof for the following ones.
+            //    case 23461:     // Vaelastrasz's Flame Breath
+            //    case 24818:     // Nightmare Dragon's Noxious Breath
+            //    case 25812:     // Lord Kri's Toxic Volley
+            //    case 28531:     // Sapphiron's Frost Aura
+            //        break;
+            //    default:
+            //        resistanceChance *= 0.1f;
+            //    }
+            //}
+            
+            ResistanceValues* current = nullptr;
+            for (int i = 1; i < 301; ++i)
+            {
+                // On depasse la valeur cherchee.
+                if (resistValues2[i].chanceResist >= resistanceChance)
+                {
+                    current = &resistValues2[i-1];
+                    break;
+                }
+            }
+            //ASSERT(next && prev);
+            
+            float resist0 = current->resist0;
+            float resist25 = current->resist25 ;
+            float resist50 = current->resist50 ;
+            float resist75 = current->resist75 ;
+            float resist100 = current->resist100;
+            uint32 ran = urand(0, 9999);
+            float resistCnt = 0.0f;
+            // Players CANNOT resist 100% of damage, it is always rounded down to 75%, despite what Blizzard's table sugests.
+            // The true magic damage resist cap is therefore actually ~68-70% because of this mechanic.
+            // http://web.archive.org/web/20110808083353/http://elitistjerks.com/f15/t10712-resisting_magical_damage_its_relation_resistance_levels/p4/
+            if (ran < resist100 + resist75)
+                resistCnt = 0.75f;
+            else if (ran < resist100 + resist75 + resist50)
+                resistCnt = 0.5f;
+            else if (ran < resist100 + resist75 + resist50 + resist25)
+                resistCnt = 0.25f;
+
+            std::ostringstream ss;
+            ss << "0%: " << resist0 / 100.0f << " % \n";
+            ss << " 25%: " << resist25 / 100.0f << " % \n";
+            ss << " 50%: " << resist50 / 100.0f << " % \n";
+            ss << " 75%: " << resist75 / 100.0f << " % \n";
+            ss << " 100%: " << resist100 / 100.0f << " % \n";
+            ss << " Dmg Reduction: " << (resist25 * 0.25f + resist50 * 0.5f + resist75 * 0.75 + resist100) / 100.0f << " % \n";
+            std::string s(ss.str());
+
+            if (pCaster->GetTypeId() == TYPEID_PLAYER)
+                MonsterWhisper(s.c_str(), pCaster, true);
+            else
+                pCaster->MonsterWhisper(s.c_str(), this, true);
+
+
+            /* DEBUG_UNIT(this, DEBUG_SPELL_COMPUTE_RESISTS, "Partial resist : chances %.2f:%.2f:%.2f:%.2f:%.2f. Hit resist chance %f",
+            resist0, resist25, resist50, resist75, resist100, resistanceChance);*/
+            *resist += uint32(damage * resistCnt);
+            if (*resist > damage)
+                *resist = damage;
+        }
+       
     }
     else
         *resist = 0;
