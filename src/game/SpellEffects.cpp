@@ -3614,15 +3614,25 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     if (!unitTarget)
                         return;
 
-                    // Prevent stacking of mounts
-                    unitTarget->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
-
-                    // Two separate mounts depending on area id (allows use both in and out of specific instance)
-                    if (unitTarget->GetAreaId() == 3428)
-                        unitTarget->CastSpell(unitTarget, 25863, false);
+                    uint32 SPELL_MOUNT_OUTSIDE_AQ40 = 26655;
+                    uint32 SPELL_MOUNT_INSIDE_AQ40 = 25863;
+                    uint32 SPELL_MOUNT_INSTANT_CAST = 31700;
+                    bool playerIsInAQ40 = unitTarget->GetAreaId() == 3428;
+                    bool isBlackQirajiMounted = unitTarget->GetMountID() == 15677;
+                    
+                    if (!unitTarget->IsMounted())
+                    {
+                        unitTarget->GetCurrentSpell(CURRENT_GENERIC_SPELL)->setState(SPELL_STATE_FINISHED);
+                        unitTarget->CastSpell(unitTarget, playerIsInAQ40 ? SPELL_MOUNT_INSIDE_AQ40 : SPELL_MOUNT_OUTSIDE_AQ40, false); 
+                    }
                     else
-                        unitTarget->CastSpell(unitTarget, 26655, false);
-
+                    {
+                        unitTarget->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
+                        if (!isBlackQirajiMounted)
+                        {
+                            unitTarget->CastSpell(unitTarget, SPELL_MOUNT_INSTANT_CAST, true);
+                        }
+                    }
                     return;
                 }
                 case 27687:                                 // Summon Bone Minions

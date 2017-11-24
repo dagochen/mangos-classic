@@ -4079,6 +4079,17 @@ void SpellMgr::LoadDbcDataCorrections()
         case 8679:
             spellInfo->procCharges += 40;
             break;
+            // Black Qiraj Battle Tank
+       case 26655:
+       case 25863:
+            spellInfo->CastingTimeIndex = 14;
+            break;
+
+       case 31700:
+           spellInfo->EffectMiscValue[0] = 15666;
+       case 26656:
+            spellInfo->CastingTimeIndex = 1;
+            break;
 
             // Deadly Poison
         case 25351:
