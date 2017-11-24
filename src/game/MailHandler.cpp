@@ -289,6 +289,7 @@ void WorldSession::HandleMailMarkAsRead(WorldPacket& recv_data)
         m->checked = m->checked | MAIL_CHECK_MASK_READ;
         pl->m_mailsUpdated = true;
         m->state = MAIL_STATE_CHANGED;
+        m->expire_time = (time(NULL) + 3 * DAY) > m->expire_time ? m->expire_time : (time(NULL) + 3 * DAY);
     }
 }
 
@@ -551,11 +552,11 @@ void WorldSession::HandleGetMailList(WorldPacket& recv_data)
             break;
 
         // skip deleted or not delivered (deliver delay not expired) mails
-        if ((*itr)->state == MAIL_STATE_DELETED || cur_time < (*itr)->deliver_time)
+        if ((*itr)->state == MAIL_STATE_DELETED || cur_time < (*itr)->deliver_time || cur_time > (*itr)->expire_time)
             continue;
 
         /*[-ZERO] TODO recheck this
-        size_t next_mail_size = 4+1+8+((*itr)->subject.size()+1)+4*7+1+item_count*(1+4+4+6*3*4+4+4+1+4+4+4);
+        size_t next_mail_size = 4+1+8+((*itr)->subject.size()+1)+4*7+1+item_count*(1+4+4+6*3*4+4+4+1+4+4+4); 
 
         if(data.wpos()+next_mail_size > maxPacketSize)
             break;

@@ -274,7 +274,7 @@ void MailDraft::SendReturnToSender(uint32 sender_acc, ObjectGuid sender_guid, Ob
  * @param checked              The mask used to specify the mail.
  * @param deliver_delay        The delay after which the mail is delivered in seconds
  */
-void MailDraft::SendMailTo(MailReceiver const& receiver, MailSender const& sender, MailCheckMask checked, uint32 deliver_delay)
+void MailDraft::SendMailTo(MailReceiver const& receiver, MailSender const& sender, MailCheckMask checked, uint32 deliver_delay, uint32 expire_delay)
 {
     Player* pReceiver = receiver.GetPlayer();               // can be nullptr
 
@@ -301,17 +301,16 @@ void MailDraft::SendMailTo(MailReceiver const& receiver, MailSender const& sende
 
     time_t deliver_time = time(nullptr) + deliver_delay;
 
-    // expire time if COD 3 days, if no COD 30 days, if auction sale pending 1 hour
-    uint32 expire_delay;
-    // auction mail without any items and money (auction sale note) pending 1 hour
-    if (sender.GetMailMessageType() == MAIL_AUCTION && m_items.empty() && !m_money)
-        expire_delay = HOUR;
-    // mail from battlemaster (rewardmarks) should last only one day
-    else if (sender.GetMailMessageType() == MAIL_CREATURE && sBattleGroundMgr.GetBattleMasterBG(sender.GetSenderId()) != BATTLEGROUND_TYPE_NONE)
-        expire_delay = DAY;
-    // default case: expire time if COD 3 days, if no COD 30 days
-    else
-        expire_delay = (m_COD > 0) ? 3 * DAY : 30 * DAY;
+    if (!expire_delay)
+    {
+        // expire time if COD 3 days, if no COD 30 days, if auction sale pending 1 hour
+        // auction mail without any items and money (auction sale note) pending 1 hour
+        if (sender.GetMailMessageType() == MAIL_AUCTION && m_items.empty() && !m_money)
+            expire_delay = HOUR;
+        // default case: expire time if COD 3 days, if no COD 30 days
+        else
+            expire_delay = (m_COD > 0) ? 3 * DAY : 30 * DAY;
+    }
 
     time_t expire_time = deliver_time + expire_delay;
 
