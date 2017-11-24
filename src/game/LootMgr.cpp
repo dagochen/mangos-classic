@@ -1139,6 +1139,7 @@ void Loot::Release(Player* player)
                         Clear();                // clear the content and reset some values
                         FillLoot(go->GetGOInfo()->GetLootId(), LootTemplates_Gameobject, player, false); // refill the loot with new items
                         go->SetLootState(GO_READY);
+                        go->ClearSkillupLootList();
                     }
                     else
                         go->SetLootState(GO_JUST_DEACTIVATED);

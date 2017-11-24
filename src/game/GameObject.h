@@ -630,10 +630,17 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
 
         void AddToSkillupList(Player* player);
         bool IsInSkillupList(Player* player) const;
+
+        void AddToSkillupLootList(Player* player);
+        bool IsInSkillupLootList(Player* player) const;
+
         void ClearSkillupList() { m_SkillupSet.clear(); }
+        void ClearSkillupLootList() { m_SkillupLootSet.clear(); }
+
         void ClearAllUsesData()
         {
             ClearSkillupList();
+            ClearSkillupLootList();
             m_useTimes = 0;
             m_firstUser.Clear();
             m_UniqueUsers.clear();
@@ -701,6 +708,7 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         CapturePointState m_captureState;
 
         GuidSet m_SkillupSet;                               // players that already have skill-up at GO use
+        GuidSet m_SkillupLootSet;                           // players that already tried to get skill-up at GO use but didn't loot
 
         uint32 m_useTimes;                                  // amount uses/charges triggered
 

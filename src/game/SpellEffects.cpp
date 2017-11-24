@@ -2080,9 +2080,12 @@ void Spell::EffectOpenLock(SpellEffectIndex eff_idx)
             if (gameObjTarget)
             {
                 // Allow one skill-up until respawned
-                if (!gameObjTarget->IsInSkillupList(player) &&
-                        player->UpdateGatherSkill(skillId, pureSkillValue, reqSkillValue))
-                    gameObjTarget->AddToSkillupList(player);
+                if (!gameObjTarget->IsInSkillupLootList(player))
+                {
+                    gameObjTarget->AddToSkillupLootList(player);
+                    if (!gameObjTarget->IsInSkillupList(player) && player->UpdateGatherSkill(skillId, pureSkillValue, reqSkillValue))
+                        gameObjTarget->AddToSkillupList(player);
+                }
             }
             else if (itemTarget)
             {

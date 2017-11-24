@@ -1877,9 +1877,19 @@ bool GameObject::IsInSkillupList(Player* player) const
     return m_SkillupSet.find(player->GetObjectGuid()) != m_SkillupSet.end();
 }
 
+bool GameObject::IsInSkillupLootList(Player* player) const
+{
+    return m_SkillupLootSet.find(player->GetObjectGuid()) != m_SkillupLootSet.end();
+}
+
 void GameObject::AddToSkillupList(Player* player)
 {
     m_SkillupSet.insert(player->GetObjectGuid());
+}
+
+void GameObject::AddToSkillupLootList(Player* player)
+{
+    m_SkillupLootSet.insert(player->GetObjectGuid());
 }
 
 struct AddGameObjectToRemoveListInMapsWorker
