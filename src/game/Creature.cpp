@@ -605,14 +605,9 @@ void Creature::Update(uint32 update_diff, uint32 diff)
 
 void Creature::RegenerateAll(uint32 update_diff)
 {
+    m_regenTimer -= update_diff;
+
     if (m_regenTimer > 0)
-    {
-        if (update_diff >= m_regenTimer)
-            m_regenTimer = 0;
-        else
-            m_regenTimer -= update_diff;
-    }
-    if (m_regenTimer != 0)
         return;
 
     if (!isInCombat() || IsPolymorphed())
@@ -620,7 +615,7 @@ void Creature::RegenerateAll(uint32 update_diff)
 
     RegeneratePower();
 
-    m_regenTimer = REGEN_TIME_FULL;
+    m_regenTimer += REGEN_TIME_FULL;
 }
 
 void Creature::RegeneratePower()
