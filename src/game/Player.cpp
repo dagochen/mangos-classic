@@ -7271,10 +7271,10 @@ void Player::SendPetSkillWipeConfirm()
 
 void Player::SetVirtualItemSlot(uint8 i, Item* item)
 {
-    MANGOS_ASSERT(i < 3);
+    /*MANGOS_ASSERT(i < 3);
     if (i < 2 && item)
     {
-       /* if (!item->GetEnchantmentId(TEMP_ENCHANTMENT_SLOT))
+        if (!item->GetEnchantmentId(TEMP_ENCHANTMENT_SLOT))
             return;
         uint32 charges = item->GetEnchantmentCharges(TEMP_ENCHANTMENT_SLOT);
         if (charges == 0)
@@ -7286,7 +7286,7 @@ void Player::SetVirtualItemSlot(uint8 i, Item* item)
             ApplyEnchantment(item, TEMP_ENCHANTMENT_SLOT, false);
             item->ClearEnchantment(TEMP_ENCHANTMENT_SLOT);
         }
-    }
+    }*/
 }
 
 void Player::SetSheath(SheathState sheathed)
@@ -7337,7 +7337,7 @@ uint8 Player::FindEquipSlot(ItemPrototype const* proto, uint32 slot, bool swap) 
                 if (slots[i] == slot)
                     return slot;
             }
-        }*/
+        }
     }
     else
     {
@@ -7361,7 +7361,7 @@ uint8 Player::FindEquipSlot(ItemPrototype const* proto, uint32 slot, bool swap) 
     }
 
     // no free position
-    return NULL_SLOT;
+    return NULL_SLOT; 
 }
 
 
