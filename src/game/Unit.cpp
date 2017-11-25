@@ -2279,7 +2279,7 @@ void Unit::CalculateDamageAbsorbAndResist(Unit* pCaster, SpellSchoolMask schoolM
 
 
             std::ostringstream ss;
-            ss << "0%: " << chances[0] << "\n";
+            ss << "0%: " << chances[0] << " % \n";
             ss << " 25%: " << chances[1] * (100.0f - chances[0]) / 100 << " % \n";
             ss << " 50%: " << chances[2] * (100.0f - chances[0]) * (100.0f - chances[1]) / 10000 << " % \n";
             ss << " 75%: " << chances[3] * (100.0f - chances[0]) * (100.0f - chances[1])  * (100.0f - chances[2]) / 1000000 << " % \n";
@@ -2382,8 +2382,7 @@ void Unit::CalculateDamageAbsorbAndResist(Unit* pCaster, SpellSchoolMask schoolM
         else if (sWorld.GetResistMode() == 2)
         {
             float resistanceChance = pCaster->GetSpellResistChance(this, schoolMask, true);
-            resistanceChance *= 10000.0f;
-
+            resistanceChance *= 100000.0f;
             // DoTs
             // The mechanic for this is strange in classic - most dots can be seen exhibiting partial resists in videos, but only very rarely,
             // and almost never more than 25% resists. How this should work exactly is somewhat a guess.
@@ -2416,12 +2415,12 @@ void Unit::CalculateDamageAbsorbAndResist(Unit* pCaster, SpellSchoolMask schoolM
                 }
             }
             //ASSERT(next && prev);
-            
-            float resist0 = current->resist0;
-            float resist25 = current->resist25 ;
-            float resist50 = current->resist50 ;
-            float resist75 = current->resist75 ;
-            float resist100 = current->resist100;
+
+            uint32 resist0 = current->resist0;
+            uint32 resist25 = current->resist25;
+            uint32 resist50 = current->resist50;
+            uint32 resist75 = current->resist75;
+            uint32 resist100 = current->resist100;
             uint32 ran = urand(0, 9999);
             float resistCnt = 0.0f;
             // Players CANNOT resist 100% of damage, it is always rounded down to 75%, despite what Blizzard's table sugests.
@@ -2435,12 +2434,12 @@ void Unit::CalculateDamageAbsorbAndResist(Unit* pCaster, SpellSchoolMask schoolM
                 resistCnt = 0.25f;
 
             std::ostringstream ss;
-            ss << "0%: " << resist0 / 100.0f << " % \n";
-            ss << " 25%: " << resist25 / 100.0f << " % \n";
-            ss << " 50%: " << resist50 / 100.0f << " % \n";
-            ss << " 75%: " << resist75 / 100.0f << " % \n";
-            ss << " 100%: " << resist100 / 100.0f << " % \n";
-            ss << " Dmg Reduction: " << (resist25 * 0.25f + resist50 * 0.5f + resist75 * 0.75 + resist100) / 100.0f << " % \n";
+            ss << "0%: " << float(resist0 / 100.0f) << " % \n";
+            ss << " 25%: " << float(resist25 / 100.0f) << " % \n";
+            ss << " 50%: " << float(resist50 / 100.0f) << " % \n";
+            ss << " 75%: " << float(resist75 / 100.0f) << " % \n";
+            ss << " 100%: " << float(resist100 / 100.0f) << " % \n";
+            ss << " Dmg Reduction: " << (float)((resist25 * 0.25f + resist50 * 0.5f + resist75 * 0.75 + resist100) / 100.0f) << " % \n";
             std::string s(ss.str());
 
             if (pCaster->GetTypeId() == TYPEID_PLAYER)
