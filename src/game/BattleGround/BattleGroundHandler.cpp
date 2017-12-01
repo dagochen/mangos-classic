@@ -176,7 +176,7 @@ void WorldSession::HandleBattlemasterJoinOpcode(WorldPacket& recv_data)
                 WorldSession* session = member->GetSession();
                 for (uint32 bgtype = 1; bgtype <= 3; bgtype++)
                 {
-                    BattleGroundQueue& queue = sBattleGroundMgr.m_BattleGroundQueues[bgQueueTypeId];
+                    BattleGroundQueue& queue = sBattleGroundMgr.m_BattleGroundQueues[bgtype];
                 
                     if (session && queue.IPAlreadyInQueue(session->GetRemoteAddress(), member->GetTeam()))
                     {
@@ -208,7 +208,7 @@ void WorldSession::HandleBattlemasterJoinOpcode(WorldPacket& recv_data)
             WorldSession* session = member->GetSession();
             for (uint32 bgtype = 1; bgtype <= 3; bgtype++)
             {
-                BattleGroundQueue& queue = sBattleGroundMgr.m_BattleGroundQueues[bgQueueTypeId];
+                BattleGroundQueue& queue = sBattleGroundMgr.m_BattleGroundQueues[bgtype];
 
                 if (session && queue.IPAlreadyInQueue(session->GetRemoteAddress(), member->GetTeam()))
                 {
