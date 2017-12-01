@@ -46,7 +46,7 @@ void BattleGroundAV::HandleKillPlayer(Player* player, Player* killer)
         if (!plr)
             continue;
 
-        if (plr->GetTeam() == killer->GetTeam() && plr != killer && plr->IsAtGroupRewardDistance(player))
+        if (plr->GetTeam() == killer->GetTeam() && plr->IsAtGroupRewardDistance(player))
         {
             uint32 faction_id = plr->GetTeam() == HORDE ? 729 : 730;
             FactionEntry const* factionEntry = sFactionStore.LookupEntry(faction_id);
@@ -137,6 +137,12 @@ void BattleGroundAV::HandleKillUnit(Creature* creature, Player* killer)
         case BG_AV_COMMANDER_A_MORTIMER:
         case BG_AV_COMMANDER_A_DUFFY:
         case BG_AV_COMMANDER_A_RANDOLPH:
+        case BG_AV_LIEUTENANT_A_GREYWAND:
+        case BG_AV_LIEUTENANT_A_LARGENT:
+        case BG_AV_LIEUTENANT_A_SPENCER:
+        case BG_AV_LIEUTENANT_A_LONADIN:
+        case BG_AV_LIEUTENANT_A_MANUSCO:
+        case BG_AV_LIEUTENANT_A_STOUTHANDLE:
             RewardHonorToTeam(BG_AV_KILL_CAPTAIN, HORDE);
             UpdatePlayerScore(killer, SCORE_SECONDARY_OBJECTIVES, 1);
             break;
@@ -145,7 +151,13 @@ void BattleGroundAV::HandleKillUnit(Creature* creature, Player* killer)
         case BG_AV_COMMANDER_H_DARDOSH:
         case BG_AV_COMMANDER_H_MULFORT:
         case BG_AV_COMMANDER_H_MALGOR:
-            RewardHonorToTeam(BG_AV_KILL_CAPTAIN, ALLIANCE);
+        case BG_AV_LIEUTENANT_H_GRUMMUS:
+        case BG_AV_LIEUTENANT_H_MURP:
+        case BG_AV_LIEUTENANT_H_STRONGHOOF:
+        case BG_AV_LIEUTENANT_H_RUGBA:
+        case BG_AV_LIEUTENANT_H_LEWIS:
+        case BG_AV_LIEUTENANT_H_VOLTALAR:
+            RewardHonorToTeam(BG_AV_KILL_CAPTAIN, HORDE);
             UpdatePlayerScore(killer, SCORE_SECONDARY_OBJECTIVES, 1);
             break;
     }
@@ -165,9 +177,12 @@ void BattleGroundAV::CompleteQuestForPlayersNearTarget(uint32 questid, WorldObje
             const Quest* pQuest = sObjectMgr.GetQuestTemplate(questid);
             if (pQuest)
             {
-                if (CreatureInfo const* cInfo = ObjectMgr::GetCreatureTemplate(pQuest->ReqCreatureOrGOId[0]))
-                    plr->KilledMonster(cInfo, ObjectGuid());
-                plr->SendQuestUpdateAddCreatureOrGo(pQuest, ObjectGuid(), 0, 1);
+                if (plr->GetQuestStatus(questid) == QUEST_STATUS_INCOMPLETE)
+                {
+                    if (CreatureInfo const* cInfo = ObjectMgr::GetCreatureTemplate(pQuest->ReqCreatureOrGOId[0]))
+                        plr->KilledMonster(cInfo, ObjectGuid());
+                    plr->SendQuestUpdateAddCreatureOrGo(pQuest, ObjectGuid(), 0, 1);
+                }
             }
         }
     }
@@ -188,9 +203,12 @@ void BattleGroundAV::CompleteQuestForPlayersNearTarget(uint32 questid, Position 
             const Quest* pQuest = sObjectMgr.GetQuestTemplate(questid);
             if (pQuest)
             {
-                if (CreatureInfo const* cInfo = ObjectMgr::GetCreatureTemplate(pQuest->ReqCreatureOrGOId[0]))
-                    plr->KilledMonster(cInfo, ObjectGuid());
-                plr->SendQuestUpdateAddCreatureOrGo(pQuest, ObjectGuid(), 0, 1);
+                if (plr->GetQuestStatus(questid) == QUEST_STATUS_INCOMPLETE)
+                {
+                    if (CreatureInfo const* cInfo = ObjectMgr::GetCreatureTemplate(pQuest->ReqCreatureOrGOId[0]))
+                        plr->KilledMonster(cInfo, ObjectGuid());
+                    plr->SendQuestUpdateAddCreatureOrGo(pQuest, ObjectGuid(), 0, 1);
+                }
             }
         }
     }
@@ -933,7 +951,26 @@ void BattleGroundAV::Reset()
         m_ActiveEvents[BG_AV_MINE_EVENT + i] = BG_AV_TEAM_NEUTRAL;
         m_Mine_Timer[i] = BG_AV_MINE_TICK_TIMER;
     }
-
+    m_ActiveEvents[BG_AV_LIEUTENANT_H_GRUMMUS] = 0;
+    m_ActiveEvents[BG_AV_LIEUTENANT_H_MURP] = 0;
+    m_ActiveEvents[BG_AV_LIEUTENANT_H_STRONGHOOF] = 0;
+    m_ActiveEvents[BG_AV_LIEUTENANT_H_RUGBA] = 0;
+    m_ActiveEvents[BG_AV_LIEUTENANT_H_LEWIS] = 0;
+    m_ActiveEvents[BG_AV_LIEUTENANT_H_VOLTALAR] = 0;
+    m_ActiveEvents[BG_AV_LIEUTENANT_A_STOUTHANDLE] = 0;
+    m_ActiveEvents[BG_AV_LIEUTENANT_A_GREYWAND] = 0;
+    m_ActiveEvents[BG_AV_LIEUTENANT_A_LONADIN] = 0;
+    m_ActiveEvents[BG_AV_LIEUTENANT_A_SPENCER] = 0;
+    m_ActiveEvents[BG_AV_LIEUTENANT_A_MANUSCO] = 0;
+    m_ActiveEvents[BG_AV_LIEUTENANT_A_LARGENT] = 0;
+    m_ActiveEvents[BG_AV_COMMANDER_A_MORTIMER] = 0;
+    m_ActiveEvents[BG_AV_COMMANDER_A_KARLPHILIPS] = 0;
+    m_ActiveEvents[BG_AV_COMMANDER_A_DUFFY] = 0;
+    m_ActiveEvents[BG_AV_COMMANDER_A_RANDOLPH] = 0;
+    m_ActiveEvents[BG_AV_COMMANDER_H_DARDOSH] = 0;
+    m_ActiveEvents[BG_AV_COMMANDER_H_LOUISPHILIP] = 0;
+    m_ActiveEvents[BG_AV_COMMANDER_H_MALGOR] = 0;
+    m_ActiveEvents[BG_AV_COMMANDER_H_MULFORT] = 0;
     m_ActiveEvents[BG_AV_CAPTAIN_A] = 0;
     m_ActiveEvents[BG_AV_CAPTAIN_H] = 0;
     m_ActiveEvents[BG_AV_HERALD] = 0;

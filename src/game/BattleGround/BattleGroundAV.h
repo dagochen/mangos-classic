@@ -48,6 +48,8 @@
 #define BG_AV_REP_TOWER_HOLIDAY             18
 #define BG_AV_RES_TOWER                     75
 
+#define BG_AV_SUMMON_IVUS_LOKHOLAR          198
+
 #define BG_AV_KILL_GET_COMMANDER            198               // for a safely returned wingcommander TODO implement it
 
 // bonushonor at the end
@@ -162,14 +164,31 @@ enum BG_AV_Nodes
 #define BG_AV_NodeEventCaptainDead_A 63
 #define BG_AV_NodeEventCaptainDead_H 64
 
-#define BG_AV_COMMANDER_A_MORTIMER 65
-#define BG_AV_COMMANDER_A_DUFFY    66
-#define BG_AV_COMMANDER_A_KARLPHILIPS  67
-#define BG_AV_COMMANDER_A_RANDOLPH 68
-#define BG_AV_COMMANDER_H_DARDOSH  69
-#define BG_AV_COMMANDER_H_LOUISPHILIP  70
-#define BG_AV_COMMANDER_H_MULFORT  71
-#define BG_AV_COMMANDER_H_MALGOR   72
+#define BG_AV_COMMANDER_A_MORTIMER      65
+#define BG_AV_COMMANDER_A_DUFFY         66
+#define BG_AV_COMMANDER_A_KARLPHILIPS   67
+#define BG_AV_COMMANDER_A_RANDOLPH      68
+
+#define BG_AV_COMMANDER_H_DARDOSH       69
+#define BG_AV_COMMANDER_H_LOUISPHILIP   70
+#define BG_AV_COMMANDER_H_MULFORT       71
+#define BG_AV_COMMANDER_H_MALGOR        72
+
+#define BG_AV_LIEUTENANT_H_GRUMMUS    73
+#define BG_AV_LIEUTENANT_H_MURP       74
+#define BG_AV_LIEUTENANT_H_STRONGHOOF 75
+#define BG_AV_LIEUTENANT_H_RUGBA      76
+#define BG_AV_LIEUTENANT_H_LEWIS      77
+#define BG_AV_LIEUTENANT_H_VOLTALAR   78
+
+#define BG_AV_LIEUTENANT_A_STOUTHANDLE 79
+#define BG_AV_LIEUTENANT_A_GREYWAND    80
+#define BG_AV_LIEUTENANT_A_LONADIN     81
+#define BG_AV_LIEUTENANT_A_SPENCER     82
+#define BG_AV_LIEUTENANT_A_MANUSCO     83
+#define BG_AV_LIEUTENANT_A_LARGENT     84
+
+
 
 enum BG_AV_Graveyards
 {
