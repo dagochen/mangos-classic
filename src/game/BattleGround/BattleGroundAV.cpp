@@ -157,7 +157,7 @@ void BattleGroundAV::HandleKillUnit(Creature* creature, Player* killer)
         case BG_AV_LIEUTENANT_H_RUGBA:
         case BG_AV_LIEUTENANT_H_LEWIS:
         case BG_AV_LIEUTENANT_H_VOLTALAR:
-            RewardHonorToTeam(BG_AV_KILL_CAPTAIN, HORDE);
+            RewardHonorToTeam(BG_AV_KILL_CAPTAIN, ALLIANCE);
             UpdatePlayerScore(killer, SCORE_OFFICERS_KILLED, 1);
             break;
     }
