@@ -975,9 +975,9 @@ void BattleGroundMgr::BuildPvpLogDataPacket(WorldPacket* data, BattleGround* bg)
                 *data << (uint32)((BattleGroundAVScore*)score)->GraveyardsDefended;   // GraveyardsDefended
                 *data << (uint32)((BattleGroundAVScore*)score)->TowersAssaulted;      // TowersAssaulted
                 *data << (uint32)((BattleGroundAVScore*)score)->TowersDefended;       // TowersDefended
-                *data << (uint32)((BattleGroundAVScore*)score)->SecondaryObjectives;  // Mines Taken
-                *data << (uint32)((BattleGroundAVScore*)score)->LieutnantCount;       // Lieutnant kills
-                *data << (uint32)((BattleGroundAVScore*)score)->SecondaryNPC;         // Secondary unit summons
+                *data << (uint32)((BattleGroundAVScore*)score)->MineCount;            // Mines taken under control
+                *data << (uint32)((BattleGroundAVScore*)score)->OfficerCount;        // Officer kills
+                *data << (uint32)((BattleGroundAVScore*)score)->SecondaryObjectives;  // Wing Commanders freed
                 break;
             case BATTLEGROUND_WS:
                 *data << (uint32)0x00000002;                // count of next fields

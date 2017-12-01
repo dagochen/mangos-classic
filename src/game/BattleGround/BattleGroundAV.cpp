@@ -94,7 +94,7 @@ void BattleGroundAV::HandleKillUnit(Creature* creature, Player* killer)
             UpdateScore(TEAM_INDEX_ALLIANCE, (-1) * BG_AV_RES_CAPTAIN);
             // spawn destroyed aura
             SpawnEvent(BG_AV_NodeEventCaptainDead_A, 0, true);
-            UpdatePlayerScore(killer, SCORE_SECONDARY_OBJECTIVES, 1);
+            UpdatePlayerScore(killer, SCORE_OFFICERS_KILLED, 1);
             break;
         case BG_AV_CAPTAIN_H:
             if (IsActiveEvent(BG_AV_NodeEventCaptainDead_H, 0))
@@ -104,7 +104,7 @@ void BattleGroundAV::HandleKillUnit(Creature* creature, Player* killer)
             UpdateScore(TEAM_INDEX_HORDE, (-1) * BG_AV_RES_CAPTAIN);
             // spawn destroyed aura
             SpawnEvent(BG_AV_NodeEventCaptainDead_H, 0, true);
-            UpdatePlayerScore(killer, SCORE_SECONDARY_OBJECTIVES, 1);
+            UpdatePlayerScore(killer, SCORE_OFFICERS_KILLED, 1);
             break;
         case BG_AV_MINE_BOSSES_NORTH:
             if (killer->GetTeam() == ALLIANCE)
@@ -117,7 +117,7 @@ void BattleGroundAV::HandleKillUnit(Creature* creature, Player* killer)
                 ChangeMineOwner(BG_AV_NORTH_MINE, GetAVTeamIndexByTeamId(killer->GetTeam()));
                 CompleteQuestForPlayersNearTarget(7124, creature, killer);
             }
-            UpdatePlayerScore(killer, SCORE_SECONDARY_OBJECTIVES, 1);
+            UpdatePlayerScore(killer, SCORE_MINE_COUNT, 1);
             break;
         case BG_AV_MINE_BOSSES_SOUTH:
             if (killer->GetTeam() == ALLIANCE)
@@ -130,7 +130,7 @@ void BattleGroundAV::HandleKillUnit(Creature* creature, Player* killer)
                 ChangeMineOwner(BG_AV_SOUTH_MINE, GetAVTeamIndexByTeamId(killer->GetTeam()));
                 CompleteQuestForPlayersNearTarget(7124, creature, killer);
             }
-            UpdatePlayerScore(killer, SCORE_SECONDARY_OBJECTIVES, 1);
+            UpdatePlayerScore(killer, SCORE_MINE_COUNT, 1);
             break;
         case BG_AV_COMMANDER_A_KARLPHILIPS:
             CompleteQuestForPlayersNearTarget(7281, creature, killer);
@@ -144,7 +144,7 @@ void BattleGroundAV::HandleKillUnit(Creature* creature, Player* killer)
         case BG_AV_LIEUTENANT_A_MANUSCO:
         case BG_AV_LIEUTENANT_A_STOUTHANDLE:
             RewardHonorToTeam(BG_AV_KILL_CAPTAIN, HORDE);
-            UpdatePlayerScore(killer, SCORE_SECONDARY_OBJECTIVES, 1);
+            UpdatePlayerScore(killer, SCORE_OFFICERS_KILLED, 1);
             break;
         case BG_AV_COMMANDER_H_LOUISPHILIP:
             CompleteQuestForPlayersNearTarget(7282, creature, killer);
@@ -158,7 +158,7 @@ void BattleGroundAV::HandleKillUnit(Creature* creature, Player* killer)
         case BG_AV_LIEUTENANT_H_LEWIS:
         case BG_AV_LIEUTENANT_H_VOLTALAR:
             RewardHonorToTeam(BG_AV_KILL_CAPTAIN, HORDE);
-            UpdatePlayerScore(killer, SCORE_SECONDARY_OBJECTIVES, 1);
+            UpdatePlayerScore(killer, SCORE_OFFICERS_KILLED, 1);
             break;
     }
 }
@@ -532,6 +532,12 @@ void BattleGroundAV::UpdatePlayerScore(Player* source, uint32 type, uint32 value
             break;
         case SCORE_SECONDARY_OBJECTIVES:
             ((BattleGroundAVScore*)itr->second)->SecondaryObjectives += value;
+            break;
+        case SCORE_OFFICERS_KILLED:
+            ((BattleGroundAVScore*)itr->second)->OfficerCount += value;
+            break;
+        case SCORE_MINE_COUNT:
+            ((BattleGroundAVScore*)itr->second)->MineCount += value;
             break;
         default:
             BattleGround::UpdatePlayerScore(source, type, value);
