@@ -339,7 +339,7 @@ inline BG_AV_Nodes& operator++(BG_AV_Nodes& i)
 class BattleGroundAVScore : public BattleGroundScore
 {
     public:
-        BattleGroundAVScore() : GraveyardsAssaulted(0), GraveyardsDefended(0), TowersAssaulted(0), TowersDefended(0), SecondaryObjectives(0), LieutnantCount(0), MineCount(0) {};
+        BattleGroundAVScore() : GraveyardsAssaulted(0), GraveyardsDefended(0), TowersAssaulted(0), TowersDefended(0), SecondaryObjectives(0), OfficerCount(0), MineCount(0) {};
         virtual ~BattleGroundAVScore() {};
 
         uint32 GetAttr1() const { return GraveyardsAssaulted; }
@@ -353,7 +353,7 @@ class BattleGroundAVScore : public BattleGroundScore
         uint32 TowersAssaulted;
         uint32 TowersDefended;
         uint32 MineCount;
-        uint32 LieutnantCount;
+        uint32 OfficerCount;
         uint32 SecondaryObjectives;
 };
 
