@@ -1211,7 +1211,6 @@ void Player::Update(uint32 update_diff, uint32 p_time)
     }
 
 
-    m_regenTimer -= update_diff;
  
 
     if (m_positionStatusUpdateTimer)
@@ -1254,6 +1253,7 @@ void Player::Update(uint32 update_diff, uint32 p_time)
 
     if (isAlive())
     {
+        m_regenTimer -= update_diff;
         RegenerateAll();
     }
 
