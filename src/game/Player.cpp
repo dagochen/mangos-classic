@@ -16801,10 +16801,60 @@ void Player::UpdateBattleGroundEntryPoint()
 
     if (HasMovementFlag(MOVEFLAG_ONTRANSPORT))
     {
-        uint32 entry = GetTransport()->GetEntry();
-        WorldLocation loc;
-        switch (entry)
+        if (!GetTransport())
         {
+            WorldLocation loc;
+            switch (GetAreaId())
+            {
+                case 2257: // Deeprun Tram
+                {
+                    WorldLocation ironforge = WorldLocation(GetMapId(), 25.229f, 9.805f, -4.297f, 3.166f);
+                    WorldLocation stormwind = WorldLocation(GetMapId(), 24.971f, 2491.988f, -4.297f, 3.109f);
+                    loc = GetDistance(ironforge.coord_x, ironforge.coord_y, ironforge.coord_z) < GetDistance(stormwind.coord_x, stormwind.coord_y, stormwind.coord_z) ? ironforge : stormwind;
+                    break;
+                }
+                case 1638: // Thunderbluff Elevators
+                {
+                    WorldLocation north = WorldLocation(GetMapId(), -1013.380f, -46.220f, 69.382f, 2.548f);
+                    WorldLocation south = WorldLocation(GetMapId(), -1303.756f, 205.174f, 68.681f, 5.069f);
+                    loc = GetDistance(north.coord_x, north.coord_y, north.coord_z) < GetDistance(south.coord_x, south.coord_y, south.coord_z) ? north : south;
+                    break;
+                }
+                case 485: // Thousand Needles (The Great Lift)
+                {
+                    WorldLocation north = WorldLocation(GetMapId(), -4687.581f, -1836.491f, -44.047f, 6.282f);
+                    WorldLocation south = WorldLocation(GetMapId(), -5376.082f, -2509.209f, -40.432f, 2.528f);
+                    loc = GetDistance(north.coord_x, north.coord_y, north.coord_z) < GetDistance(south.coord_x, south.coord_y, south.coord_z) ? north : south;
+                    break;
+                }
+                case 153: // Thousand Needles (The Great Lift)
+                {
+                    loc = WorldLocation(GetMapId(), 1600.439f, 240.360f, 60.150f, 3.233f);
+                    break;
+                }
+                case 246: // Searing Gorge Lift
+                {
+                    WorldLocation east = WorldLocation(GetMapId(), -6891.928f, -1336.169f, 239.925f, 3.506f);
+                    WorldLocation west = WorldLocation(GetMapId(), -6890.225f, -1209.587f, 240.495f, 3.027f);
+                    loc = GetDistance(east.coord_x, east.coord_y, east.coord_z) < GetDistance(west.coord_x, west.coord_y, west.coord_z) ? east : west;
+                    break;
+                }
+                case 721: // Gnomeregan Lift
+                {
+                    loc = WorldLocation(GetMapId(), -5162.968f, 667.612f, 248.057f, 1.531f);
+                    break;
+                }
+            }
+            m_bgData.joinPos = loc;
+            m_bgData.m_needSave = true;
+            return;
+        }
+        else
+        {
+            uint32 entry = GetTransport()->GetEntry();
+            WorldLocation loc;
+            switch (entry)
+            {
             case 20808: // Ratchet <--> Beutebucht
                 loc = GetMapId() == 0 ? WorldLocation(GetMapId(), -14285.17f, 557.55f, 8.86f, 4.30f) : WorldLocation(GetMapId(), -999.12f, -3825.31f, 5.34f, 1.09f);
                 break;
@@ -16826,13 +16876,14 @@ void Player::UpdateBattleGroundEntryPoint()
             case 176495: // Gromgol <--> Unterstadt
                 loc = GetZoneId() == 85 ? WorldLocation(GetMapId(), 2058.04f, 240.94f, 99.76f, 1.3f) : WorldLocation(GetMapId(), -12410.10f, 206.74f, 31.59f, 3.11f);
                 break;
-            case 177233:
+            case 177233: // Feathermoon
                 loc = WorldLocation(GetMapId(), -4215.49f, 3285.64f, 6.47f, 3.21f);
                 break;
+            }
+            m_bgData.joinPos = loc;
+            m_bgData.m_needSave = true;
+            return;
         }
-        m_bgData.joinPos = loc;
-        m_bgData.m_needSave = true;
-        return;
     }
 
     // In error cases use homebind position
