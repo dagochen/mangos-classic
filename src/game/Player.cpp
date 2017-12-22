@@ -16827,7 +16827,7 @@ void Player::UpdateBattleGroundEntryPoint()
                     loc = GetDistance(north.coord_x, north.coord_y, north.coord_z) < GetDistance(south.coord_x, south.coord_y, south.coord_z) ? north : south;
                     break;
                 }
-                case 153: // Thousand Needles (The Great Lift)
+                case 153: // Undercity
                 {
                     loc = WorldLocation(GetMapId(), 1600.439f, 240.360f, 60.150f, 3.233f);
                     break;
