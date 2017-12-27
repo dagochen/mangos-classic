@@ -3025,7 +3025,7 @@ void Spell::update(uint32 difftime)
 
                 //convert the stream buffer into a string
                 std::string ausgabe = werte.str();
-                GetCaster()->MonsterWhisper(ausgabe.c_str(), GetCaster(), true);
+                /*GetCaster()->MonsterWhisper(ausgabe.c_str(), GetCaster(), true);*/
             }
 
             if (m_timer)
