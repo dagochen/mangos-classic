@@ -430,8 +430,8 @@ void ThreatManager::addThreat(Unit* pVictim, float pThreat, bool crit, SpellScho
     addThreatDirectly(pVictim, threat);
     
 
-    if (threat && pVictim->GetTypeId() == TYPEID_PLAYER && static_cast<Player*>(pVictim)->GetSession()->GetSecurity() >= AccountTypes::SEC_GAMEMASTER)
-       getOwner()->MonsterWhisper(std::to_string(getOwner()->getThreatManager().getThreat(pVictim)).c_str(), pVictim, true);
+    /*if (threat && pVictim->GetTypeId() == TYPEID_PLAYER && static_cast<Player*>(pVictim)->GetSession()->GetSecurity() >= AccountTypes::SEC_GAMEMASTER)
+       getOwner()->MonsterWhisper(std::to_string(getOwner()->getThreatManager().getThreat(pVictim)).c_str(), pVictim, true);*/
 
     
 }
