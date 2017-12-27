@@ -1047,6 +1047,18 @@ enum MangosStrings
     LANG_ACCOUNT_LIST_PVP_QUEUE         = 1710,
     LANG_IP_ALREADY_IN_QUEUE_OR_BG      = 1711,
     LANG_IP_ALREADY_IN_QUEUE_OR_BG_GROUP = 1712,
+    LANG_BATTLECOM_INITIALIZING         = 1731,
+    LANG_BATTLECOM_INFIGHT              = 1732,
+    LANG_BATTLECOM_NO_MONEY             = 1733,
+    LANG_BATTLECOM_ESTABLISHED          = 1734,
+    LANG_BATTLECOM_QUEUES_JOINED        = 1735,
+    LANG_BATTLECOM_FEE                  = 1736,
+    LANG_BATTLECOM_PVP_STATUS           = 1737,
+    LANG_BATTLECOM_SHUTDOWN             = 1738,
+    LANG_BATTLECOM_IN_BG                = 1739,
+    LANG_BATTLECOM_DESERTER             = 1740,
+    LANG_BATTLECOM_IN_QUEUE             = 1741,
+    LANG_BATTLECOM_COOLDOWN             = 1742,
     // Use for not-in-official-sources patches
     //                                    10000-10999
 

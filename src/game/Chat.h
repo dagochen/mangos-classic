@@ -292,6 +292,8 @@ class MANGOS_DLL_SPEC ChatHandler
         bool HandleLearnAllMySpellsCommand(char* args);
         bool HandleLearnAllMyTalentsCommand(char* args);
 
+        bool HandleIsTaxiFlyingCommand(char *);
+
         bool HandleListAurasCommand(char* args);
         bool HandleListCreatureCommand(char* args);
         bool HandleListItemCommand(char* args);

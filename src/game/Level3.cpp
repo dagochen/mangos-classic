@@ -4550,6 +4550,23 @@ bool ChatHandler::HandleTeleDelCommand(char* args)
     return true;
 }
 
+
+bool ChatHandler::HandleIsTaxiFlyingCommand(char* /*args*/)
+{
+    Unit* unit = getSelectedUnit();
+
+    if (unit->IsTaxiFlying())
+    {
+        SendSysMessage("IsTaxiFlying()");
+    }
+    else
+    {
+        SendSysMessage("!IsTaxiFlying()");
+    }
+
+    return true;
+};
+
 bool ChatHandler::HandleListAurasCommand(char* /*args*/)
 {
     Unit* unit = getSelectedUnit();
