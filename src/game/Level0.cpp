@@ -356,6 +356,7 @@ bool ChatHandler::HandleReportCountCommand(char* args)
     std::ostringstream out;
     out << "Name: " << report->GetName() << " GUID: " << report->GetGUIDLow() << " Reports: " << reportCount;
     PSendSysMessage(out.str().c_str());
+    return true;
 }
 
 bool ChatHandler::HandleJoinBGQueue(char* args)
