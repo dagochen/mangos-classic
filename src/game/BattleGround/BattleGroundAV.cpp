@@ -110,12 +110,12 @@ void BattleGroundAV::HandleKillUnit(Creature* creature, Player* killer)
             if (killer->GetTeam() == ALLIANCE)
             {
                 ChangeMineOwner(BG_AV_NORTH_MINE, GetAVTeamIndexByTeamId(killer->GetTeam()));
-                CompleteQuestForPlayersNearTarget(7122, creature, killer);
+                CompleteQuestForPlayersNearTarget(7122, creature, ALLIANCE);
             }
             else if (killer->GetTeam() == HORDE)
             {
                 ChangeMineOwner(BG_AV_NORTH_MINE, GetAVTeamIndexByTeamId(killer->GetTeam()));
-                CompleteQuestForPlayersNearTarget(7124, creature, killer);
+                CompleteQuestForPlayersNearTarget(7124, creature, HORDE);
             }
             UpdatePlayerScore(killer, SCORE_MINE_COUNT, 1);
             break;
@@ -123,17 +123,17 @@ void BattleGroundAV::HandleKillUnit(Creature* creature, Player* killer)
             if (killer->GetTeam() == ALLIANCE)
             {
                 ChangeMineOwner(BG_AV_SOUTH_MINE, GetAVTeamIndexByTeamId(killer->GetTeam()));
-                CompleteQuestForPlayersNearTarget(7122, creature, killer);
+                CompleteQuestForPlayersNearTarget(7122, creature, ALLIANCE);
             }
             else if (killer->GetTeam() == HORDE)
             {
                 ChangeMineOwner(BG_AV_SOUTH_MINE, GetAVTeamIndexByTeamId(killer->GetTeam()));
-                CompleteQuestForPlayersNearTarget(7124, creature, killer);
+                CompleteQuestForPlayersNearTarget(7124, creature, HORDE);
             }
             UpdatePlayerScore(killer, SCORE_MINE_COUNT, 1);
             break;
         case BG_AV_COMMANDER_A_KARLPHILIPS:
-            CompleteQuestForPlayersNearTarget(7281, creature, killer);
+            CompleteQuestForPlayersNearTarget(7281, creature, HORDE);
         case BG_AV_COMMANDER_A_MORTIMER:
         case BG_AV_COMMANDER_A_DUFFY:
         case BG_AV_COMMANDER_A_RANDOLPH:
@@ -147,7 +147,7 @@ void BattleGroundAV::HandleKillUnit(Creature* creature, Player* killer)
             UpdatePlayerScore(killer, SCORE_OFFICERS_KILLED, 1);
             break;
         case BG_AV_COMMANDER_H_LOUISPHILIP:
-            CompleteQuestForPlayersNearTarget(7282, creature, killer);
+            CompleteQuestForPlayersNearTarget(7282, creature, ALLIANCE);
         case BG_AV_COMMANDER_H_DARDOSH:
         case BG_AV_COMMANDER_H_MULFORT:
         case BG_AV_COMMANDER_H_MALGOR:
@@ -163,7 +163,7 @@ void BattleGroundAV::HandleKillUnit(Creature* creature, Player* killer)
     }
 }
 
-void BattleGroundAV::CompleteQuestForPlayersNearTarget(uint32 questid, WorldObject* pSource, Player* killer)
+void BattleGroundAV::CompleteQuestForPlayersNearTarget(uint32 questid, WorldObject* pSource, Team team)
 {
     for (BattleGroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
     {
@@ -172,7 +172,7 @@ void BattleGroundAV::CompleteQuestForPlayersNearTarget(uint32 questid, WorldObje
         if (!plr)
             continue;
 
-        if (plr->GetTeam() == killer->GetTeam() && plr->IsAtGroupRewardDistance(pSource))
+        if (plr->GetTeam() ==  team && plr->IsAtGroupRewardDistance(pSource))
         {
             const Quest* pQuest = sObjectMgr.GetQuestTemplate(questid);
             if (pQuest)
@@ -189,7 +189,7 @@ void BattleGroundAV::CompleteQuestForPlayersNearTarget(uint32 questid, WorldObje
 }
 
 
-void BattleGroundAV::CompleteQuestForPlayersNearTarget(uint32 questid, Position pos, Player* killer)
+void BattleGroundAV::CompleteQuestForPlayersNearTarget(uint32 questid, Position pos, Team team)
 {
     for (BattleGroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
     {
@@ -198,7 +198,7 @@ void BattleGroundAV::CompleteQuestForPlayersNearTarget(uint32 questid, Position 
         if (!plr)
             continue;
 
-        if (plr->GetTeam() == killer->GetTeam() && plr->IsAtGroupRewardDistance(pos))
+        if (plr->GetTeam() == team && plr->IsAtGroupRewardDistance(pos))
         {
             const Quest* pQuest = sObjectMgr.GetQuestTemplate(questid);
             if (pQuest)
@@ -326,27 +326,27 @@ void BattleGroundAV::HandleQuestComplete(uint32 questid, Player* player)
 
 void BattleGroundAV::UpdateScore(PvpTeamIndex teamIdx, int32 points)
 {
-    // note: to remove reinforcements points must be negative, for adding reinforcements points must be positive
-    MANGOS_ASSERT(teamIdx == TEAM_INDEX_ALLIANCE || teamIdx == TEAM_INDEX_HORDE);
-    m_TeamScores[teamIdx] += points;                      // m_TeamScores is int32 - so no problems here
+    //// note: to remove reinforcements points must be negative, for adding reinforcements points must be positive
+    //MANGOS_ASSERT(teamIdx == TEAM_INDEX_ALLIANCE || teamIdx == TEAM_INDEX_HORDE);
+    //m_TeamScores[teamIdx] += points;                      // m_TeamScores is int32 - so no problems here
 
-    if (points < 0)
-    {
-        if (m_TeamScores[teamIdx] < 1)
-        {
-            m_TeamScores[teamIdx] = 0;
-            // other team will win:
-            EndBattleGround((teamIdx == TEAM_INDEX_ALLIANCE) ? HORDE : ALLIANCE);
-        }
-        else if (!m_IsInformedNearLose[teamIdx] && m_TeamScores[teamIdx] < BG_AV_SCORE_NEAR_LOSE)
-        {
-            SendMessageToAll((teamIdx == TEAM_INDEX_HORDE) ? LANG_BG_AV_H_NEAR_LOSE : LANG_BG_AV_A_NEAR_LOSE, CHAT_MSG_BG_SYSTEM_NEUTRAL);
-            PlaySoundToAll(BG_AV_SOUND_NEAR_LOSE);
-            m_IsInformedNearLose[teamIdx] = true;
-        }
-    }
-    // must be called here, else it could display a negative value
-    UpdateWorldState(((teamIdx == TEAM_INDEX_HORDE) ? BG_AV_Horde_Score : BG_AV_Alliance_Score), m_TeamScores[teamIdx]);
+    //if (points < 0)
+    //{
+    //    if (m_TeamScores[teamIdx] < 1)
+    //    {
+    //        m_TeamScores[teamIdx] = 0;
+    //        // other team will win:
+    //        EndBattleGround((teamIdx == TEAM_INDEX_ALLIANCE) ? HORDE : ALLIANCE);
+    //    }
+    //    else if (!m_IsInformedNearLose[teamIdx] && m_TeamScores[teamIdx] < BG_AV_SCORE_NEAR_LOSE)
+    //    {
+    //        SendMessageToAll((teamIdx == TEAM_INDEX_HORDE) ? LANG_BG_AV_H_NEAR_LOSE : LANG_BG_AV_A_NEAR_LOSE, CHAT_MSG_BG_SYSTEM_NEUTRAL);
+    //        PlaySoundToAll(BG_AV_SOUND_NEAR_LOSE);
+    //        m_IsInformedNearLose[teamIdx] = true;
+    //    }
+    //}
+    //// must be called here, else it could display a negative value
+    //UpdateWorldState(((teamIdx == TEAM_INDEX_HORDE) ? BG_AV_Horde_Score : BG_AV_Alliance_Score), m_TeamScores[teamIdx]);
 }
 
 void BattleGroundAV::Update(uint32 diff)
@@ -575,11 +575,10 @@ void BattleGroundAV::EventPlayerDestroyedPoint(BG_AV_Nodes node)
         Player* plr = sObjectMgr.GetPlayer(m_Nodes[node].Assaulter);
         Position pos = m_Nodes[node].Pos;
 
-        if (!plr && !plr->InBattleGround())
-            return;
+      
+        CompleteQuestForPlayersNearTarget(ownerTeam == ALLIANCE ? BG_AV_QUEST_A_TOWER : BG_AV_QUEST_H_TOWER, pos, ownerTeam);
+       
 
-        Team team = plr->GetTeam();
-        CompleteQuestForPlayersNearTarget(team == ALLIANCE ? BG_AV_QUEST_A_TOWER : BG_AV_QUEST_H_TOWER, pos, plr);
     }
     else
     {
@@ -748,7 +747,7 @@ void BattleGroundAV::EventPlayerAssaultsPoint(Player* player, BG_AV_Nodes node)
         // update the statistic for the assaulting player
         UpdatePlayerScore(player, SCORE_GRAVEYARDS_ASSAULTED, 1);
         if (ownerTeamIdx != TEAM_INDEX_NEUTRAL)
-            CompleteQuestForPlayersNearTarget((teamIdx == TEAM_INDEX_ALLIANCE) ? BG_AV_QUEST_A_GRAVEYARD : BG_AV_QUEST_H_GRAVEYARD, player, player);
+            CompleteQuestForPlayersNearTarget((teamIdx == TEAM_INDEX_ALLIANCE) ? BG_AV_QUEST_A_GRAVEYARD : BG_AV_QUEST_H_GRAVEYARD, player, (teamIdx == TEAM_INDEX_ALLIANCE) ? ALLIANCE : HORDE);
     }
 
     PlaySoundToAll((teamIdx == TEAM_INDEX_ALLIANCE) ? BG_AV_SOUND_ALLIANCE_ASSAULTS : BG_AV_SOUND_HORDE_ASSAULTS);

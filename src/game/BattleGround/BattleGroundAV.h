@@ -386,8 +386,8 @@ class BattleGroundAV : public BattleGround
         void HandleKillPlayer(Player* player, Player* killer) override;
         void HandleKillUnit(Creature* creature, Player* killer) override;
         void HandleQuestComplete(uint32 questid, Player* player);
-        void CompleteQuestForPlayersNearTarget(uint32 questid, WorldObject* pSource, Player* killer);
-        void CompleteQuestForPlayersNearTarget(uint32 questid, Position poos, Player* killer);
+        void CompleteQuestForPlayersNearTarget(uint32 questid, WorldObject* pSource, Team team);
+        void CompleteQuestForPlayersNearTarget(uint32 questid, Position poos, Team team);
 
         bool PlayerCanDoMineQuest(int32 GOId, Team team);
 
