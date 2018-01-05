@@ -1680,7 +1680,7 @@ bool Creature::IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectInd
         return true;
 
     // Taunt immunity special flag check
-    if (GetCreatureInfo()->ExtraFlags & CREATURE_EXTRA_FLAG_NOT_TAUNTABLE || HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_TAUNT_IMMUNE))
+    if (GetCreatureInfo()->ExtraFlags & CREATURE_EXTRA_FLAG_NOT_TAUNTABLE || IsTauntImmune())
     {
         // Taunt aura apply check
         if (spellInfo->Effect[index] == SPELL_EFFECT_APPLY_AURA)

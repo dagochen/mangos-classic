@@ -726,6 +726,8 @@ class MANGOS_DLL_SPEC Creature : public Unit
         uint32 GetTemporaryFactionFlags() { return m_temporaryFactionFlags; }
 
         void SendAreaSpiritHealerQueryOpcode(Player* pl);
+    bool IsTauntImmune() { return m_tauntImmune; };
+    void SetTauntImmune(bool isImmune) { m_tauntImmune = isImmune; };
 
         void SetVirtualItem(VirtualItemSlot slot, uint32 item_id);
         void SetVirtualItemRaw(VirtualItemSlot slot, uint32 display_id, uint32 info0, uint32 info1);
@@ -773,6 +775,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         float m_combatStartZ;
 
         Position m_respawnPos;
+        bool m_tauntImmune;
 
     private:
         GridReference<Creature> m_gridRef;
