@@ -43,6 +43,7 @@
 #include "Util.h"
 #include "Chat.h"
 #include "SQLStorages.h"
+#include "RaidStatsMgr.h"
 
 extern pEffect SpellEffects[TOTAL_SPELL_EFFECTS];
 
@@ -1019,6 +1020,20 @@ void Spell::DoAllEffectOnTarget(TargetInfo* target)
 
         if (real_caster)
             unitTarget->getHostileRefManager().threatAssist(real_caster, float(gain) * 0.5f * sSpellMgr.GetSpellThreatMultiplier(m_spellInfo), m_spellInfo);
+
+        if (sRaidStatsMgr.IsTrackingEnabled(RaidStatsEvent::HEAL, caster, unitTarget))
+        {
+            RaidStatsData raiddata(RaidStatsEvent::HEAL, real_caster->GetMap()->GetInstanceId(), real_caster->GetZoneId());
+            raiddata.heal.healer = caster->GetObjectGuid();
+            raiddata.heal.target = unitTarget->GetObjectGuid();
+            raiddata.heal.efficientHeal = gain;
+            raiddata.heal.rawHeal = addhealth;
+            raiddata.heal.overHeal = addhealth - gain;
+            raiddata.heal.spellId = m_spellInfo->Id;
+            raiddata.heal.isOverTime = false;
+            sRaidStatsMgr.AddRaidEvent(raiddata);
+        }
+
     }
     // Do damage and triggers
     else if (m_damage)

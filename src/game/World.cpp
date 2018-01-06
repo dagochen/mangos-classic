@@ -63,6 +63,7 @@
 #include "CharacterDatabaseCleaner.h"
 #include "CreatureLinkingMgr.h"
 #include "Weather.h"
+#include "RaidStatsMgr.h"
 
 #include <algorithm>
 #include <mutex>
@@ -1383,6 +1384,7 @@ void World::Update(uint32 diff)
     sMapMgr.Update(diff);
     sBattleGroundMgr.Update(diff);
     sLFGMgr.Update(diff);
+    sRaidStatsMgr.Update(diff);
     sOutdoorPvPMgr.Update(diff);
 
     ///- Delete all characters which have been deleted X days before

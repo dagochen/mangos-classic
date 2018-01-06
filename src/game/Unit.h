@@ -1,3 +1,6 @@
+
+
+
 /*
  * This file is part of the CMaNGOS Project. See AUTHORS file for Copyright information
  *
@@ -1886,6 +1889,13 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         void ForceHealthAndPowerUpdate();   // force server to send new value for hp and power (including max)
 
+        bool IsInBossfight() { return m_bossList.size() > 0; };
+        void AddBoss(ObjectGuid guid) { if (m_bossList.find(guid) == m_bossList.end())
+                                            m_bossList.insert(guid); }
+        void RemoveBoss(ObjectGuid guid) {
+            m_bossList.erase(guid);
+         }
+
     protected:
         explicit Unit();
 
@@ -1979,6 +1989,9 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         ObjectGuid m_TotemSlot[MAX_TOTEM_SLOT];
 
         ObjectGuid m_fixateTargetGuid;                      //< Stores the Guid of a fixated target
+        
+        using BossList = std::unordered_set<ObjectGuid>;
+        BossList m_bossList;
 
     private:                                                // Error traps for some wrong args using
         // this will catch and prevent build for any cases when all optional args skipped and instead triggered used non boolean type

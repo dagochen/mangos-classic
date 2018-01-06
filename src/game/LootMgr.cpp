@@ -27,6 +27,7 @@
 #include "SQLStorages.h"
 #include "BattleGround/BattleGroundAV.h"
 #include "ItemEnchantmentMgr.h"
+#include "RaidStatsMgr.h"
 
 INSTANTIATE_SINGLETON_1(LootMgr);
 
@@ -1575,6 +1576,34 @@ Loot::Loot(Player* player, Creature* creature, LootType type) :
             if ((creatureInfo->LootId && FillLoot(creatureInfo->LootId, LootTemplates_Creature, player, false)) || creatureInfo->MaxLootGold > 0)
             {
                 GenerateMoneyLoot(creatureInfo->MinLootGold, creatureInfo->MaxLootGold);
+                
+                if (sRaidStatsMgr.IsTrackingEnabled(RaidStatsEvent::LOOT, (Unit*)creature, (Unit*)player))
+                {
+                    RaidStatsData raiddata(RaidStatsEvent::LOOT, creature->GetMap()->GetInstanceId(), creature->GetZoneId());
+                    raiddata.lootdrop.source = creature->GetObjectGuid().GetCounter();
+                    raiddata.lootdrop.sourceType = (uint32)sRaidStatsMgr.GetRaidStatsType(creature->GetObjectGuid());
+                    raiddata.lootdrop.gold = m_gold;
+                    uint32 counter = 0;
+                    for (LootItemList::const_iterator lootItemItr = m_lootItems.begin(); lootItemItr != m_lootItems.end(); ++lootItemItr)
+                    {
+                        LootItem* item = (*lootItemItr);
+                        const ItemPrototype* itemProto = ObjectMgr::GetItemPrototype((*lootItemItr)->itemId);
+                        if (itemProto->Quality >= ITEM_QUALITY_RARE || itemProto->Class == ITEM_CLASS_QUEST)
+                        {
+                            raiddata.lootdrop.item[counter] = item->itemId;
+                            ++counter;
+                        }
+                    }
+                    if (m_gold > 0 && counter > 0)
+                    {
+                        for (uint32 i = counter; i < 10; ++i)
+                        {
+                            raiddata.lootdrop.item[i] = 0;
+                        }
+                        sRaidStatsMgr.AddRaidEvent(raiddata);
+                    }   
+                }
+
                 // loot may be anyway empty
                 if (!IsLootedForAll())      // TODO:: implement empty windows? sWorld.getConfig(CONFIG_BOOL_CORPSE_EMPTY_LOOT_SHOW))
                 {

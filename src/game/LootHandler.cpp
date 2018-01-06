@@ -26,6 +26,7 @@
 #include "LootMgr.h"
 #include "Object.h"
 #include "Group.h"
+#include "RaidStatsMgr.h"
 
 void WorldSession::HandleAutostoreLootItemOpcode(WorldPacket& recv_data)
 {
@@ -65,6 +66,23 @@ void WorldSession::HandleAutostoreLootItemOpcode(WorldPacket& recv_data)
     {
         if (Item* item = _player->GetItemByGuid(lguid))
             item->SetLootState(ITEM_LOOT_CHANGED);
+    }
+
+    if (result == EQUIP_ERR_OK)
+    {
+        if (sRaidStatsMgr.IsTrackingEnabled(RaidStatsEvent::LOOT_PICK, (Unit*)_player, (Unit*)_player) || (loot->GetLootTarget()->GetObjectGuid().IsCreature() && ((Creature*)loot->GetLootTarget())->GetCreatureInfo()->Rank == 3))
+        {
+            const ItemPrototype* itemProto = ObjectMgr::GetItemPrototype(lootItem->itemId);
+            if (itemProto->Quality >= ITEM_QUALITY_RARE || itemProto->Class == ITEM_CLASS_QUEST)
+            {
+                RaidStatsData raiddata(RaidStatsEvent::LOOT_PICK, _player->GetMap()->GetInstanceId(), _player->GetZoneId());
+                raiddata.lootpickup.item = lootItem->itemId;
+                raiddata.lootpickup.looter = _player->GetObjectGuid().GetCounter();
+                raiddata.lootpickup.source = loot->GetLootTarget()->GetObjectGuid().GetCounter();
+                raiddata.lootpickup.sourceType = (uint32)sRaidStatsMgr.GetRaidStatsType(loot->GetLootTarget()->GetObjectGuid());
+                sRaidStatsMgr.AddRaidEvent(raiddata);
+            }
+        }
     }
 }
 

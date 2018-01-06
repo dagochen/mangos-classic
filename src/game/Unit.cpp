@@ -46,6 +46,7 @@
 #include "movement/MoveSplineInit.h"
 #include "movement/MoveSpline.h"
 #include "CreatureLinkingMgr.h"
+#include "RaidStatsMgr.h"
 
 #include <math.h>
 
@@ -746,6 +747,16 @@ uint32 Unit::DealDamage(Unit* pVictim, uint32 damage, CleanDamage const* cleanDa
                 group_tap->RewardGroupAtKill(pVictim, player_tap);
             else if (player_tap)
                 player_tap->RewardSinglePlayerAtKill(pVictim);
+        }
+
+        if (sRaidStatsMgr.IsTrackingEnabled(RaidStatsEvent::KILL, pVictim, this))
+        {
+            RaidStatsData raiddata(RaidStatsEvent::KILL, GetMap()->GetInstanceId(), GetZoneId());
+            raiddata.kill.killer = sRaidStatsMgr.GetId(this);
+            raiddata.kill.killerType = (uint32)sRaidStatsMgr.GetRaidStatsType(this);
+            raiddata.kill.victim = sRaidStatsMgr.GetId(pVictim);
+            raiddata.kill.victimType = (uint32)sRaidStatsMgr.GetRaidStatsType(pVictim);
+            sRaidStatsMgr.AddRaidEvent(raiddata);
         }
 
         // stop combat
@@ -5155,6 +5166,24 @@ void Unit::SendSpellNonMeleeDamageLog(SpellNonMeleeDamage* log)
     data << uint32(log->HitInfo);
     data << uint8(0);                                       // flag to use extend data
     SendMessageToSet(&data, true);
+
+    if (sRaidStatsMgr.IsTrackingEnabled(RaidStatsEvent::SPELL, log->attacker, log->target))
+    {
+        RaidStatsData raiddata(RaidStatsEvent::SPELL, log->attacker->GetMap()->GetInstanceId(), log->attacker->GetZoneId());
+        raiddata.spells.caster = log->attacker->GetObjectGuid();
+        raiddata.spells.target = log->target->GetObjectGuid();
+        raiddata.spells.damage = log->damage;
+        raiddata.spells.hitresult = log->HitInfo;
+        raiddata.spells.missInfo = 0;
+        raiddata.spells.resist = log->resist;
+        raiddata.spells.absorb = log->absorb;
+        raiddata.spells.blocked = log->blocked;
+        raiddata.spells.spellId = log->SpellID;
+        raiddata.spells.school = log->school;
+        raiddata.spells.resistance = GetSpellResistChance(log->target, SpellSchoolMask(log->school), log->target->GetObjectGuid().IsCreature()) * getLevel() / 0.15f;
+        raiddata.spells.isOverTime = false;
+        sRaidStatsMgr.AddRaidEvent(raiddata);
+    }
 }
 
 void Unit::SendSpellNonMeleeDamageLog(Unit* target, uint32 SpellID, uint32 Damage, SpellSchoolMask damageSchoolMask, uint32 AbsorbedDamage, uint32 Resist, bool PhysicalDamage, uint32 Blocked, bool CriticalHit)
@@ -5236,6 +5265,24 @@ void Unit::SendSpellMiss(Unit* target, uint32 spellID, SpellMissInfo missInfo)
     data << uint8(missInfo);
     // end loop
     SendMessageToSet(&data, true);
+
+    if (sRaidStatsMgr.IsTrackingEnabled(RaidStatsEvent::SPELL, this, target))
+    {
+        RaidStatsData raiddata(RaidStatsEvent::SPELL, GetMap()->GetInstanceId(), GetZoneId());
+        raiddata.spells.caster = GetObjectGuid();
+        raiddata.spells.target = target->GetObjectGuid();
+        raiddata.spells.missInfo = uint32(missInfo);
+        raiddata.spells.spellId = spellID;
+        raiddata.spells.damage = 0;
+        raiddata.spells.hitresult = 0;
+        raiddata.spells.resist = 0;
+        raiddata.spells.absorb = 0;
+        raiddata.spells.blocked = 0;
+        raiddata.spells.school = sSpellStore.LookupEntry(spellID)->School;
+        raiddata.spells.resistance = GetSpellResistChance(target, SpellSchoolMask(sSpellStore.LookupEntry(spellID)->School), target->GetObjectGuid().IsCreature()) * getLevel() / 0.15f;
+        raiddata.spells.isOverTime = false;
+        sRaidStatsMgr.AddRaidEvent(raiddata);
+    }
 }
 
 void Unit::SendAttackStateUpdate(CalcDamageInfo* damageInfo)
@@ -5269,6 +5316,18 @@ void Unit::SendAttackStateUpdate(CalcDamageInfo* damageInfo)
     data << uint32(damageInfo->blocked_amount);
 
     SendMessageToSet(&data, true);
+
+    if (sRaidStatsMgr.IsTrackingEnabled(RaidStatsEvent::AUTOATTACK, damageInfo->attacker, damageInfo->target))
+    {
+        RaidStatsData raiddata(RaidStatsEvent::AUTOATTACK, damageInfo->attacker->GetMap()->GetInstanceId(), damageInfo->attacker->GetZoneId());
+        raiddata.autoattack.attacker = damageInfo->attacker->GetObjectGuid();
+        raiddata.autoattack.target = damageInfo->target->GetObjectGuid();
+        raiddata.autoattack.attackType = damageInfo->attackType;
+        raiddata.autoattack.damage = damageInfo->totalDamage;
+        raiddata.autoattack.hitoutcome = damageInfo->hitOutCome;
+
+        sRaidStatsMgr.AddRaidEvent(raiddata);
+    }
 }
 
 void Unit::SendAttackStateUpdate(uint32 HitInfo, Unit* target, SpellSchoolMask damageSchoolMask, uint32 Damage, uint32 AbsorbDamage, uint32 Resist, VictimState TargetState, uint32 BlockedAmount)
@@ -7121,6 +7180,20 @@ void Unit::SetInCombatState(bool PvP, Unit* enemy)
 
         if (m_isCreatureLinkingTrigger)
             GetMap()->GetCreatureLinkingHolder()->DoCreatureLinkingEvent(LINKING_EVENT_AGGRO, pCreature, enemy);
+    
+
+        if (sRaidStatsMgr.IsTrackingEnabled(RaidStatsEvent::COMBAT_START, this, enemy))
+        {
+            RaidStatsData raiddata(RaidStatsEvent::COMBAT_START, GetMap()->GetInstanceId(), GetZoneId());
+            raiddata.combatStart.attacker = GetObjectGuid();
+            raiddata.combatStart.victim = enemy->GetObjectGuid();
+            sRaidStatsMgr.AddRaidEvent(raiddata);
+        }
+    }
+
+    if (enemy && enemy->GetObjectGuid().IsCreature() && ((Creature*)enemy)->GetCreatureInfo()->Rank == 3)
+    {
+        AddBoss(enemy->GetObjectGuid());
     }
 }
 
@@ -7140,6 +7213,22 @@ void Unit::ClearInCombat()
             SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
 
         clearUnitState(UNIT_STAT_ATTACK_PLAYER);
+    }
+
+    if (sRaidStatsMgr.IsTrackingEnabled(RaidStatsEvent::COMBAT_STOP, this, this))
+    {
+        for each (ObjectGuid boss in m_bossList)
+        {
+            RaidStatsData raiddata(RaidStatsEvent::COMBAT_STOP, GetMap()->GetInstanceId(), GetZoneId());
+            raiddata.combatStop.bossGuid = boss.GetCounter();
+            raiddata.combatStop.playerGuid = GetObjectGuid().GetCounter();
+            sRaidStatsMgr.AddRaidEvent(raiddata);
+        }
+    }
+
+    if (!m_bossList.empty())
+    {
+        m_bossList.clear();
     }
 }
 
@@ -7840,6 +7929,13 @@ void Unit::TauntFadeOut(Unit* taunter)
         if (InstanceData* mapInstance = GetInstanceData())
             mapInstance->OnCreatureEvade((Creature*)this);
 
+        if (sRaidStatsMgr.IsTrackingEnabled(RaidStatsEvent::EVADE, this, this))
+        {
+            RaidStatsData raiddata(RaidStatsEvent::EVADE, GetMap()->GetInstanceId(), GetZoneId());
+            raiddata.evade.unit = GetObjectGuid();
+            sRaidStatsMgr.AddRaidEvent(raiddata);
+        }
+
         if (m_isCreatureLinkingTrigger)
             GetMap()->GetCreatureLinkingHolder()->DoCreatureLinkingEvent(LINKING_EVENT_EVADE, (Creature*)this);
 
@@ -7959,6 +8055,13 @@ bool Unit::SelectHostileTarget()
                     // only one target in list, we have to evade after timer
                     // TODO: make timer - inside Creature class
                     ((Creature*)this)->AI()->EnterEvadeMode();
+
+                    if (sRaidStatsMgr.IsTrackingEnabled(RaidStatsEvent::EVADE, this, this))
+                    {
+                        RaidStatsData raiddata(RaidStatsEvent::EVADE, GetMap()->GetInstanceId(), GetZoneId());
+                        raiddata.evade.unit = GetObjectGuid();
+                        sRaidStatsMgr.AddRaidEvent(raiddata);
+                    }
                 }
                 else
                 {
@@ -7999,6 +8102,13 @@ bool Unit::SelectHostileTarget()
 
     if (InstanceData* mapInstance = GetInstanceData())
         mapInstance->OnCreatureEvade((Creature*)this);
+
+    if (sRaidStatsMgr.IsTrackingEnabled(RaidStatsEvent::EVADE, this, this))
+    {
+        RaidStatsData raiddata(RaidStatsEvent::EVADE, GetMap()->GetInstanceId(), GetZoneId());
+        raiddata.evade.unit = sRaidStatsMgr.GetId(this);
+        sRaidStatsMgr.AddRaidEvent(raiddata);
+    }
 
     if (m_isCreatureLinkingTrigger)
         GetMap()->GetCreatureLinkingHolder()->DoCreatureLinkingEvent(LINKING_EVENT_EVADE, (Creature*)this);

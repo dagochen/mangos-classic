@@ -46,6 +46,7 @@
 #include "Language.h"
 #include "MapManager.h"
 #include "LootMgr.h"
+#include "RaidStatsMgr.h"
 
 #define NULL_AURA_SLOT 0xFF
 
@@ -4448,6 +4449,24 @@ void Aura::PeriodicTick()
             pCaster->ProcDamageAndSpell(target, procAttacker, procVictim, PROC_EX_NORMAL_HIT, pdamage, BASE_ATTACK, spellProto);
 
             pCaster->DealDamage(target, pdamage, &cleanDamage, DOT, GetSpellSchoolMask(spellProto), spellProto, true);
+            
+            if (sRaidStatsMgr.IsTrackingEnabled(RaidStatsEvent::SPELL, pCaster, target))
+            {
+                RaidStatsData raiddata(RaidStatsEvent::SPELL, pCaster->GetMap()->GetInstanceId(), pCaster->GetZoneId());
+                raiddata.spells.caster = pCaster->GetObjectGuid();
+                raiddata.spells.target = target->GetObjectGuid();
+                raiddata.spells.damage = pdamage;
+                raiddata.spells.hitresult = 0;
+                raiddata.spells.missInfo = 0;
+                raiddata.spells.resist = resist;
+                raiddata.spells.absorb = absorb;
+                raiddata.spells.blocked = 0;
+                raiddata.spells.spellId = spellProto->Id;
+                raiddata.spells.school = spellProto->School;
+                raiddata.spells.resistance = pCaster->GetSpellResistChance(target, SpellSchoolMask(spellProto->School), target->GetObjectGuid().IsCreature()) * pCaster->getLevel() / 0.15f;
+                raiddata.spells.isOverTime = true;
+                sRaidStatsMgr.AddRaidEvent(raiddata);
+            }
             break;
         }
         case SPELL_AURA_PERIODIC_LEECH:
@@ -4597,6 +4616,19 @@ void Aura::PeriodicTick()
                     CleanDamage cleanDamage =  CleanDamage(0, BASE_ATTACK, MELEE_HIT_NORMAL);
                     pCaster->DealDamage(pCaster, damage, &cleanDamage, NODAMAGE, GetSpellSchoolMask(spellProto), spellProto, true);
                 }
+            }
+            
+            if (sRaidStatsMgr.IsTrackingEnabled(RaidStatsEvent::HEAL, pCaster, target))
+            {
+                RaidStatsData raiddata(RaidStatsEvent::HEAL, pCaster->GetMap()->GetInstanceId(), pCaster->GetZoneId());
+                raiddata.heal.healer = pCaster->GetObjectGuid();
+                raiddata.heal.target = target->GetObjectGuid();
+                raiddata.heal.efficientHeal = gain;
+                raiddata.heal.rawHeal = pdamage;
+                raiddata.heal.overHeal = pdamage - gain;
+                raiddata.heal.spellId =  spellProto->Id;
+                raiddata.heal.isOverTime = true;
+                sRaidStatsMgr.AddRaidEvent(raiddata);
             }
             break;
         }

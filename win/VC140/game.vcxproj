@@ -447,6 +447,7 @@
     <ClCompile Include="..\..\src\game\QueryHandler.cpp" />
     <ClCompile Include="..\..\src\game\QuestDef.cpp" />
     <ClCompile Include="..\..\src\game\QuestHandler.cpp" />
+    <ClCompile Include="..\..\src\game\RaidStatsMgr.cpp" />
     <ClCompile Include="..\..\src\game\RandomMovementGenerator.cpp" />
     <ClCompile Include="..\..\src\game\ReactorAI.cpp" />
     <ClCompile Include="..\..\src\game\ReputationMgr.cpp" />
@@ -593,6 +594,7 @@
     <ClInclude Include="..\..\src\game\PointMovementGenerator.h" />
     <ClInclude Include="..\..\src\game\PoolManager.h" />
     <ClInclude Include="..\..\src\game\QuestDef.h" />
+    <ClInclude Include="..\..\src\game\RaidStatsMgr.h" />
     <ClInclude Include="..\..\src\game\RandomMovementGenerator.h" />
     <ClInclude Include="..\..\src\game\ReactorAI.h" />
     <ClInclude Include="..\..\src\game\ReputationMgr.h" />
