@@ -4550,6 +4550,22 @@ bool ChatHandler::HandleTeleDelCommand(char* args)
     return true;
 }
 
+bool ChatHandler::HandleIsInBossFightCommand(char* /*args*/)
+{
+    Unit* unit = getSelectedUnit();
+   
+    if (unit->IsInBossfight())
+    {
+        SendSysMessage("Infight");
+    }
+    else
+    {
+        SendSysMessage("Outfight");
+    }
+
+    return true;
+};
+
 
 bool ChatHandler::HandleIsTaxiFlyingCommand(char* /*args*/)
 {
@@ -4557,11 +4573,11 @@ bool ChatHandler::HandleIsTaxiFlyingCommand(char* /*args*/)
 
     if (unit->IsTaxiFlying())
     {
-        SendSysMessage("IsTaxiFlying()");
+        SendSysMessage("Infight");
     }
     else
     {
-        SendSysMessage("!IsTaxiFlying()");
+        SendSysMessage("Outfight");
     }
 
     return true;

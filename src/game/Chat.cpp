@@ -777,6 +777,7 @@ ChatCommand* ChatHandler::getCommandTable()
         { "joinbg",         SEC_PLAYER,         false, &ChatHandler::HandleJoinBGQueue,               "", nullptr },
         { "charstats",      SEC_PLAYER,         false, &ChatHandler::HandlePlayerStatsCommand,        "", nullptr },
         { "resistmode",     SEC_GAMEMASTER,     false, &ChatHandler::HandleResistanceModeCommand,        "", nullptr },
+        { "bossfight",      SEC_PLAYER,         false, &ChatHandler::HandleIsInBossFightCommand,        "", nullptr },
         { "taxiflight",     SEC_PLAYER,         false, &ChatHandler::HandleIsTaxiFlyingCommand,        "", nullptr },
         { nullptr,          0,                  false, nullptr,                                        "", nullptr }
     };
