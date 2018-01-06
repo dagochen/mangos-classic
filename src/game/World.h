@@ -441,7 +441,11 @@ class World
         uint32 GetUptime() const { return uint32(m_gameTime - m_startTime); }
 
         tm* GetLocalTimeByTime(time_t now) const { return localtime(&now); }
-        uint32 GetDateByLocalTime(tm* now) const { return ((uint32)(now->tm_year << 16) | (uint32)(now->tm_yday)); }
+        uint32 GetDateByLocalTime(tm* now) const {
+            uint32 leapYearCount = (now->tm_year) / 4;
+            uint32 normalYearCount = now->tm_year - leapYearCount;
+            
+         return ((uint32)((leapYearCount *366)+(normalYearCount *365) | (uint32)(now->tm_yday))); }
         uint32 GetDateToday() const {   return GetDateByLocalTime(GetLocalTimeByTime(m_gameTime)); }
         uint32 GetDateThisWeekBegin() const {   return GetDateToday() - GetLocalTimeByTime(m_gameTime)->tm_wday; }
         uint32 GetDateLastMaintenanceDay() const
