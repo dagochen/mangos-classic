@@ -246,6 +246,7 @@ class MANGOS_DLL_SPEC ChatHandler
         bool HandleGameObjectPhaseCommand(char* args);
         bool HandleGameObjectTargetCommand(char* args);
         bool HandleGameObjectTurnCommand(char* args);
+        bool HandleGameObjectPushCommand(char * args);
 
         bool HandleGMCommand(char* args);
         bool HandleGMChatCommand(char* args);

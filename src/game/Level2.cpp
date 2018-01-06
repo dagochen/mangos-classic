@@ -974,6 +974,69 @@ bool ChatHandler::HandleGameObjectTurnCommand(char* args)
 }
 
 // move selected object
+bool ChatHandler::HandleGameObjectPushCommand(char* args)
+{
+    // number or [name] Shift-click form |color|Hgameobject:go_guid|h[name]|h|r
+    uint32 lowguid;
+    if (!ExtractUint32KeyFromLink(&args, "Hgameobject", lowguid))
+        return false;
+
+    if (!lowguid)
+        return false;
+
+    GameObject* obj = nullptr;
+
+    // by DB guid
+    if (GameObjectData const* go_data = sObjectMgr.GetGOData(lowguid))
+        obj = GetGameObjectWithGuid(lowguid, go_data->id);
+
+    if (!obj)
+    {
+        PSendSysMessage(LANG_COMMAND_OBJNOTFOUND, lowguid);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+   
+    float x;
+    if (!ExtractFloat(&args, x))
+        return false;
+
+    float y;
+    if (!ExtractFloat(&args, y))
+        return false;
+
+    float z;
+    if (!ExtractFloat(&args, z))
+        return false;
+
+    if (!MapManager::IsValidMapCoord(obj->GetMapId(), obj->GetPositionX() + x, obj->GetPositionY() + y, obj->GetPositionZ() + z))
+    {
+        PSendSysMessage(LANG_INVALID_TARGET_COORD, obj->GetPositionX() + x, obj->GetPositionY() + y, obj->GetMapId());
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+        Map* map = obj->GetMap();
+        map->Remove(obj, false);
+
+        obj->Relocate(obj->GetPositionX()+ x, obj->GetPositionY() + y, obj->GetPositionZ() + z, obj->GetOrientation());
+        obj->SetFloatValue(GAMEOBJECT_POS_X, obj->GetPositionX() + x);
+        obj->SetFloatValue(GAMEOBJECT_POS_Y, obj->GetPositionY() + y);
+        obj->SetFloatValue(GAMEOBJECT_POS_Z, obj->GetPositionZ() + z);
+
+        map->Add(obj);
+    
+
+    obj->SaveToDB();
+    obj->Refresh();
+
+    PSendSysMessage(LANG_COMMAND_MOVEOBJMESSAGE, obj->GetGUIDLow(), obj->GetGOInfo()->name, obj->GetGUIDLow());
+
+    return true;
+}
+
+// move selected object
 bool ChatHandler::HandleGameObjectMoveCommand(char* args)
 {
     // number or [name] Shift-click form |color|Hgameobject:go_guid|h[name]|h|r
