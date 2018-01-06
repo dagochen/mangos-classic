@@ -89,3 +89,5 @@ cmake_install.cmake
 
 # recastnavigation directory needs exception
 !dep/recastnavigation/RecastDemo/Build/
+win/mangosdVC140.VC.db
+win/VC140/mangosd.vcxproj
