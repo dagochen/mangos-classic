@@ -35,6 +35,7 @@
 #include "Mail.h"
 #include "Util.h"
 #include "SpellMgr.h"
+#include "RaidStatsMgr.h"
 #ifdef _DEBUG_VMAPS
 #include "VMapFactory.h"
 #endif
@@ -2146,6 +2147,237 @@ bool ChatHandler::HandleSetViewCommand(char* /*args*/)
         SetSentErrorMessage(true);
         return false;
     }
+
+    return true;
+}
+
+bool ChatHandler::HandleRaidstatsAllCommand(char* args)
+{
+    bool value;
+    if (!ExtractOnOff(&args, value))
+    {
+        SendSysMessage(LANG_USE_BOL);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (value)
+    {
+        sRaidStatsMgr.SetAutoattack(true);
+        sRaidStatsMgr.SetSpell(true);
+        sRaidStatsMgr.SetHeal(true);
+        sRaidStatsMgr.SetCombat(true);
+        sRaidStatsMgr.SetEvade(true);
+        sRaidStatsMgr.SetLootpick(true);
+        sRaidStatsMgr.SetLoot(true);
+        sRaidStatsMgr.SetKill(true);
+        PSendSysMessage(LANG_RAIDSTATS_ALL_ON);
+    }
+    else
+    {
+        sRaidStatsMgr.SetAutoattack(false);
+        sRaidStatsMgr.SetSpell(false);
+        sRaidStatsMgr.SetHeal(false);
+        sRaidStatsMgr.SetCombat(false);
+        sRaidStatsMgr.SetEvade(false);
+        sRaidStatsMgr.SetLootpick(false);
+        sRaidStatsMgr.SetLoot(false);
+        sRaidStatsMgr.SetKill(false);
+        PSendSysMessage(LANG_RAIDSTATS_ALL_OFF);
+    }
+
+    return true;
+}
+
+bool ChatHandler::HandleRaidstatsAutoattackCommand(char* args)
+{
+    bool value;
+    if (!ExtractOnOff(&args, value))
+    {
+        SendSysMessage(LANG_USE_BOL);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (value)
+    {
+        sRaidStatsMgr.SetAutoattack(true);
+        PSendSysMessage(LANG_RAIDSTATS_AUTOATTACK_ON);
+    }
+    else
+    {
+        sRaidStatsMgr.SetAutoattack(false);
+        PSendSysMessage(LANG_RAIDSTATS_AUTOATTACK_OFF);
+    }
+
+    return true;
+}
+
+bool ChatHandler::HandleRaidstatsSpellCommand(char* args)
+{
+    bool value;
+    if (!ExtractOnOff(&args, value))
+    {
+        SendSysMessage(LANG_USE_BOL);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (value)
+    {
+        sRaidStatsMgr.SetSpell(true);
+        PSendSysMessage(LANG_RAIDSTATS_SPELL_ON);
+    }
+    else
+    {
+        sRaidStatsMgr.SetSpell(false);
+        PSendSysMessage(LANG_RAIDSTATS_SPELL_OFF);
+    }
+
+    return true;
+}
+
+bool ChatHandler::HandleRaidstatsHealCommand(char* args)
+{
+    bool value;
+    if (!ExtractOnOff(&args, value))
+    {
+        SendSysMessage(LANG_USE_BOL);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (value)
+    {
+        sRaidStatsMgr.SetHeal(true);
+        PSendSysMessage(LANG_RAIDSTATS_HEAL_ON);
+    }
+    else
+    {
+        sRaidStatsMgr.SetHeal(false);
+        PSendSysMessage(LANG_RAIDSTATS_HEAL_OFF);
+    }
+
+    return true;
+}
+
+bool ChatHandler::HandleRaidstatsEvadeCommand(char* args)
+{
+    bool value;
+    if (!ExtractOnOff(&args, value))
+    {
+        SendSysMessage(LANG_USE_BOL);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (value)
+    {
+        sRaidStatsMgr.SetEvade(true);
+        PSendSysMessage(LANG_RAIDSTATS_EVADE_ON);
+    }
+    else
+    {
+        sRaidStatsMgr.SetEvade(false);
+        PSendSysMessage(LANG_RAIDSTATS_EVADE_OFF);
+    }
+
+    return true;
+}
+
+bool ChatHandler::HandleRaidstatsKillCommand(char* args)
+{
+    bool value;
+    if (!ExtractOnOff(&args, value))
+    {
+        SendSysMessage(LANG_USE_BOL);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (value)
+    {
+        sRaidStatsMgr.SetKill(true);
+        PSendSysMessage(LANG_RAIDSTATS_KILL_ON);
+    }
+    else
+    {
+        sRaidStatsMgr.SetKill(false);
+        PSendSysMessage(LANG_RAIDSTATS_KILL_OFF);
+    }
+
+    return true;
+}
+
+bool ChatHandler::HandleRaidstatsLootpickCommand(char* args)
+{
+    bool value;
+    if (!ExtractOnOff(&args, value))
+    {
+        SendSysMessage(LANG_USE_BOL);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (value)
+    {
+        sRaidStatsMgr.SetLootpick(true);
+        PSendSysMessage(LANG_RAIDSTATS_LOOTPICK_ON);
+    }
+    else
+    {
+        sRaidStatsMgr.SetLootpick(false);
+        PSendSysMessage(LANG_RAIDSTATS_LOOTPICK_OFF);
+    }
+
+    return true;
+}
+
+bool ChatHandler::HandleRaidstatsLootCommand(char* args)
+{
+    bool value;
+    if (!ExtractOnOff(&args, value))
+    {
+        SendSysMessage(LANG_USE_BOL);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (value)
+    {
+        sRaidStatsMgr.SetLoot(true);
+        PSendSysMessage(LANG_RAIDSTATS_LOOT_ON);
+    }
+    else
+    {
+        sRaidStatsMgr.SetLoot(false);
+        PSendSysMessage(LANG_RAIDSTATS_LOOT_OFF);
+    }
+
+    return true;
+}
+
+bool ChatHandler::HandleRaidstatsCombatCommand(char* args)
+{
+    bool value;
+    if (!ExtractOnOff(&args, value))
+    {
+        SendSysMessage(LANG_USE_BOL);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (value)
+    {
+        sRaidStatsMgr.SetCombat(true);
+        PSendSysMessage(LANG_RAIDSTATS_COMBAT_ON);
+    }
+    else
+    {
+        sRaidStatsMgr.SetCombat(false);
+        PSendSysMessage(LANG_RAIDSTATS_COMBAT_OFF);
+    }
+
 
     return true;
 }

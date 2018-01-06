@@ -543,6 +543,17 @@ class MANGOS_DLL_SPEC ChatHandler
         bool HandleModifyDrunkCommand(char* args);
         bool HandleSetViewCommand(char* args);
 
+        bool HandleRaidstatsAllCommand(char * args);
+        bool HandleRaidstatsAutoattackCommand(char * args);
+        bool HandleRaidstatsSpellCommand(char * args);
+        bool HandleRaidstatsHealCommand(char * args);
+        bool HandleRaidstatsEvadeCommand(char * args);
+        bool HandleRaidstatsLootCommand(char * args);
+        bool HandleRaidstatsLootpickCommand(char * args);
+        bool HandleRaidstatsKillCommand(char * args);
+        bool HandleRaidstatsCombatCommand(char * args);
+
+
         bool HandleLoadScriptsCommand(char* args);
 
         bool HandleGUIDCommand(char* args);

@@ -683,6 +683,20 @@ ChatCommand* ChatHandler::getCommandTable()
         { nullptr,          0,                  false, nullptr,                                        "", nullptr }
     };
 
+    static ChatCommand raidstatsCommandTable[] =
+    {
+        { "all",            SEC_GAMEMASTER,     false, &ChatHandler::HandleRaidstatsAllCommand, "", nullptr },
+        { "autoattack",     SEC_GAMEMASTER,     false, &ChatHandler::HandleRaidstatsAutoattackCommand, "", nullptr },
+        { "spell",          SEC_GAMEMASTER,     false, &ChatHandler::HandleRaidstatsSpellCommand,      "", nullptr },
+        { "heal",           SEC_GAMEMASTER,     false, &ChatHandler::HandleRaidstatsHealCommand,       "", nullptr },
+        { "kill",           SEC_GAMEMASTER,     false, &ChatHandler::HandleRaidstatsKillCommand,       "", nullptr },
+        { "evade",          SEC_GAMEMASTER,     false, &ChatHandler::HandleRaidstatsEvadeCommand,      "", nullptr },
+        { "combat",         SEC_GAMEMASTER,     false, &ChatHandler::HandleRaidstatsCombatCommand,     "", nullptr },
+        { "loot",           SEC_GAMEMASTER,     false, &ChatHandler::HandleRaidstatsLootCommand,       "", nullptr },
+        { "lootpick",       SEC_GAMEMASTER,     false, &ChatHandler::HandleRaidstatsLootpickCommand,   "", nullptr },
+        { nullptr,          0,                  false, nullptr,                                        "", nullptr }
+    };
+
     static ChatCommand commandTable[] =
     {
         { "account",        SEC_PLAYER,         true,  nullptr,                                           "", accountCommandTable  },
@@ -712,7 +726,7 @@ ChatCommand* ChatHandler::getCommandTable()
         { "tele",           SEC_MODERATOR,      true,  nullptr,                                           "", teleCommandTable     },
         { "trigger",        SEC_GAMEMASTER,     false, nullptr,                                           "", triggerCommandTable  },
         { "wp",             SEC_GAMEMASTER,     false, nullptr,                                           "", wpCommandTable       },
-
+        { "raidstats",      SEC_GAMEMASTER,     false, nullptr,                                           "", raidstatsCommandTable },
         { "aura",           SEC_ADMINISTRATOR,  false, &ChatHandler::HandleAuraCommand,                "", nullptr },
         { "unaura",         SEC_ADMINISTRATOR,  false, &ChatHandler::HandleUnAuraCommand,              "", nullptr },
         { "announce",       SEC_MODERATOR,      true,  &ChatHandler::HandleAnnounceCommand,            "", nullptr },
