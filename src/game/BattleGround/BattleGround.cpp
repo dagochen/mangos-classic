@@ -732,7 +732,7 @@ void BattleGround::EndBattleGround(Team winner)
 
         SqlStatement stmt = CharacterDatabase.CreateStatement(insPvPstatsBattleground, "INSERT INTO pvpstats_battlegrounds (id, winner_team, bracket_id, type, duration, date) VALUES (?, ?, ?, ?, ?, NOW())");
 
-        uint8 battleground_bracket = GetMinLevel() / 10;
+        uint8 battleground_bracket = GetBracketId() + 1;
         uint8 battleground_type = (uint8)GetTypeID();
         uint64 duration = m_StartTime / 1000;
         // query next id
@@ -791,7 +791,7 @@ void BattleGround::EndBattleGround(Team winner)
         {
             static SqlStatementID insPvPstatsPlayer;
             BattleGroundScoreMap::iterator score = m_PlayerScores.find(itr->first);
-            SqlStatement stmt = CharacterDatabase.CreateStatement(insPvPstatsPlayer, "INSERT INTO pvpstats_players (battleground_id, character_guid, score_killing_blows, score_deaths, score_honorable_kills, score_bonus_honor, score_damage_done, score_healing_done) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            SqlStatement stmt = CharacterDatabase.CreateStatement(insPvPstatsPlayer, "INSERT INTO pvpstats_players (battleground_id, character_guid, score_killing_blows, score_deaths, score_honorable_kills, score_bonus_honor, score_damage_done, score_healing_done, attr_1, attr_2, attr_3, attr_4, attr_5, attr_6, attr_7) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
             stmt.addUInt32(battleground_id);
             stmt.addUInt32(plr->GetGUIDLow());
@@ -806,6 +806,8 @@ void BattleGround::EndBattleGround(Team winner)
             stmt.addUInt32(score->second->GetAttr3());
             stmt.addUInt32(score->second->GetAttr4());
             stmt.addUInt32(score->second->GetAttr5());
+            stmt.addUInt32(score->second->GetAttr6());
+            stmt.addUInt32(score->second->GetAttr7());
 
             stmt.Execute();
         }

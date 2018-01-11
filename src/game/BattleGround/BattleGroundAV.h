@@ -347,6 +347,8 @@ class BattleGroundAVScore : public BattleGroundScore
         uint32 GetAttr3() const { return TowersAssaulted; }
         uint32 GetAttr4() const { return TowersDefended; }
         uint32 GetAttr5() const { return SecondaryObjectives; }
+        uint32 GetAttr6() const { return OfficerCount; }
+        uint32 GetAttr7() const { return MineCount; }
 
         uint32 GraveyardsAssaulted;
         uint32 GraveyardsDefended;

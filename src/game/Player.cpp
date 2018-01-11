@@ -17522,37 +17522,50 @@ bool Player::GetBGAccessByLevel(BattleGroundTypeId bgTypeId) const
 
 uint32 Player::GetMinLevelForBattleGroundBracketId(BattleGroundBracketId bracket_id, BattleGroundTypeId bgTypeId)
 {
-    if (bracket_id < 1)
-        return 0;
-
-    if (bracket_id > BG_BRACKET_ID_LAST)
-        bracket_id = BG_BRACKET_ID_LAST;
-
     BattleGround* bg = sBattleGroundMgr.GetBattleGroundTemplate(bgTypeId);
     assert(bg);
-    return 10 * bracket_id + bg->GetMinLevel();
+ 
+    switch (bgTypeId)
+    {
+        case BATTLEGROUND_AV:
+            return bg->GetMinLevel(); // there is only one bracket!
+        case BATTLEGROUND_WS:
+            return ((1 + bracket_id) * 10);
+        case BATTLEGROUND_AB:
+            return ((1 + bracket_id) * 10);
+    }
 }
 
 uint32 Player::GetMaxLevelForBattleGroundBracketId(BattleGroundBracketId bracket_id, BattleGroundTypeId bgTypeId)
 {
-    if (bracket_id >= BG_BRACKET_ID_LAST)
-        return 255;                                         // hardcoded max level
 
-    return GetMinLevelForBattleGroundBracketId(bracket_id, bgTypeId) + 10;
+    BattleGround* bg = sBattleGroundMgr.GetBattleGroundTemplate(bgTypeId);
+    assert(bg);
+
+    switch (bgTypeId)
+    {
+    case BATTLEGROUND_AV:
+        return bg->GetMaxLevel(); // there is only one bracket!
+    case BATTLEGROUND_WS:
+        return (bracket_id == 5) ? 60 : ((1 + bracket_id) * 10 + 9);
+    case BATTLEGROUND_AB:
+        return (bracket_id == 5) ? 60 : ((1 + bracket_id) * 10 + 9);
+    }
 }
 
 BattleGroundBracketId Player::GetBattleGroundBracketIdFromLevel(BattleGroundTypeId bgTypeId) const
 {
     BattleGround* bg = sBattleGroundMgr.GetBattleGroundTemplate(bgTypeId);
     assert(bg);
-    if (getLevel() < bg->GetMinLevel())
-        return BG_BRACKET_ID_FIRST;
-
-    uint32 bracket_id = (getLevel() - bg->GetMinLevel()) / 10;
-    if (bracket_id > MAX_BATTLEGROUND_BRACKETS)
-        return BG_BRACKET_ID_LAST;
-
-    return BattleGroundBracketId(bracket_id);
+    
+    switch (bgTypeId)
+    {
+        case 1:
+            return BattleGroundBracketId(5);
+        case 2:
+        case 3:
+            return BattleGroundBracketId(getLevel() / 10 - 1);
+    }
 }
 
 float Player::GetReputationPriceDiscount(Creature const* pCreature) const
