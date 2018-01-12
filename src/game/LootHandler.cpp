@@ -70,7 +70,7 @@ void WorldSession::HandleAutostoreLootItemOpcode(WorldPacket& recv_data)
 
     if (result == EQUIP_ERR_OK)
     {
-        if (sRaidStatsMgr.IsTrackingEnabled(RaidStatsEvent::LOOT_PICK, (Unit*)_player, (Unit*)_player) || (loot->GetLootTarget()->GetObjectGuid().IsCreature() && ((Creature*)loot->GetLootTarget())->GetCreatureInfo()->Rank == 3))
+        if (sRaidStatsMgr.IsTrackingEnabled(RaidStatsEvent::LOOT_PICK, (Unit*)_player, (Unit*)_player) || (loot->GetLootTarget() && loot->GetLootTarget()->GetObjectGuid().IsCreature() && ((Creature*)loot->GetLootTarget())->GetCreatureInfo()->Rank == 3))
         {
             const ItemPrototype* itemProto = ObjectMgr::GetItemPrototype(lootItem->itemId);
             if (itemProto->Quality >= ITEM_QUALITY_RARE || itemProto->Class == ITEM_CLASS_QUEST)
