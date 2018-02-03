@@ -1080,6 +1080,19 @@ enum MangosStrings
     LANG_BATTLECOM_DESERTER             = 1740,
     LANG_BATTLECOM_IN_QUEUE             = 1741,
     LANG_BATTLECOM_COOLDOWN             = 1742,
+
+    LANG_TIMING_MASSMAIL                = 1750,
+    LANG_TIMING_AUCTION                 = 1751,
+    LANG_TIMING_SESSION                 = 1752,
+    LANG_TIMING_MAPMANAGER              = 1753,
+    LANG_TIMING_BGMANAGER               = 1754,
+    LANG_TIMING_LFGMANAGER              = 1755,
+    LANG_TIMING_RSMANAGER               = 1756,
+    LANG_TIMING_OUTDOORPVP              = 1757,
+    LANG_TIMING_SQLQUEUE                = 1758,
+    LANG_TIMING_REMOVING                = 1759,
+    LANG_TIMING_GRIDS                   = 1760, 
+
     // Use for not-in-official-sources patches
     //                                    10000-10999
 

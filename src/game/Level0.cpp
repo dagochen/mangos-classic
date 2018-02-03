@@ -392,3 +392,31 @@ bool ChatHandler::HandleJoinBGQueue(char* args)
     return true;
 }
 
+bool ChatHandler::HandleShowTimingCommand(char * args)
+{
+
+    PSendSysMessage(LANG_TIMING_MASSMAIL, sWorld.GetAverageTime(MASSMAIL), sWorld.GetMinTime(MASSMAIL), sWorld.GetMaxTime(MASSMAIL));
+  
+    PSendSysMessage(LANG_TIMING_AUCTION, sWorld.GetAverageTime(AUCTION), sWorld.GetMinTime(AUCTION), sWorld.GetMaxTime(AUCTION));
+
+    PSendSysMessage(LANG_TIMING_SESSION, sWorld.GetAverageTime(SESSION), sWorld.GetMinTime(SESSION), sWorld.GetMaxTime(SESSION));
+
+    PSendSysMessage(LANG_TIMING_MAPMANAGER, sWorld.GetAverageTime(MAPMANAGER), sWorld.GetMinTime(MAPMANAGER), sWorld.GetMaxTime(MAPMANAGER));
+
+    PSendSysMessage(LANG_TIMING_BGMANAGER, sWorld.GetAverageTime(BGMANAGER), sWorld.GetMinTime(BGMANAGER), sWorld.GetMaxTime(BGMANAGER));
+
+    PSendSysMessage(LANG_TIMING_LFGMANAGER, sWorld.GetAverageTime(LFGMANAGER), sWorld.GetMinTime(LFGMANAGER), sWorld.GetMaxTime(LFGMANAGER));
+
+    PSendSysMessage(LANG_TIMING_RSMANAGER, sWorld.GetAverageTime(RSMANAGER), sWorld.GetMinTime(RSMANAGER), sWorld.GetMaxTime(RSMANAGER));
+
+    PSendSysMessage(LANG_TIMING_OUTDOORPVP, sWorld.GetAverageTime(OUTDOORPVP), sWorld.GetMinTime(OUTDOORPVP), sWorld.GetMaxTime(OUTDOORPVP));
+
+    PSendSysMessage(LANG_TIMING_SQLQUEUE, sWorld.GetAverageTime(SQLQUEUE), sWorld.GetMinTime(SQLQUEUE), sWorld.GetMaxTime(SQLQUEUE));
+
+    PSendSysMessage(LANG_TIMING_REMOVING, sWorld.GetAverageTime(REMOVING), sWorld.GetMinTime(REMOVING), sWorld.GetMaxTime(REMOVING));
+
+    PSendSysMessage(LANG_TIMING_GRIDS, sWorld.GetAverageTime(GRIDS), sWorld.GetMinTime(GRIDS), sWorld.GetMaxTime(GRIDS));
+
+    return true;
+}
+

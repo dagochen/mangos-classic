@@ -793,6 +793,7 @@ ChatCommand* ChatHandler::getCommandTable()
         { "resistmode",     SEC_GAMEMASTER,     false, &ChatHandler::HandleResistanceModeCommand,        "", nullptr },
         { "bossfight",      SEC_PLAYER,         false, &ChatHandler::HandleIsInBossFightCommand,        "", nullptr },
         { "taxiflight",     SEC_PLAYER,         false, &ChatHandler::HandleIsTaxiFlyingCommand,        "", nullptr },
+        { "timings",        SEC_PLAYER,         false, &ChatHandler::HandleShowTimingCommand,          "", nullptr },
         { nullptr,          0,                  false, nullptr,                                        "", nullptr }
     };
 
