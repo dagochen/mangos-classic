@@ -1327,7 +1327,7 @@ void World::DetectDBCLang()
 /// Update the World !
 void World::Update(uint32 diff)
 {
-    uint32 timediff = 0;
+    float timediff = 0.0f;
     ///- Update the different timers
     for (int i = 0; i < WUPDATE_COUNT; ++i)
     {
@@ -1340,29 +1340,13 @@ void World::Update(uint32 diff)
     ///- Update the game time and check for shutdown time
     _UpdateGameTime();
 
-    SYSTEMTIME start;
-    GetLocalTime(&start);
+    LONGLONG g_Frequency, start, end, massmailmgr, auctionmgr, sessions, mapmgr, bgmgr, lfgmgr, rsmgr, outdoorpvpmgr, sqlcallbacks, corpseremoving, gameeventmgr, removingobjects, mappersistentmgr;
+    QueryPerformanceFrequency((LARGE_INTEGER*)&g_Frequency);
+    QueryPerformanceCounter((LARGE_INTEGER*)&start);
 
     ///-Update mass mailer tasks if any
     sMassMailMgr.Update();
-
-    SYSTEMTIME massmail;
-    GetLocalTime(&massmail);
-
-    timediff = (massmail.wSecond - start.wSecond) * 1000 + massmail.wMilliseconds - start.wMilliseconds;
-    if (timingsets[MASSMAIL].size() > 1000)
-        timingsets[MASSMAIL].pop();
-        
-    timingsets[MASSMAIL].push(timediff);
-
-    if (timediff > maxtimings[MASSMAIL])
-        maxtimings[MASSMAIL] = timediff;
-
-    if (timediff < mintimings[MASSMAIL])
-        mintimings[MASSMAIL] = timediff;
-
-    timediff = 0;
-
+    QueryPerformanceCounter((LARGE_INTEGER*)&massmailmgr);
 
     /// <ul><li> Handle auctions when the timer has passed
     if (m_timers[WUPDATE_AUCTIONS].Passed())
@@ -1381,24 +1365,7 @@ void World::Update(uint32 diff)
         sAuctionMgr.Update();
     }
 
-    SYSTEMTIME auction;
-    GetLocalTime(&auction);
-
-    timediff = (auction.wSecond - massmail.wSecond) * 1000 + auction.wMilliseconds - massmail.wMilliseconds;
-    if (timingsets[AUCTION].size() > 1000)
-        timingsets[AUCTION].pop();
-
-    timingsets[AUCTION].push(timediff);
-
-
-    if (timediff > maxtimings[AUCTION])
-        maxtimings[AUCTION] = timediff;
-
-    if (timediff < mintimings[AUCTION])
-        mintimings[AUCTION] = timediff;
-
-    timediff = 0;
-
+    QueryPerformanceCounter((LARGE_INTEGER*)&auctionmgr);
 
     /// <li> Handle AHBot operations
     if (m_timers[WUPDATE_AHBOT].Passed())
@@ -1409,6 +1376,7 @@ void World::Update(uint32 diff)
 
     /// <li> Handle session updates
     UpdateSessions(diff);
+    QueryPerformanceCounter((LARGE_INTEGER*)&sessions);
 
     /// <li> Update uptime table
     if (m_timers[WUPDATE_UPTIME].Passed())
@@ -1420,119 +1388,25 @@ void World::Update(uint32 diff)
         LoginDatabase.PExecute("UPDATE uptime SET uptime = %u, maxplayers = %u WHERE realmid = %u AND starttime = " UI64FMTD, tmpDiff, maxClientsNum, realmID, uint64(m_startTime));
     }
 
-    SYSTEMTIME sessions;
-    GetLocalTime(&sessions);
-
-    timediff = (sessions.wSecond - auction.wSecond) * 1000 + sessions.wMilliseconds - auction.wMilliseconds;
-    if (timingsets[SESSION].size() > 1000)
-        timingsets[SESSION].pop();
-
-    timingsets[SESSION].push(timediff);
-
-    if (timediff > maxtimings[SESSION])
-        maxtimings[SESSION] = timediff;
-
-    if (timediff < mintimings[SESSION])
-        mintimings[SESSION] = timediff;
-
-    timediff = 0;
+   
 
     /// <li> Handle all other objects
     ///- Update objects (maps, transport, creatures,...)
     sMapMgr.Update(diff);
-
-    SYSTEMTIME mapmgr;
-    GetLocalTime(&mapmgr);
-
-    timediff = (mapmgr.wSecond - sessions.wSecond) * 1000 + mapmgr.wMilliseconds - sessions.wMilliseconds;
-    if (timingsets[MAPMANAGER].size() > 1000)
-        timingsets[MAPMANAGER].pop();
-
-    timingsets[MAPMANAGER].push(timediff);
-
-    if (timediff > maxtimings[MAPMANAGER])
-        maxtimings[MAPMANAGER] = timediff;
-
-    if (timediff < mintimings[MAPMANAGER])
-        mintimings[MAPMANAGER] = timediff;
-
-    timediff = 0;
+    QueryPerformanceCounter((LARGE_INTEGER*)&mapmgr);
 
     sBattleGroundMgr.Update(diff);
-
-    SYSTEMTIME bgmgr;
-    GetLocalTime(&bgmgr);
-
-    timediff = (bgmgr.wSecond - mapmgr.wSecond) * 1000 + bgmgr.wMilliseconds - mapmgr.wMilliseconds;
-    if (timingsets[BGMANAGER].size() > 1000)
-        timingsets[BGMANAGER].pop();
-
-    timingsets[BGMANAGER].push(timediff);
-
-    if (timediff > maxtimings[BGMANAGER])
-        maxtimings[BGMANAGER] = timediff;
-
-    if (timediff < mintimings[BGMANAGER])
-        mintimings[BGMANAGER] = timediff;
-
-    timediff = 0;
+    QueryPerformanceCounter((LARGE_INTEGER*)&bgmgr);
 
     sLFGMgr.Update(diff);
-
-    SYSTEMTIME lfgmgr;
-    GetLocalTime(&lfgmgr);
-
-    timediff = (lfgmgr.wSecond - bgmgr.wSecond) * 1000 + lfgmgr.wMilliseconds - bgmgr.wMilliseconds;
-    if (timingsets[LFGMANAGER].size() > 1000)
-        timingsets[LFGMANAGER].pop();
-
-    timingsets[LFGMANAGER].push(timediff);
-
-    if (timediff > maxtimings[LFGMANAGER])
-        maxtimings[LFGMANAGER] = timediff;
-
-    if (timediff < mintimings[LFGMANAGER])
-        mintimings[LFGMANAGER] = timediff;
-
-    timediff = 0;
+    QueryPerformanceCounter((LARGE_INTEGER*)&lfgmgr);
 
     sRaidStatsMgr.Update(diff);
-
-    SYSTEMTIME rsmgr;
-    GetLocalTime(&rsmgr);
-
-    timediff = (rsmgr.wSecond - lfgmgr.wSecond) * 1000 + rsmgr.wMilliseconds - lfgmgr.wMilliseconds;
-    if (timingsets[RSMANAGER].size() > 1000)
-        timingsets[RSMANAGER].pop();
-
-    timingsets[RSMANAGER].push(timediff);
-
-    if (timediff > maxtimings[RSMANAGER])
-        maxtimings[RSMANAGER] = timediff;
-
-    if (timediff < mintimings[RSMANAGER])
-        mintimings[RSMANAGER] = timediff;
-
-    timediff = 0;
+    QueryPerformanceCounter((LARGE_INTEGER*)&rsmgr);
 
     sOutdoorPvPMgr.Update(diff);
-
-    SYSTEMTIME outdoorpvp;
-    GetLocalTime(&outdoorpvp);
-
-    timediff = (outdoorpvp.wSecond - rsmgr.wSecond) * 1000 + outdoorpvp.wMilliseconds - rsmgr.wMilliseconds;
-    if (timingsets[OUTDOORPVP].size() > 1000)
-        timingsets[OUTDOORPVP].pop();
-
-    timingsets[OUTDOORPVP].push(timediff);
-
-    if (timediff > maxtimings[OUTDOORPVP])
-        maxtimings[OUTDOORPVP] = timediff;
-
-    if (timediff < mintimings[OUTDOORPVP])
-        mintimings[OUTDOORPVP] = timediff;
-
-    timediff = 0;
+    QueryPerformanceCounter((LARGE_INTEGER*)&outdoorpvpmgr);
+  
 
     ///- Delete all characters which have been deleted X days before
     if (m_timers[WUPDATE_DELETECHARS].Passed())
@@ -1543,23 +1417,7 @@ void World::Update(uint32 diff)
 
     // execute callbacks from sql queries that were queued recently
     UpdateResultQueue();
-
-    SYSTEMTIME sqlqueue;
-    GetLocalTime(&sqlqueue);
-
-    timediff = (sqlqueue.wSecond - outdoorpvp.wSecond) * 1000 + sqlqueue.wMilliseconds - outdoorpvp.wMilliseconds;
-    if (timingsets[SQLQUEUE].size() > 1000)
-        timingsets[SQLQUEUE].pop();
-
-    timingsets[SQLQUEUE].push(timediff);
-
-    if (timediff > maxtimings[SQLQUEUE])
-        maxtimings[SQLQUEUE] = timediff;
-
-    if (timediff < mintimings[SQLQUEUE])
-        mintimings[SQLQUEUE] = timediff;
-
-    timediff = 0;
+    QueryPerformanceCounter((LARGE_INTEGER*)&sqlcallbacks);
 
     ///- Erase corpses once every 20 minutes
     if (m_timers[WUPDATE_CORPSES].Passed())
@@ -1569,6 +1427,9 @@ void World::Update(uint32 diff)
         sObjectAccessor.RemoveOldCorpses();
     }
 
+    QueryPerformanceCounter((LARGE_INTEGER*)&corpseremoving);
+
+
     ///- Process Game events when necessary
     if (m_timers[WUPDATE_EVENTS].Passed())
     {
@@ -1577,13 +1438,17 @@ void World::Update(uint32 diff)
         m_timers[WUPDATE_EVENTS].SetInterval(nextGameEvent);
         m_timers[WUPDATE_EVENTS].Reset();
     }
+    QueryPerformanceCounter((LARGE_INTEGER*)&gameeventmgr);
 
     /// </ul>
     ///- Move all creatures with "delayed move" and remove and delete all objects with "delayed remove"
     sMapMgr.RemoveAllObjectsInRemoveList();
+    QueryPerformanceCounter((LARGE_INTEGER*)&removingobjects);
 
     // update the instance reset times
     sMapPersistentStateMgr.Update();
+    QueryPerformanceCounter((LARGE_INTEGER*)&mappersistentmgr);
+
 
     if (m_MaintenanceTimeChecker < diff)
     {
@@ -1597,22 +1462,7 @@ void World::Update(uint32 diff)
     else
         m_MaintenanceTimeChecker -= diff;
 
-    SYSTEMTIME removing;
-    GetLocalTime(&removing);
-
-    timediff = (removing.wSecond - sqlqueue.wSecond) * 1000 + removing.wMilliseconds - sqlqueue.wMilliseconds;
-    if (timingsets[REMOVING].size() > 1000)
-        timingsets[REMOVING].pop();
-
-    timingsets[REMOVING].push(timediff);
-
-    if (timediff > maxtimings[REMOVING])
-        maxtimings[REMOVING] = timediff;
-
-    if (timediff < mintimings[REMOVING])
-        mintimings[REMOVING] = timediff;
-
-    timediff = 0;
+   
 
     // And last, but not least handle the issued cli commands
     ProcessCliCommands();
@@ -1620,22 +1470,31 @@ void World::Update(uint32 diff)
     // cleanup unused GridMap objects as well as VMaps
     sTerrainMgr.Update(diff);
 
-    SYSTEMTIME grids;
-    GetLocalTime(&grids);
+    QueryPerformanceCounter((LARGE_INTEGER*)&end);
 
-    timediff = (grids.wSecond - removing.wSecond) * 1000 + grids.wMilliseconds - removing.wMilliseconds;
-    if (timingsets[GRIDS].size() > 1000)
-        timingsets[GRIDS].pop();
+    timediff = 1000 * (((double)(end - start)) / ((double)g_Frequency)); // * 1000 for ms
 
-    timingsets[GRIDS].push(timediff);
+    if (timediff > 50.0f)
+    {
+        float massmailtime, auctiontime, sessiontime, maptime, bgtime, lfgtime, rstime, opvptime, corpseremtime, gameeventtime, removingtime, mappersisttime, terraintime;
+        massmailtime = 1000 * (((double)(massmailmgr - start)) / ((double)g_Frequency)); // * 1000 for ms
+        auctiontime = 1000 * (((double)(auctionmgr - massmailmgr)) / ((double)g_Frequency)); // * 1000 for ms
+        sessiontime = 1000 * (((double)(sessions - auctionmgr)) / ((double)g_Frequency)); // * 1000 for ms
+        maptime = 1000 * (((double)(mapmgr - sessions)) / ((double)g_Frequency)); // * 1000 for ms
+        bgtime = 1000 * (((double)(bgmgr - mapmgr)) / ((double)g_Frequency)); // * 1000 for ms
+        lfgtime = 1000 * (((double)(lfgmgr - bgmgr)) / ((double)g_Frequency)); // * 1000 for ms
+        rstime = 1000 * (((double)(rsmgr - lfgmgr)) / ((double)g_Frequency)); // * 1000 for ms
+        opvptime = 1000 * (((double)(outdoorpvpmgr - rsmgr)) / ((double)g_Frequency)); // * 1000 for ms
+        corpseremtime = 1000 * (((double)(corpseremoving - outdoorpvpmgr)) / ((double)g_Frequency)); // * 1000 for ms
+        gameeventtime = 1000 * (((double)(gameeventmgr - corpseremoving)) / ((double)g_Frequency)); // * 1000 for ms
+        removingtime = 1000 * (((double)(removingobjects - gameeventmgr)) / ((double)g_Frequency)); // * 1000 for ms
+        mappersisttime = 1000 * (((double)(mappersistentmgr - removingobjects)) / ((double)g_Frequency)); // * 1000 for ms
+        terraintime = 1000 * (((double)(end - mappersistentmgr)) / ((double)g_Frequency)); // * 1000 for ms
 
-    if (timediff > maxtimings[GRIDS])
-        maxtimings[GRIDS] = timediff;
-
-    if (timediff < mintimings[GRIDS])
-        mintimings[GRIDS] = timediff;
-
-    timediff = 0;
+        sLog.outError("Lag-detected: Gesamtzeit: %f - MassmailMgr: %f - AuctionMgr: %f - Sessions: %f - MapMgr: %f - BgMgr: %f - LfgMgr: %f - RsMgr: %f - OutdoorPvPMgr: %f - Corpseremoving: %f - GameEventMgr: %f - RemovingObjects: %f - Mappersistence: %f - Terraintime: %f",
+            timediff, massmailtime, auctiontime, sessiontime, maptime, bgtime, lfgtime, rstime, opvptime, corpseremtime, gameeventtime, removingtime, mappersisttime, terraintime);
+    }
+   
 }
 
 namespace MaNGOS

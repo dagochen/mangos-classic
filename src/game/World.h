@@ -581,30 +581,7 @@ class World
         void SetResistMode(uint32 value) { m_resistMode = value; }
         uint32 GetResistMode() { return m_resistMode; }
 
-        float GetAverageTime(uint32 index)
-        {
-            float result;
-            uint64 sum = 0;
-            std::queue<uint64> tmp = timingsets[index]; 
-
-            while (!tmp.empty())
-            {
-                sum += tmp.front();
-                tmp.pop();
-            }
-            result = sum / timingsets[index].size();
-            return result;
-        }
-
-        uint64 GetMinTime(uint64 index)
-        {
-            return mintimings[index];
-        }
-
-        uint64 GetMaxTime(uint64 index)
-        {
-            return maxtimings[index];
-        }
+       
 
     protected:
         void _UpdateGameTime();
@@ -641,11 +618,6 @@ class World
         IntervalTimer m_timers[WUPDATE_COUNT];
         uint32 mail_timer;
         uint32 mail_timer_expires;
-
-
-        std::queue<uint64> timingsets[MAX_TIME_TYPES];
-        uint64 mintimings[MAX_TIME_TYPES] = { 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000 };
-        uint64 maxtimings[MAX_TIME_TYPES] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
         typedef std::unordered_map<uint32, WorldSession*> SessionMap;
         SessionMap m_sessions;
