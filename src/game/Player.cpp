@@ -12401,6 +12401,40 @@ bool Player::GetQuestRewardStatus(uint32 quest_id) const
     return false;
 }
 
+
+bool Player::GetQuestRewardStatusExclusiveGroup(uint32 quest_id) const
+{
+    Quest const* qInfo = sObjectMgr.GetQuestTemplate(quest_id);
+   
+    // not found OR no Group -> dont check, its done
+    if (!qInfo)
+        return true;
+
+    if (qInfo->GetExclusiveGroup() <= 0)
+        return true;
+
+
+    ExclusiveQuestGroupsMapBounds bounds = sObjectMgr.GetExclusiveQuestGroupsMapBounds(qInfo->GetExclusiveGroup());
+
+    MANGOS_ASSERT(bounds.first != bounds.second);           // must always be found if qInfo->ExclusiveGroup != 0
+
+    for (ExclusiveQuestGroupsMap::const_iterator iter = bounds.first; iter != bounds.second; ++iter)
+    {
+        uint32 exclude_Id = iter->second;
+
+        // skip checked quest id, only state of other quests in group is interesting
+        if (exclude_Id == qInfo->GetQuestId())
+            continue;
+
+        QuestStatusMap::const_iterator itr = mQuestStatus.find(exclude_Id);
+        if (itr != mQuestStatus.end() && itr->second.m_status != QUEST_STATUS_NONE && !qInfo->IsRepeatable() && itr->second.m_rewarded)
+            return true;
+    }
+
+    return false;
+}
+
+
 QuestStatus Player::GetQuestStatus(uint32 quest_id) const
 {
     if (quest_id)
@@ -19021,7 +19055,7 @@ AreaLockStatus Player::GetAreaTriggerLockStatus(AreaTrigger const* at, uint32& m
     }
 
     // Quest Requirements
-    if (at->requiredQuest && !GetQuestRewardStatus(at->requiredQuest))
+    if (at->requiredQuest && !GetQuestRewardStatus(at->requiredQuest) && !GetQuestRewardStatusExclusiveGroup(at->requiredQuest))
     {
         miscRequirement = at->requiredQuest;
         return AREA_LOCKSTATUS_QUEST_NOT_COMPLETED;
