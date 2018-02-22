@@ -19055,7 +19055,7 @@ AreaLockStatus Player::GetAreaTriggerLockStatus(AreaTrigger const* at, uint32& m
     }
 
     // Quest Requirements
-    if (at->requiredQuest && !GetQuestRewardStatus(at->requiredQuest) && !GetQuestRewardStatusExclusiveGroup(at->requiredQuest))
+    if (at->requiredQuest && !(GetQuestRewardStatus(at->requiredQuest) || GetQuestRewardStatusExclusiveGroup(at->requiredQuest)))
     {
         miscRequirement = at->requiredQuest;
         return AREA_LOCKSTATUS_QUEST_NOT_COMPLETED;
