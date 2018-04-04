@@ -673,6 +673,12 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket& recv_data)
         return;
     }
 
+    if (player->isCharmed())
+    {
+        DEBUG_LOG("Player '%s' (GUID: %u) is charmed, ignore Area Trigger ID: %u", player->GetName(), player->GetGUIDLow(), Trigger_ID);
+        return;
+    }
+
     AreaTriggerEntry const* atEntry = sAreaTriggerStore.LookupEntry(Trigger_ID);
     if (!atEntry)
     {
