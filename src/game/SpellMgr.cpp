@@ -1762,6 +1762,11 @@ bool SpellMgr::IsRankSpellDueToSpell(SpellEntry const* spellInfo_1, uint32 spell
     if (!spellInfo_1 || !spellInfo_2) return false;
     if (spellInfo_1->Id == spellId_2) return false;
 
+    // Sunder Armor vs Expose Armor only the bigger debuff counts!
+    if (spellInfo_1->SpellVisual == 3441 && spellInfo_2->SpellVisual == 406) return true;
+    if (spellInfo_1->SpellVisual == 406 && spellInfo_2->SpellVisual == 3441) return true;
+
+
     return GetFirstSpellInChain(spellInfo_1->Id) == GetFirstSpellInChain(spellId_2);
 }
 
