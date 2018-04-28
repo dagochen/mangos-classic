@@ -183,6 +183,67 @@ bool AreaTrigger_at_ancient_leaf(Player* pPlayer, AreaTriggerEntry const* pAt)
     return false;
 }
 
+enum
+{
+    BG_ENTRANCE_AB_ALLIANCE = 3953,
+    BG_ENTRANCE_AB_HORDE    = 3954,
+    BG_ENTRANCE_WS_ALLIANCE = 3650,
+    BG_ENTRANCE_WS_HORDE    = 3654,
+    BG_ENTRANCE_AV_ALLIANCE = 2412,
+    BG_ENTRANCE_AV_HORDE    = 2413,
+
+    WS_ALLIANCE     = 2302,
+    WS_HORDE        = 3890,
+    AB_ALLIANCE     = 15008,
+    AB_HORDE        = 15007,
+    AV_ALLIANCE     = 12197,
+    AV_HORDE        = 347,
+
+};
+
+bool AreaTrigger_at_bgentrance(Player* pPlayer, AreaTriggerEntry const* pAt)
+{
+    if (pPlayer && pPlayer->isAlive())
+    {   
+        BattleGroundTypeId type;
+        uint32 bgMaster;
+        switch (pAt->id)
+        {
+            case BG_ENTRANCE_AB_ALLIANCE:
+            case BG_ENTRANCE_AB_HORDE:
+            {
+                bgMaster = pAt->id == BG_ENTRANCE_AB_ALLIANCE ? AB_ALLIANCE : AB_HORDE;
+                type = BATTLEGROUND_AB;
+                break;
+            }
+            case BG_ENTRANCE_WS_ALLIANCE:
+            case BG_ENTRANCE_WS_HORDE:
+            {
+                bgMaster = pAt->id == BG_ENTRANCE_WS_ALLIANCE ? WS_ALLIANCE : WS_HORDE;
+                type = BATTLEGROUND_WS;
+                break;
+            }
+            case BG_ENTRANCE_AV_ALLIANCE:
+            case BG_ENTRANCE_AV_HORDE:
+            {
+                bgMaster = pAt->id == BG_ENTRANCE_AV_ALLIANCE ? AV_ALLIANCE : AV_HORDE;
+                type = BATTLEGROUND_AV;
+                break;
+            }
+        }
+
+        Creature* pBgMaster = GetClosestCreatureWithEntry(pPlayer, bgMaster, 20.0f);
+        if (!pBgMaster)
+        {
+            pBgMaster = pPlayer->SummonCreature(bgMaster, pPlayer->GetPositionX(), pPlayer->GetPositionY(), pPlayer->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN, 60000);
+            pBgMaster->SetVisibility(VISIBILITY_OFF);
+        }
+        pPlayer->GetSession()->SendBattlegGroundList(pBgMaster->GetObjectGuid(), type);
+        return true;
+    }
+    return false;
+}
+
 void AddSC_areatrigger_scripts()
 {
     Script* pNewScript;
@@ -210,5 +271,10 @@ void AddSC_areatrigger_scripts()
     pNewScript = new Script;
     pNewScript->Name = "at_ancient_leaf";
     pNewScript->pAreaTrigger = &AreaTrigger_at_ancient_leaf;
+    pNewScript->RegisterSelf();
+
+    pNewScript = new Script;
+    pNewScript->Name = "at_bgentrance";
+    pNewScript->pAreaTrigger = &AreaTrigger_at_bgentrance;
     pNewScript->RegisterSelf();
 }
