@@ -4091,6 +4091,16 @@ SpellCastResult Spell::CheckCast(bool strict)
                 && ((Creature*)target)->IsTotem())
             return SPELL_FAILED_IMMUNE;
 
+        bool isAuraSpell = true;
+        for (int j = 0; j < MAX_EFFECT_INDEX; ++j)
+        {
+            if (m_spellInfo->Effect[j] && m_spellInfo->Effect[j] != SPELL_EFFECT_APPLY_AURA)
+                isAuraSpell = false;
+        }
+
+        if (isAuraSpell && target->IsMorePowerfulSpellActive(m_spellInfo->Id, m_caster))
+            return SPELL_FAILED_MORE_POWERFUL_SPELL_ACTIVE;
+
         bool non_caster_target = target != m_caster && !IsSpellWithCasterSourceTargetsOnly(m_spellInfo);
 
         if (non_caster_target)

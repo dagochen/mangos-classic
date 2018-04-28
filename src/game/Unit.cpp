@@ -1839,6 +1839,63 @@ void Unit::HandleEmote(uint32 emote_id)
     }
 }
 
+
+bool Unit::IsMorePowerfulSpellActive(uint32 spellId, Unit* caster)
+{
+    SpellEntry const *spellInfo = sSpellStore.LookupEntry(spellId);
+    if (!spellInfo)
+        return false;
+
+    // Loop trough spellEffects and applied auras if a spell with same visual or spellFamilyFlags is more powerful
+    for (int eff = 0; eff < MAX_EFFECT_INDEX; ++eff)
+    {
+        Unit::AuraList const &m_Auras = GetAurasByType(AuraType(spellInfo->EffectApplyAuraName[eff]));
+        for (Unit::AuraList::const_iterator i = m_Auras.begin(); i != m_Auras.end(); ++i)
+        {
+            if (!(*i)->GetHolder() || !(*i)->GetHolder()->GetSpellProto())
+                continue;
+
+            if (sSpellMgr.IsRankSpellDueToSpell((*i)->GetSpellProto(), spellInfo->Id) || (*i)->GetSpellProto()->Id == spellInfo->Id)
+            {
+                if (spellInfo->EffectApplyAuraName[eff] != SPELL_AURA_PERIODIC_HEAL)
+                {
+                    if (CompareAuraRanks((*i)->GetSpellProto()->Id, spellInfo->Id) > 0)
+                        return true;
+                }
+                else
+                {
+                    int32 activeSpell = (*i)->GetModifier()->m_amount;
+                    int32 freshSpell = spellInfo->CalculateSimpleValue((SpellEffectIndex)eff);
+                    //CalculateSpellDamage(caster, spellInfo, (SpellEffectIndex)eff, &freshSpell);
+                    freshSpell += spellInfo->EffectBaseDice[eff] * spellInfo->EffectDieSides[eff];
+                    if (Player* modOwner = caster->GetSpellModOwner())
+                    {
+                        modOwner->ApplySpellMod(spellInfo->Id, SPELLMOD_ALL_EFFECTS, freshSpell);
+
+                        switch (eff)
+                        {
+                        case EFFECT_INDEX_0:
+                            modOwner->ApplySpellMod(spellInfo->Id, SPELLMOD_ATTACK_POWER, freshSpell);
+                            break;
+                        case EFFECT_INDEX_1:
+                            modOwner->ApplySpellMod(spellInfo->Id, SPELLMOD_SPEED, freshSpell);
+                            break;
+                        case EFFECT_INDEX_2:
+                            modOwner->ApplySpellMod(spellInfo->Id, SPELLMOD_HASTE, freshSpell);
+                            break;
+                        }
+                    }
+                    if (caster)
+                        freshSpell = caster->SpellHealingBonusDone(this, spellInfo, freshSpell, DOT, std::max(spellInfo->StackAmount, uint32(1)));
+                    if (activeSpell > freshSpell)
+                        return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
 uint32 Unit::CalcArmorReducedDamage(Unit* pVictim, const uint32 damage)
 {
     float armor = (float)pVictim->GetArmor();
@@ -2326,7 +2383,7 @@ void Unit::CalculateDamageAbsorbAndResist(Unit* pCaster, SpellSchoolMask schoolM
             //{
             //    switch (spellProto->Id)
             //    {
-            //        // NOSTALRIUS: Some DoTs follow normal resist rules. Need to find which ones, why and how.
+            //        // Some DoTs follow normal resist rules. Need to find which ones, why and how.
             //        // We have a video proof for the following ones.
             //    case 23461:     // Vaelastrasz's Flame Breath
             //    case 24818:     // Nightmare Dragon's Noxious Breath
@@ -2342,7 +2399,6 @@ void Unit::CalculateDamageAbsorbAndResist(Unit* pCaster, SpellSchoolMask schoolM
             ResistanceValues* next = nullptr;
             for (int i = 1; i < 31; ++i)
             {
-                // On depasse la valeur cherchee.
                 if (resistValues[i].chanceResist >= resistanceChance)
                 {
                     prev = &resistValues[i - 1];
@@ -2350,7 +2406,6 @@ void Unit::CalculateDamageAbsorbAndResist(Unit* pCaster, SpellSchoolMask schoolM
                     break;
                 }
             }
-            //ASSERT(next && prev);
             float coeff = float(resistanceChance - prev->chanceResist) / float(next->chanceResist - prev->chanceResist);
             float resist0 = prev->resist0 + (next->resist0 - prev->resist0) * coeff;
             float resist25 = prev->resist25 + (next->resist25 - prev->resist25) * coeff;
@@ -2384,8 +2439,7 @@ void Unit::CalculateDamageAbsorbAndResist(Unit* pCaster, SpellSchoolMask schoolM
                 pCaster->MonsterWhisper(s.c_str(), this, true);
 
 
-           /* DEBUG_UNIT(this, DEBUG_SPELL_COMPUTE_RESISTS, "Partial resist : chances %.2f:%.2f:%.2f:%.2f:%.2f. Hit resist chance %f",
-                resist0, resist25, resist50, resist75, resist100, resistanceChance);*/
+        
             *resist += uint32(damage * resistCnt);
             if (*resist > damage)
                 *resist = damage;
@@ -2403,7 +2457,7 @@ void Unit::CalculateDamageAbsorbAndResist(Unit* pCaster, SpellSchoolMask schoolM
             //{
             //    switch (spellProto->Id)
             //    {
-            //        // NOSTALRIUS: Some DoTs follow normal resist rules. Need to find which ones, why and how.
+            //        // Some DoTs follow normal resist rules. Need to find which ones, why and how.
             //        // We have a video proof for the following ones.
             //    case 23461:     // Vaelastrasz's Flame Breath
             //    case 24818:     // Nightmare Dragon's Noxious Breath
@@ -2418,14 +2472,12 @@ void Unit::CalculateDamageAbsorbAndResist(Unit* pCaster, SpellSchoolMask schoolM
             ResistanceValues* current = nullptr;
             for (int i = 1; i < 301; ++i)
             {
-                // On depasse la valeur cherchee.
                 if (resistValues2[i].chanceResist >= resistanceChance)
                 {
                     current = &resistValues2[i-1];
                     break;
                 }
             }
-            //ASSERT(next && prev);
 
             uint32 resist0 = current->resist0;
             uint32 resist25 = current->resist25;
@@ -2459,8 +2511,7 @@ void Unit::CalculateDamageAbsorbAndResist(Unit* pCaster, SpellSchoolMask schoolM
                 pCaster->MonsterWhisper(s.c_str(), this, true);
 
 
-            /* DEBUG_UNIT(this, DEBUG_SPELL_COMPUTE_RESISTS, "Partial resist : chances %.2f:%.2f:%.2f:%.2f:%.2f. Hit resist chance %f",
-            resist0, resist25, resist50, resist75, resist100, resistanceChance);*/
+      
             *resist += uint32(damage * resistCnt);
             if (*resist > damage)
                 *resist = damage;

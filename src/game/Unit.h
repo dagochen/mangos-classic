@@ -1105,6 +1105,10 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
          * @return True if an attack was made and no error happened, false otherwise
          */
         bool UpdateMeleeAttackingState();
+
+
+        bool IsMorePowerfulSpellActive(uint32 spellId, Unit* caster);
+
         /**
          * Check is a given equipped weapon can be used, ie the mainhand, offhand etc.
          * @param attackType The attack type to check, ie: main/offhand/ranged
