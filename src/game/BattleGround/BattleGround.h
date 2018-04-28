@@ -152,8 +152,12 @@ enum BattleGroundQueueTypeId
 enum BattleGroundBracketId                                  // bracketId for level ranges
 {
     BG_BRACKET_ID_TEMPLATE       = -1,                      // used to mark bg as template
-    BG_BRACKET_ID_FIRST          = 0,                       // brackets start from specific BG min level and each include 10 levels range
-    BG_BRACKET_ID_LAST           = 5,                       // so for start level 10 will be 10-19, 20-29, ...  all greater max bg level included in last breaket
+    BG_BRACKET_ID_10PLUS         = 0,                       // getlevel() / 10 -  = brackid
+    BG_BRACKET_ID_20PLUS         = 1,                       // 
+    BG_BRACKET_ID_30PLUS         = 2,                       // 
+    BG_BRACKET_ID_40PLUS         = 3,                       // 
+    BG_BRACKET_ID_50PLUS         = 4,                       // 
+    BG_BRACKET_ID_60             = 5,                         // 
 };
 
 #define MAX_BATTLEGROUND_BRACKETS  6
@@ -236,6 +240,8 @@ class BattleGroundScore
         virtual uint32 GetAttr3() const     { return 0; }
         virtual uint32 GetAttr4() const     { return 0; }
         virtual uint32 GetAttr5() const     { return 0; }
+        virtual uint32 GetAttr6() const     { return 0; }
+        virtual uint32 GetAttr7() const     { return 0; }
 
         uint32 KillingBlows;
         uint32 Deaths;
