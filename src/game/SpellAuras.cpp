@@ -1313,6 +1313,21 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
         {
             switch (GetId())
             {
+
+            case 28757:
+            {
+                if (apply)
+                {
+                    target->CastSpell(target, 28758,  true);
+                }
+                else
+                {
+                    target->RemoveAura(28758, EFFECT_INDEX_0);
+                    target->RemoveAura(28758, EFFECT_INDEX_1);
+                }
+                return;
+            }
+
                 case 6606:                                  // Self Visual - Sleep Until Cancelled (DND)
                 {
                     if (apply)
