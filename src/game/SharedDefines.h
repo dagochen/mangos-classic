@@ -418,7 +418,7 @@ enum SpellAttributesEx4
     SPELL_ATTR_EX4_UNK28                        = 0x10000000,            // 28
     SPELL_ATTR_EX4_UNK29                        = 0x20000000,            // 29
     SPELL_ATTR_EX4_UNK30                        = 0x40000000,            // 30
-    SPELL_ATTR_EX4_UNK31                        = 0x80000000,            // 31
+    SPELL_ATTR_EX4_UNK31                        = 0x80000000,            // 31 
 };
 
 enum SheathTypes

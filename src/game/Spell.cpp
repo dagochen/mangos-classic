@@ -5523,7 +5523,7 @@ uint32 Spell::CalculatePowerCost(SpellEntry const* spellInfo, Unit* caster, Spel
 SpellCastResult Spell::CheckPower()
 {
     // item cast not used power
-    if (m_CastItem)
+    if (m_CastItem || m_IsTriggeredSpell)
         return SPELL_CAST_OK;
 
     // health as power used - need check health amount

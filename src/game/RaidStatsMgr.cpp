@@ -72,7 +72,7 @@ void RaidStatsMgr::WriteAll()
             }
             case RaidStatsEvent::HEAL:
             {
-                SqlStatement stmt = CharacterDatabase.CreateStatement(insHeal, "INSERT INTO raidstats_heal (raidId,zoneId,timestamp,healerGUID,targetGUID,spellId,healerType,targetType,rawheal,overheal,efficientheal, isOverTime) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                SqlStatement stmt = CharacterDatabase.CreateStatement(insHeal, "INSERT INTO raidstats_heal (raidId,zone,timestamp,healerGUID,targetGUID,spellId,healerType,targetType,rawheal,overheal,efficientheal, isOverTime) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
                 stmt.addUInt32(current.raidId);
                 stmt.addUInt32(current.zone);
                 stmt.addString(current.timestamp);
@@ -92,7 +92,7 @@ void RaidStatsMgr::WriteAll()
                 break;
             case RaidStatsEvent::COMBAT_START:
             {
-                SqlStatement stmt = CharacterDatabase.CreateStatement(insCombatStart, "INSERT INTO raidstats_combat (raidId,zoneId,timestamp,attackerGUID,victimGUID,attackerType,victimType) VALUES (?,?, ?, ?, ?, ?, ?)");
+                SqlStatement stmt = CharacterDatabase.CreateStatement(insCombatStart, "INSERT INTO raidstats_combat (raidId,zone,timestamp,attackerGUID,victimGUID,attackerType,victimType) VALUES (?,?, ?, ?, ?, ?, ?)");
                 stmt.addUInt32(current.raidId);
                 stmt.addUInt32(current.zone);
                 stmt.addString(current.timestamp);
@@ -105,7 +105,7 @@ void RaidStatsMgr::WriteAll()
             }
             case RaidStatsEvent::KILL:
             {
-                SqlStatement stmt = CharacterDatabase.CreateStatement(insUnitDied, "INSERT INTO raidstats_kill (raidId,zoneId,timestamp,killerGUID,victimGUID,killerType,victimType) VALUES (?,?, ?, ?, ?, ?, ?)");
+                SqlStatement stmt = CharacterDatabase.CreateStatement(insUnitDied, "INSERT INTO raidstats_kill (raidId,zone,timestamp,killerGUID,victimGUID,killerType,victimType) VALUES (?,?, ?, ?, ?, ?, ?)");
                 stmt.addUInt32(current.raidId);
                 stmt.addUInt32(current.zone);
                 stmt.addString(current.timestamp);
@@ -118,7 +118,7 @@ void RaidStatsMgr::WriteAll()
             }
             case RaidStatsEvent::EVADE:
             {
-                SqlStatement stmt = CharacterDatabase.CreateStatement(insEvade, "INSERT INTO raidstats_evade (raidid,zoneId,timestamp,unitGUID) VALUES (?,?,?,?)");
+                SqlStatement stmt = CharacterDatabase.CreateStatement(insEvade, "INSERT INTO raidstats_evade (raidid,zone,timestamp,unitGUID) VALUES (?,?,?,?)");
                 stmt.addUInt32(current.raidId);
                 stmt.addUInt32(current.zone);
                 stmt.addString(current.timestamp);
@@ -128,7 +128,7 @@ void RaidStatsMgr::WriteAll()
             }
             case RaidStatsEvent::LOOT:
             {
-                SqlStatement stmt = CharacterDatabase.CreateStatement(insLoot, "INSERT INTO raidstats_loot (raidId,zoneId,timestamp,sourceGUID,sourceType,gold,loot1,loot2,loot3,loot4,loot5,loot6,loot7,loot8,loot9,loot10) VALUES (?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                SqlStatement stmt = CharacterDatabase.CreateStatement(insLoot, "INSERT INTO raidstats_loot (raidId,zone,timestamp,sourceGUID,sourceType,gold,loot1,loot2,loot3,loot4,loot5,loot6,loot7,loot8,loot9,loot10) VALUES (?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
                 stmt.addUInt32(current.raidId);
                 stmt.addUInt32(current.zone);
                 stmt.addString(current.timestamp);
@@ -144,7 +144,7 @@ void RaidStatsMgr::WriteAll()
             }
             case RaidStatsEvent::LOOT_PICK:
             {
-                SqlStatement stmt = CharacterDatabase.CreateStatement(insLootPick, "INSERT INTO raidstats_lootpick (raidId,zoneId,timestamp,looterGUID,sourceGUID,sourceType,loot) VALUES (?,?,?,?,?,?,?)");
+                SqlStatement stmt = CharacterDatabase.CreateStatement(insLootPick, "INSERT INTO raidstats_lootpick (raidId,zone,timestamp,looterGUID,sourceGUID,sourceType,loot) VALUES (?,?,?,?,?,?,?)");
                 stmt.addUInt32(current.raidId);
                 stmt.addUInt32(current.zone);
                 stmt.addString(current.timestamp);
@@ -157,7 +157,7 @@ void RaidStatsMgr::WriteAll()
             }
             case RaidStatsEvent::COMBAT_STOP:
             {
-                SqlStatement stmt = CharacterDatabase.CreateStatement(insCombatStop, "INSERT INTO raidstats_combatstop (raidId,zoneId,timestamp,bossGuid,playerGuid) VALUES (?,?,?,?,?)");
+                SqlStatement stmt = CharacterDatabase.CreateStatement(insCombatStop, "INSERT INTO raidstats_combatstop (raidId,zone,timestamp,bossGuid,playerGuid) VALUES (?,?,?,?,?)");
                 stmt.addUInt32(current.raidId);
                 stmt.addUInt32(current.zone);
                 stmt.addString(current.timestamp);

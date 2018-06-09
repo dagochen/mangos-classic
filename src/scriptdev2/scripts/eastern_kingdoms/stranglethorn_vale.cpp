@@ -457,6 +457,138 @@ CreatureAI* GetAI_mob_riggle(Creature* _Creature)
     return new mob_riggle_bassbait(_Creature);
 };
 
+
+
+enum
+{
+    SPELL_STONEFORM = 17624,
+    SPELL_BLUEAURA = 17327,
+
+    SPELL_BOK = 20217,
+    SPELL_BOW = 25290,
+    SPELL_BOM = 19838
+};
+
+struct mob_rukachi : public ScriptedAI
+{
+    uint32 m_StoneFormTimer = 5000;
+
+    mob_rukachi(Creature *c) : ScriptedAI(c)
+    {
+        Reset();
+    }
+
+    void Reset()
+    {
+        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+        DoCastSpellIfCan(m_creature, SPELL_BLUEAURA, CAST_TRIGGERED);
+        DoCastSpellIfCan(m_creature, SPELL_STONEFORM, CAST_TRIGGERED);
+        m_creature->addUnitState(UNIT_STAT_STUNNED);
+        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED);
+    }
+
+    void UpdateAI(uint32 diff)
+    {
+        if (m_StoneFormTimer <= diff)
+        {
+            m_creature->GetSpellAuraHolder(SPELL_STONEFORM)->SetAuraDuration(60000);
+           // m_creature->CastSpell(m_creature, SPELL_STONEFORM, true);
+            m_StoneFormTimer = 55000;
+            m_creature->addUnitState(UNIT_STAT_STUNNED);
+            m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED);
+        }
+        else
+            m_StoneFormTimer -= diff;
+
+    }
+};
+
+
+struct mob_rukachi_buffer : public ScriptedAI
+{
+
+    uint32 m_randomBuffTimer = 30000;
+
+    mob_rukachi_buffer(Creature *c) : ScriptedAI(c)
+    {
+        Reset();
+    }
+
+    void Reset()
+    {
+        m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+    }
+
+    uint32 GetSpellForPlayer(Player* pPlayer)
+    {
+        uint32 result = SPELL_BOK;
+
+        switch (pPlayer->getClass())
+        {
+            case CLASS_WARRIOR:
+            case CLASS_ROGUE:           // Might or Kings
+            {
+                if (roll_chance_i(50))
+                    result = SPELL_BOM;
+                break;
+            }
+            case CLASS_MAGE:
+            case CLASS_WARLOCK:
+            case CLASS_PRIEST:
+            case CLASS_HUNTER:           // Wisdom or Kings
+            {
+                if (roll_chance_i(50))
+                    result = SPELL_BOW;
+                break;
+            }
+            case CLASS_SHAMAN:
+            case CLASS_DRUID:
+            case CLASS_PALADIN:           // Wisdowm or Might or Kings
+            {
+                if (roll_chance_i(33))
+                    result = SPELL_BOW;
+                else if (roll_chance_i(33))
+                    result = SPELL_BOM;
+                break;
+            }
+            default:
+                break;
+        }
+        return result;
+    }
+
+    void UpdateAI(uint32 diff)
+    {
+        if (m_randomBuffTimer <= diff)
+        {
+            Unit* target = m_creature->SelectRandomFriendlyTarget(m_creature, 8.0f); // interaction range for reading the text
+            if (target && target->GetTypeId() == TYPEID_PLAYER)
+            {
+                uint32 spellID = GetSpellForPlayer((Player*)target);
+                m_creature->CastSpell(target, spellID, true);
+                m_randomBuffTimer = 30000;
+            }
+            else
+                m_randomBuffTimer = 5000;
+        }
+        else
+            m_randomBuffTimer -= diff;
+    }
+};
+
+
+
+CreatureAI* GetAI_mob_rukachi_buffer(Creature* _Creature)
+{
+    return new mob_rukachi_buffer(_Creature);
+};
+
+
+CreatureAI* GetAI_mob_rukachi(Creature* _Creature)
+{
+    return new mob_rukachi(_Creature);
+};
+
 /*######
 ##
 ######*/
@@ -481,5 +613,16 @@ void AddSC_stranglethorn_vale()
     pNewScript->GetAI = &GetAI_mob_riggle;
     pNewScript->pQuestRewardedNPC = &ChooseReward;
     pNewScript->pGossipHello = &OnGossipHello;
+    pNewScript->RegisterSelf();
+
+
+    pNewScript = new Script;
+    pNewScript->Name = "mob_ruka";
+    pNewScript->GetAI = &GetAI_mob_rukachi;
+    pNewScript->RegisterSelf();
+
+    pNewScript = new Script;
+    pNewScript->Name = "mob_ruka_buffer";
+    pNewScript->GetAI = &GetAI_mob_rukachi_buffer;
     pNewScript->RegisterSelf();
 }

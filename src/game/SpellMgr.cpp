@@ -782,7 +782,7 @@ bool IsPositiveEffect(SpellEntry const* spellproto, SpellEffectIndex effIndex)
 
                     // Petrification
                     if (spellproto->Id == 17624)
-                        return false;
+                        return true;
                     break;
                 case SPELL_AURA_MOD_PACIFY_SILENCE:
                     if (spellproto->Id == 24740)            // Wisp Costume
@@ -4061,6 +4061,7 @@ void SpellMgr::LoadDbcDataCorrections()
         switch (spellInfo->Id)
         {
 
+        
         case 24198:
         case 23930:
         case 17670:
