@@ -772,7 +772,8 @@ ChatCommand* ChatHandler::getCommandTable()
         { "mmap",           SEC_GAMEMASTER,     false, nullptr,                                        "", mmapCommandTable },
         { "report",         SEC_PLAYER,         false, &ChatHandler::HandleReportAFKCommand,           "", reportCommandTable },
         { "refund",         SEC_GAMEMASTER,     false, &ChatHandler::HandleRefundQuestItem,           "", nullptr },
-
+        { "joinbg",         SEC_PLAYER,         false, &ChatHandler::HandleJoinBGQueue,               "", nullptr },
+        { "taxiflight",     SEC_PLAYER,         false, &ChatHandler::HandleIsTaxiFlyingCommand,        "", nullptr },
         { nullptr,          0,                  false, nullptr,                                        "", nullptr }
     };
 

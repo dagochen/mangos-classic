@@ -357,3 +357,37 @@ bool ChatHandler::HandleReportCountCommand(char* args)
     out << "Name: " << report->GetName() << " GUID: " << report->GetGUIDLow() << " Reports: " << reportCount;
     PSendSysMessage(out.str().c_str());
 }
+
+bool ChatHandler::HandleJoinBGQueue(char* args)
+{
+    Player* player = m_session->GetPlayer();
+
+    if (!player)
+        return false;
+      
+    uint32 bgId;
+    std::string name = args;
+    std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+
+
+    if ("ws" == name)
+        bgId = 489;
+    else if ("av" == name)
+        bgId = 30;
+    else if ("ab" == name)
+        bgId = 529;
+    else
+        return false;
+
+
+    WorldPacket data;
+    data << player->GetObjectGuid();                                      // battlemaster guid
+    data << bgId;
+    data << 0;                                // instance id, 0 if First Available selected
+    data << 0;                               // join as group
+
+    player->GetSession()->HandleBattlemasterJoinOpcode(data);
+
+    return true;
+}
+

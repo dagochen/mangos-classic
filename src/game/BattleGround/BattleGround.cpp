@@ -796,6 +796,8 @@ void BattleGround::EndBattleGround(Team winner)
         sBattleGroundMgr.BuildPvpLogDataPacket(&data, this);
         plr->GetSession()->SendPacket(&data);
 
+
+
         BattleGroundQueueTypeId bgQueueTypeId = BattleGroundMgr::BGQueueTypeId(GetTypeID());
         sBattleGroundMgr.BuildBattleGroundStatusPacket(&data, this, plr->GetBattleGroundQueueIndex(bgQueueTypeId), STATUS_IN_PROGRESS, TIME_TO_AUTOREMOVE, GetStartTime());
         plr->GetSession()->SendPacket(&data);
@@ -809,6 +811,16 @@ uint32 BattleGround::GetBonusHonorFromKill(uint32 kills) const
 {
     // variable kills means how many honorable kills you scored (so we need kills * honor_for_one_kill)
     return (uint32)MaNGOS::Honor::hk_honor_at_level(GetMaxLevel(), kills);
+}
+
+bool BattleGround::IPAlreadyInBG(std::string ip, Team team)
+{
+    for (BattleGroundPlayerMap::const_iterator itr = GetPlayers().begin(); itr != GetPlayers().end(); ++itr)
+    {
+        if (Player* player = sObjectMgr.GetPlayer(itr->first))
+            return (player->GetTeam() != team && player->GetSession()->GetRemoteAddress() == ip);
+    }
+    return false;
 }
 
 uint32 BattleGround::GetBattlemasterEntry() const

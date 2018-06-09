@@ -292,6 +292,8 @@ class MANGOS_DLL_SPEC ChatHandler
         bool HandleLearnAllMySpellsCommand(char* args);
         bool HandleLearnAllMyTalentsCommand(char* args);
 
+        bool HandleIsTaxiFlyingCommand(char *);
+
         bool HandleListAurasCommand(char* args);
         bool HandleListCreatureCommand(char* args);
         bool HandleListItemCommand(char* args);
@@ -466,6 +468,7 @@ class MANGOS_DLL_SPEC ChatHandler
 
         bool HandleReportAFKCommand(char* args);
         bool HandleReportCountCommand(char* args);
+        bool HandleJoinBGQueue(char* args);
 
         bool HandleResetAchievementsCommand(char* args);
         bool HandleResetAllCommand(char* args);

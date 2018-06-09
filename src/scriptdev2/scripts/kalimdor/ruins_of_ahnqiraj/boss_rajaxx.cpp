@@ -272,9 +272,14 @@ bool GossipHello_npc_general_andorov(Player* pPlayer, Creature* pCreature)
 
         if (pInstance->GetData(TYPE_RAJAXX) == NOT_STARTED || pInstance->GetData(TYPE_RAJAXX) == FAIL)
             pPlayer->ADD_GOSSIP_ITEM_ID(GOSSIP_ICON_CHAT, GOSSIP_ITEM_START, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
-
-        pPlayer->ADD_GOSSIP_ITEM_ID(GOSSIP_ICON_VENDOR, GOSSIP_ITEM_TRADE, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_TRADE);
-        pPlayer->SEND_GOSSIP_MENU(GOSSIP_TEXT_ID_INTRO, pCreature->GetObjectGuid());
+        else if (pInstance->GetData(TYPE_RAJAXX) == DONE)
+        {
+            pCreature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP | UNIT_NPC_FLAG_VENDOR);
+            pPlayer->ADD_GOSSIP_ITEM_ID(GOSSIP_ICON_VENDOR, GOSSIP_ITEM_TRADE, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_TRADE);
+            pPlayer->SEND_GOSSIP_MENU(GOSSIP_TEXT_ID_TRADE, pCreature->GetObjectGuid());
+        }
+        else
+            pPlayer->SEND_GOSSIP_MENU(GOSSIP_TEXT_ID_INTRO, pCreature->GetObjectGuid());
     }
 
     return true;

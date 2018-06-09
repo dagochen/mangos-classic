@@ -24,8 +24,75 @@ EndScriptData */
 /* ContentData
 EndContentData */
 
+
 #include "precompiled.h"
+#include "Language.h"
+
+bool On_ItemUse_battleCom(Player* pPlayer, Item* pItem, SpellCastTargets const& targets)
+{
+    if (!pPlayer)
+        return false;
+   
+    ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_INITIALIZING);
+   
+    if (pPlayer->HasSpellCooldown(29154))
+    {
+        ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_COOLDOWN);
+        return false;
+    }
+
+    if (pPlayer->InBattleGroundQueue())
+    {
+        ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_IN_QUEUE);
+        return false;
+    }
+    
+    if (pPlayer->isInCombat())
+    {
+        ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_INFIGHT);
+        return false;
+    }
+    if (pPlayer->GetMoney() < (pPlayer->getLevel() * 10))
+    {
+        ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_NO_MONEY);
+        return false;
+    }
+
+    if (pPlayer->GetBattleGround())
+    {
+        ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_IN_BG);
+        return false;
+    }
+  
+    if (pPlayer->HasAura(26013))
+    {
+        ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_DESERTER);
+        return false;
+    }
+
+    uint32 bgs[] = { 489, 30, 529 };
+
+    for (uint32 i = 0; i < 3; ++i)
+    {
+       pPlayer->GetSession()->HackBattlemasterJoinOpcode(bgs[i], pPlayer);
+    }
+    ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_ESTABLISHED);
+    ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_QUEUES_JOINED);
+    ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_FEE, pPlayer->getLevel() / 10);
+    pPlayer->ModifyMoney(pPlayer->getLevel() * -10);
+    ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_PVP_STATUS);
+    pPlayer->UpdatePvP(true, true);
+    ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_SHUTDOWN);
+    
+    pPlayer->AddSpellCooldown(29154, pItem->GetEntry(), 120);
+    
+    return true;
+}
 
 void AddSC_item_scripts()
 {
+    Script* newScript = new Script;
+    newScript->Name = "item_Battle_Communicator";
+    newScript->pItemUse = &On_ItemUse_battleCom;
+    newScript->RegisterSelf();
 }

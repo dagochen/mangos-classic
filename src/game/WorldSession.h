@@ -621,6 +621,7 @@ class MANGOS_DLL_SPEC WorldSession
         // BattleGround
         void HandleBattlemasterHelloOpcode(WorldPacket& recv_data);
         void HandleBattlemasterJoinOpcode(WorldPacket& recv_data);
+        void HackBattlemasterJoinOpcode(uint32 bgId, Player* player);
         void HandleBattleGroundPlayerPositionsOpcode(WorldPacket& recv_data);
         void HandlePVPLogDataOpcode(WorldPacket& recv_data);
         void HandleBattlefieldStatusOpcode(WorldPacket& recv_data);

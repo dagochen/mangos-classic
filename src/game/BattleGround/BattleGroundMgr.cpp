@@ -997,7 +997,7 @@ void BattleGroundMgr::BuildPvpLogDataPacket(WorldPacket* data, BattleGround* bg)
     }
 }
 
-void BattleGroundMgr::BuildGroupJoinedBattlegroundPacket(WorldPacket* data, BattleGroundTypeId bgTypeId)
+void BattleGroundMgr::BuildGroupJoinedBattlegroundPacket(WorldPacket* data, uint32 bgMapId)
 {
     /*bgTypeId is:
     0 - Your group has joined a battleground queue, but you are not eligible
@@ -1005,7 +1005,7 @@ void BattleGroundMgr::BuildGroupJoinedBattlegroundPacket(WorldPacket* data, Batt
     2 - Your group has joined the queue for WS
     3 - Your group has joined the queue for AB*/
     data->Initialize(SMSG_GROUP_JOINED_BATTLEGROUND, 4);
-    *data << uint32(bgTypeId);
+    *data << uint32(bgMapId);
 }
 
 void BattleGroundMgr::BuildUpdateWorldStatePacket(WorldPacket* data, uint32 field, uint32 value)
@@ -1450,6 +1450,39 @@ bool BattleGroundMgr::IsBGWeekend(BattleGroundTypeId bgTypeId)
 {
     return sGameEventMgr.IsActiveHoliday(BGTypeToWeekendHolidayId(bgTypeId));
 }
+
+bool BattleGroundQueue::IPAlreadyInQueue(std::string ip, Team team)
+{
+    for (QueuedPlayersMap::iterator itr = m_QueuedPlayers.begin(); itr != m_QueuedPlayers.end(); itr++)
+    {
+        ObjectGuid guid = itr->first;
+        Player* pPlayer = sObjectAccessor.FindPlayer(guid);
+        if (pPlayer && pPlayer->GetTeam() != team && pPlayer->GetSession()->GetRemoteAddress() == ip)
+              return true;
+    }
+
+   
+    return false;
+}
+
+bool BattleGroundMgr::IPAlreadyInBG(std::string ip, Team team)
+{
+
+    for (uint32 i = 0; i < MAX_BATTLEGROUND_TYPE_ID; ++i)
+    {
+        for (BattleGroundSet::iterator itr = m_BattleGrounds[i].begin(); itr != m_BattleGrounds[i].end(); ++itr)
+        {
+            BattleGround* bg = itr->second;
+            if (bg)
+            {
+                if (bg->IPAlreadyInBG(ip, team))
+                    return true;
+            }
+        }
+    }
+    return false;
+}
+
 
 void BattleGroundMgr::LoadBattleEventIndexes()
 {

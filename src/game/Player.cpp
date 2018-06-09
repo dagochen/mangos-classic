@@ -16638,13 +16638,13 @@ void Player::SendCooldownEvent(SpellEntry const* spellInfo, uint32 itemId, Spell
     SendDirectMessage(&data);
 }
 
-void Player::SetBattleGroundEntryPoint(Player* leader /*= nullptr*/)
+void Player::SetBattleGroundEntryPoint(Player* leader /*= nullptr*/, bool saveAgain /*= false*/)
 {
     // chat command use case, or non-group join
     if (!leader || !leader->IsInWorld() || leader->IsTaxiFlying() || leader->GetMap()->IsDungeon() || leader->GetMap()->IsBattleGround())
         leader = this;
 
-    if (leader->IsInWorld() && !leader->IsTaxiFlying())
+    if (leader->IsInWorld() && !leader->IsTaxiFlying() && !leader->HasMovementFlag(MOVEFLAG_ONTRANSPORT))
     {
         // If map is dungeon find linked graveyard
         if (leader->GetMap()->IsDungeon())
@@ -16653,6 +16653,7 @@ void Player::SetBattleGroundEntryPoint(Player* leader /*= nullptr*/)
             {
                 m_bgData.joinPos = WorldLocation(entry->map_id, entry->x, entry->y, entry->z, 0.0f);
                 m_bgData.m_needSave = true;
+                m_bgData.m_saveAgain = saveAgain;
                 return;
             }
             else
@@ -16662,6 +16663,159 @@ void Player::SetBattleGroundEntryPoint(Player* leader /*= nullptr*/)
         else if (!leader->GetMap()->IsBattleGround())
         {
             m_bgData.joinPos = WorldLocation(leader->GetMapId(), leader->GetPositionX(), leader->GetPositionY(), leader->GetPositionZ(), leader->GetOrientation());
+            m_bgData.m_needSave = true;
+            m_bgData.m_saveAgain = saveAgain;
+            return;
+        }
+    }
+
+    if (leader->IsTaxiFlying() && !leader->HasMovementFlag(MOVEFLAG_ONTRANSPORT))
+    {
+        uint32 taxiId = leader->m_taxi.GetTaxiSource();
+        TaxiNodesEntry const* node = sTaxiNodesStore.LookupEntry(taxiId);
+        m_bgData.joinPos = WorldLocation(leader->GetMapId(), node->x, node->y, node->z, leader->GetOrientation());
+        m_bgData.m_needSave = true;
+        m_bgData.m_saveAgain = saveAgain;
+        return;
+    }
+
+    if (leader->HasMovementFlag(MOVEFLAG_ONTRANSPORT))
+    {
+        if (const WorldSafeLocsEntry* entry = sObjectMgr.GetClosestGraveYard(leader->GetPositionX(), leader->GetPositionY(), leader->GetPositionZ(), leader->GetMapId(), leader->GetTeam()))
+        {
+            m_bgData.joinPos = WorldLocation(entry->map_id, entry->x, entry->y, entry->z, 0.0f);
+            m_bgData.m_needSave = true;
+            m_bgData.m_saveAgain = saveAgain;
+            return;
+        }
+    }
+
+
+    // In error cases use homebind position
+    m_bgData.joinPos = WorldLocation(m_homebindMapId, m_homebindX, m_homebindY, m_homebindZ, 0.0f);
+    m_bgData.m_needSave = true;
+    m_bgData.m_saveAgain = saveAgain;
+}
+
+void Player::UpdateBattleGroundEntryPoint()
+{
+    if (!m_bgData.m_saveAgain)
+        return;
+
+    if (IsInWorld() && !IsTaxiFlying() && !HasMovementFlag(MOVEFLAG_ONTRANSPORT))
+    {
+        // If map is dungeon find linked graveyard
+        if (GetMap()->IsDungeon())
+        {
+            if (const WorldSafeLocsEntry* entry = sObjectMgr.GetClosestGraveYard(GetPositionX(), GetPositionY(), GetPositionZ(), GetMapId(), GetTeam()))
+            {
+                m_bgData.joinPos = WorldLocation(entry->map_id, entry->x, entry->y, entry->z, 0.0f);
+                m_bgData.m_needSave = true;
+                return;
+            }
+            else
+                sLog.outError("SetBattleGroundEntryPoint: Dungeon map %u has no linked graveyard, setting home location as entry point.", GetMapId());
+        }
+        // If new entry point is not BG or arena set it
+        else if (!GetMap()->IsBattleGround())
+        {
+            m_bgData.joinPos = WorldLocation(GetMapId(), GetPositionX(), GetPositionY(), GetPositionZ(), GetOrientation());
+            m_bgData.m_needSave = true;
+            return;
+        }
+    }
+
+    if (IsTaxiFlying())
+    {
+        uint32 taxiId = m_taxi.GetTaxiSource();
+        TaxiNodesEntry const* node = sTaxiNodesStore.LookupEntry(taxiId);
+        m_bgData.joinPos = WorldLocation(GetMapId(), node->x, node->y, node->z, GetOrientation());
+        m_bgData.m_needSave = true;
+        return;
+    }
+
+    if (HasMovementFlag(MOVEFLAG_ONTRANSPORT))
+    {
+        if (!GetTransport())
+        {
+            WorldLocation loc;
+            switch (GetAreaId())
+            {
+                case 2257: // Deeprun Tram
+                {
+                    WorldLocation ironforge = WorldLocation(GetMapId(), 25.229f, 9.805f, -4.297f, 3.166f);
+                    WorldLocation stormwind = WorldLocation(GetMapId(), 24.971f, 2491.988f, -4.297f, 3.109f);
+                    loc = GetDistance(ironforge.coord_x, ironforge.coord_y, ironforge.coord_z) < GetDistance(stormwind.coord_x, stormwind.coord_y, stormwind.coord_z) ? ironforge : stormwind;
+                    break;
+                }
+                case 1638: // Thunderbluff Elevators
+                {
+                    WorldLocation north = WorldLocation(GetMapId(), -1013.380f, -46.220f, 69.382f, 2.548f);
+                    WorldLocation south = WorldLocation(GetMapId(), -1303.756f, 205.174f, 68.681f, 5.069f);
+                    loc = GetDistance(north.coord_x, north.coord_y, north.coord_z) < GetDistance(south.coord_x, south.coord_y, south.coord_z) ? north : south;
+                    break;
+                }
+                case 485: // Thousand Needles (The Great Lift)
+                {
+                    WorldLocation north = WorldLocation(GetMapId(), -4687.581f, -1836.491f, -44.047f, 6.282f);
+                    WorldLocation south = WorldLocation(GetMapId(), -5376.082f, -2509.209f, -40.432f, 2.528f);
+                    loc = GetDistance(north.coord_x, north.coord_y, north.coord_z) < GetDistance(south.coord_x, south.coord_y, south.coord_z) ? north : south;
+                    break;
+                }
+                case 153: // Undercity
+                {
+                    loc = WorldLocation(GetMapId(), 1600.439f, 240.360f, 60.150f, 3.233f);
+                    break;
+                }
+                case 246: // Searing Gorge Lift
+                {
+                    WorldLocation east = WorldLocation(GetMapId(), -6891.928f, -1336.169f, 239.925f, 3.506f);
+                    WorldLocation west = WorldLocation(GetMapId(), -6890.225f, -1209.587f, 240.495f, 3.027f);
+                    loc = GetDistance(east.coord_x, east.coord_y, east.coord_z) < GetDistance(west.coord_x, west.coord_y, west.coord_z) ? east : west;
+                    break;
+                }
+                case 721: // Gnomeregan Lift
+                {
+                    loc = WorldLocation(GetMapId(), -5162.968f, 667.612f, 248.057f, 1.531f);
+                    break;
+                }
+            }
+            m_bgData.joinPos = loc;
+            m_bgData.m_needSave = true;
+            return;
+        }
+        else
+        {
+            uint32 entry = GetTransport()->GetEntry();
+            WorldLocation loc;
+            switch (entry)
+            {
+            case 20808: // Ratchet <--> Beutebucht
+                loc = GetMapId() == 0 ? WorldLocation(GetMapId(), -14285.17f, 557.55f, 8.86f, 4.30f) : WorldLocation(GetMapId(), -999.12f, -3825.31f, 5.34f, 1.09f);
+                break;
+            case 164871: // Orgrimmar <--> Unterstadt
+                loc = GetMapId() == 0 ? WorldLocation(GetMapId(), 2067.27f, 288.56f, 97.03f, 4.49f) : WorldLocation(GetMapId(), 1323.46f, -4641.58f, 53.82f, 6.26f);
+                break;
+            case 175080: // Gromgol <--> Orgrimmar
+                loc = GetMapId() == 0 ? WorldLocation(GetMapId(), -12444.37f, 219.05f, 31.79f, 5.7f) : WorldLocation(GetMapId(), 1360.06f, -4638.52f, 53.83f, 3.64f);
+                break;
+            case 176231: // Menethil <--> Therammore
+                loc = GetMapId() == 0 ? WorldLocation(GetMapId(), -3895.40f, -601.69f, 5.44f, 5.08f) : WorldLocation(GetMapId(), -4001.57f, -4727.90f, 4.99f, 0.78f);
+                break;
+            case 176244: // Teldrassil <--> Auberdine
+                loc = WorldLocation(GetMapId(), 6579.50f, 768.85f, 5.74f, 2.92f);
+                break;
+            case 176310: // Menethil <--> Auberdine
+                loc = GetMapId() == 0 ? WorldLocation(GetMapId(), -3725.48f, -582.80f, 6.22f, 3.71f) : WorldLocation(GetMapId(), 6422.23f, 818.44f, 5.62f, 6.06f);
+                break;
+            case 176495: // Gromgol <--> Unterstadt
+                loc = GetZoneId() == 85 ? WorldLocation(GetMapId(), 2058.04f, 240.94f, 99.76f, 1.3f) : WorldLocation(GetMapId(), -12410.10f, 206.74f, 31.59f, 3.11f);
+                break;
+            case 177233: // Feathermoon
+                loc = WorldLocation(GetMapId(), -4215.49f, 3285.64f, 6.47f, 3.21f);
+                break;
+            }
+            m_bgData.joinPos = loc;
             m_bgData.m_needSave = true;
             return;
         }
