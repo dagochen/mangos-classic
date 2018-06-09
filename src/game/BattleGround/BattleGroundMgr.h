@@ -84,7 +84,7 @@ class BattleGroundQueue
         uint32 GetAverageQueueWaitTime(GroupQueueInfo* ginfo, BattleGroundBracketId bracket_id);
 
         bool IPAlreadyInQueue(std::string ip, Team team);
-
+        void RemovePlayerFromAllQueues(Player* player, BattleGround* bg = nullptr, uint32 bgTypeId = 0);
 
     private:
         // mutex that should not allow changing private data, nor allowing to update Queue during private data change.
@@ -228,6 +228,8 @@ class BattleGroundMgr
 
         void ToggleTesting();
 
+        void KickPlayerFromAllQueues(Player* player);
+
         void LoadBattleMastersEntry();
         BattleGroundTypeId GetBattleMasterBG(uint32 entry) const
         {
@@ -256,6 +258,7 @@ class BattleGroundMgr
         bool IPAlreadyInBG(std::string ip, Team team);
 
         bool isTesting() const { return m_Testing; }
+
 
         static BattleGroundQueueTypeId BGQueueTypeId(BattleGroundTypeId bgTypeId);
         static BattleGroundTypeId BGTemplateId(BattleGroundQueueTypeId bgQueueTypeId);

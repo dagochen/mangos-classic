@@ -41,6 +41,12 @@ bool On_ItemUse_battleCom(Player* pPlayer, Item* pItem, SpellCastTargets const& 
         return false;
     }
 
+    if (!pPlayer->GetMap()->IsContinent())
+    {
+        ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_DUNGEON);
+        return false;
+    }
+
     if (pPlayer->InBattleGroundQueue())
     {
         ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_IN_QUEUE);
@@ -84,7 +90,7 @@ bool On_ItemUse_battleCom(Player* pPlayer, Item* pItem, SpellCastTargets const& 
     pPlayer->UpdatePvP(true, true);
     ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_SHUTDOWN);
     
-    pPlayer->AddSpellCooldown(29154, pItem->GetEntry(), 120);
+    pPlayer->AddSpellCooldown(29154, pItem->GetEntry(), 30);
     
     return true;
 }

@@ -386,7 +386,7 @@ bool ChatHandler::HandleJoinBGQueue(char* args)
     data << 0;                                // instance id, 0 if First Available selected
     data << 0;                               // join as group
 
-    player->GetSession()->HandleBattlemasterJoinOpcode(data);
+    player->GetSession()->HackBattlemasterJoinOpcode(bgId, player);
 
     return true;
 }

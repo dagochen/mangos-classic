@@ -1058,6 +1058,7 @@ enum MangosStrings
     LANG_BATTLECOM_DESERTER             = 1740,
     LANG_BATTLECOM_IN_QUEUE             = 1741,
     LANG_BATTLECOM_COOLDOWN             = 1742,
+    LANG_BATTLECOM_DUNGEON              = 1743,
     // Use for not-in-official-sources patches
     //                                    10000-10999
 
