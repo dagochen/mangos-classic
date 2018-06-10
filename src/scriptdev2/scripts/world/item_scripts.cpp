@@ -80,7 +80,29 @@ bool On_ItemUse_battleCom(Player* pPlayer, Item* pItem, SpellCastTargets const& 
 
     for (uint32 i = 0; i < 3; ++i)
     {
-       pPlayer->GetSession()->HackBattlemasterJoinOpcode(bgs[i], pPlayer);
+        uint32 minlevel = 50;
+        switch (bgs[i])
+        {
+            case 489:
+            {
+                minlevel = 10;
+                break;
+            }
+            case 30:
+            {
+                minlevel = 50;
+                break;
+            }
+            case 529:
+            {
+                minlevel = 20;
+                break;
+            }
+            default:
+                break;
+        }
+        if (pPlayer->getLevel() >= minlevel)
+            pPlayer->GetSession()->HackBattlemasterJoinOpcode(bgs[i], pPlayer);
     }
     ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_ESTABLISHED);
     ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_QUEUES_JOINED);
