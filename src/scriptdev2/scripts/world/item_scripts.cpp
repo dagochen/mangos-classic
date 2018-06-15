@@ -130,7 +130,7 @@ bool On_ItemUse_battleCom(Player* pPlayer, Item* pItem, SpellCastTargets const& 
     }
     ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_ESTABLISHED);
     ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_QUEUES_JOINED);
-    ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_FEE, pPlayer->getLevel() / 10);
+    ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_FEE, float(pPlayer->getLevel() / 10.0f));
     pPlayer->ModifyMoney(pPlayer->getLevel() * -10);
     ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_PVP_STATUS);
     pPlayer->UpdatePvP(true, true);
