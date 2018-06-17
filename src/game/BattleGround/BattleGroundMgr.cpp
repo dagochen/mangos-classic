@@ -47,6 +47,7 @@ BattleGroundQueue::BattleGroundQueue()
     {
         for (uint8 j = 0; j < MAX_BATTLEGROUND_BRACKETS; ++j)
         {
+            m_CountPlayers[i][j] = 0;
             m_SumOfWaitTimes[i][j] = 0;
             m_WaitTimeLastPlayer[i][j] = 0;
             for (uint8 k = 0; k < COUNT_OF_PLAYERS_TO_AVERAGE_WAIT_TIME; ++k)
@@ -176,6 +177,7 @@ GroupQueueInfo* BattleGroundQueue::AddGroup(Player* leader, Group* grp, BattleGr
                 pl_info.GroupInfo        = ginfo;
                 // add the pinfo to ginfo's list
                 ginfo->Players[member->GetObjectGuid()]  = &pl_info;
+                m_CountPlayers[member->GetTeam() == HORDE ? TEAM_INDEX_HORDE : TEAM_INDEX_ALLIANCE][bracketId]++;
             }
         }
         else
@@ -184,6 +186,7 @@ GroupQueueInfo* BattleGroundQueue::AddGroup(Player* leader, Group* grp, BattleGr
             pl_info.LastOnlineTime   = lastOnlineTime;
             pl_info.GroupInfo        = ginfo;
             ginfo->Players[leader->GetObjectGuid()]  = &pl_info;
+            m_CountPlayers[leader->GetTeam() == HORDE ? TEAM_INDEX_HORDE : TEAM_INDEX_ALLIANCE][bracketId]++;
         }
 
         // add GroupInfo to m_QueuedGroups
@@ -330,6 +333,8 @@ void BattleGroundQueue::RemovePlayer(ObjectGuid guid, bool decreaseInvitedCount)
             bg->DecreaseInvitedCount(group->GroupTeam);
     }
 
+    m_CountPlayers[itr->second.GroupInfo->GroupTeam == HORDE ? TEAM_INDEX_HORDE : TEAM_INDEX_ALLIANCE][(BattleGroundBracketId)bracket_id]--;
+
     // remove player queue info
     m_QueuedPlayers.erase(itr);
 
@@ -462,6 +467,11 @@ void BattleGroundQueue::RemovePlayerFromAllQueues(Player* plr, BattleGround* bg,
         plr->GetSession()->SendPacket(&queueLeavedata);
         DEBUG_LOG("Battleground: player %s (%u) left queue for bgtype %u, queue type %u.", plr->GetName(), plr->GetGUIDLow(), bg->GetTypeID(), queueID);
     }
+}
+
+uint32 BattleGroundQueue::GetPlayerPerTeamAndBracket(PvpTeamIndex team, BattleGroundBracketId bracket)
+{
+    return m_CountPlayers[team][bracket];
 }
 
 /*
@@ -1462,6 +1472,11 @@ BattleGroundTypeId BattleGroundMgr::WeekendHolidayIdToBGType(HolidayIds holiday)
 bool BattleGroundMgr::IsBGWeekend(BattleGroundTypeId bgTypeId)
 {
     return sGameEventMgr.IsActiveHoliday(BGTypeToWeekendHolidayId(bgTypeId));
+}
+
+uint32 BattleGroundMgr::GetCount(BattleGroundTypeId queue, PvpTeamIndex team, BattleGroundBracketId bracket)
+{
+    return m_BattleGroundQueues[queue].GetPlayerPerTeamAndBracket(team, bracket);
 }
 
 bool BattleGroundQueue::IPAlreadyInQueue(std::string ip, Team team)

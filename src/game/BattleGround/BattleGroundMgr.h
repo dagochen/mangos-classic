@@ -85,7 +85,7 @@ class BattleGroundQueue
 
         bool IPAlreadyInQueue(std::string ip, Team team);
         void RemovePlayerFromAllQueues(Player* player, BattleGround* bg = nullptr, uint32 bgTypeId = 0);
-
+        uint32 GetPlayerPerTeamAndBracket(PvpTeamIndex team, BattleGroundBracketId bracket);
     private:
         // mutex that should not allow changing private data, nor allowing to update Queue during private data change.
         std::recursive_mutex m_Lock;
@@ -129,6 +129,7 @@ class BattleGroundQueue
         uint32 m_WaitTimes[PVP_TEAM_COUNT][MAX_BATTLEGROUND_BRACKETS][COUNT_OF_PLAYERS_TO_AVERAGE_WAIT_TIME];
         uint32 m_WaitTimeLastPlayer[PVP_TEAM_COUNT][MAX_BATTLEGROUND_BRACKETS];
         uint32 m_SumOfWaitTimes[PVP_TEAM_COUNT][MAX_BATTLEGROUND_BRACKETS];
+        uint32 m_CountPlayers[PVP_TEAM_COUNT][MAX_BATTLEGROUND_BRACKETS];
 };
 
 /*
@@ -266,6 +267,10 @@ class BattleGroundMgr
         static HolidayIds BGTypeToWeekendHolidayId(BattleGroundTypeId bgTypeId);
         static BattleGroundTypeId WeekendHolidayIdToBGType(HolidayIds holiday);
         static bool IsBGWeekend(BattleGroundTypeId bgTypeId);
+
+        uint32 GetCount(BattleGroundTypeId queue, PvpTeamIndex team, BattleGroundBracketId bracket);
+
+
     private:
         std::mutex    SchedulerLock;
         BattleMastersMap    mBattleMastersMap;
