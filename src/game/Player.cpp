@@ -1320,6 +1320,8 @@ void Player::Update(uint32 update_diff, uint32 p_time)
     UpdateEnchantTime(update_diff);
     UpdateHomebindTime(update_diff);
 
+    UpdateBGInformation(update_diff);
+
     // Group update
     SendUpdateToOutOfRangeGroupMembers();
 
@@ -1329,6 +1331,50 @@ void Player::Update(uint32 update_diff, uint32 p_time)
 
     if (IsHasDelayedTeleport())
         TeleportTo(m_teleport_dest, m_teleport_options);
+}
+
+
+void Player::UpdateBGInformation(uint32 diff)
+{
+    if (m_infoTimer <= diff)
+    {
+        if (InBattleGroundQueue(BATTLEGROUND_AB))
+        {
+            uint32 bracket = GetBattleGroundBracketIdFromLevel(BATTLEGROUND_AB);
+            uint32 horde = sBattleGroundMgr.GetCount(BATTLEGROUND_AB, TEAM_INDEX_HORDE, (BattleGroundBracketId)bracket);
+            uint32 ally = sBattleGroundMgr.GetCount(BATTLEGROUND_AB, TEAM_INDEX_ALLIANCE, (BattleGroundBracketId)bracket);
+            if (horde != 0 || ally != 0)
+            {
+                ChatHandler(this).PSendSysMessage(LANG_BG_AB_STATUS_QUEUE, horde, ally);
+            }
+        }
+
+        if (InBattleGroundQueue(BATTLEGROUND_AV))
+        {
+            uint32 bracket = GetBattleGroundBracketIdFromLevel(BATTLEGROUND_AV);
+            uint32 horde = sBattleGroundMgr.GetCount(BATTLEGROUND_AV, TEAM_INDEX_HORDE, (BattleGroundBracketId)bracket);
+            uint32 ally = sBattleGroundMgr.GetCount(BATTLEGROUND_AV, TEAM_INDEX_ALLIANCE, (BattleGroundBracketId)bracket);
+            if (horde != 0 || ally != 0)
+            {
+                ChatHandler(this).PSendSysMessage(LANG_BG_AV_STATUS_QUEUE, horde, ally);
+            }
+        }
+
+        if (InBattleGroundQueue(BATTLEGROUND_WS))
+        {
+            uint32 bracket = GetBattleGroundBracketIdFromLevel(BATTLEGROUND_WS);
+            uint32 horde = sBattleGroundMgr.GetCount(BATTLEGROUND_WS, TEAM_INDEX_HORDE, (BattleGroundBracketId)bracket);
+            uint32 ally = sBattleGroundMgr.GetCount(BATTLEGROUND_WS, TEAM_INDEX_ALLIANCE, (BattleGroundBracketId)bracket);
+            if (horde != 0 || ally != 0)
+            {
+                ChatHandler(this).PSendSysMessage(LANG_BG_WS_STATUS_QUEUE, horde, ally);
+            }
+        }
+
+        m_infoTimer = 60000;
+    }
+    else
+        m_infoTimer -= diff;
 }
 
 void Player::SetDeathState(DeathState s)

@@ -92,3 +92,4 @@ cmake_install.cmake
 !dep/recastnavigation/RecastDemo/Build/
 win/mangosdVC140.VC.db
 win/VC140/mangosd.vcxproj
+*.db

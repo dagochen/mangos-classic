@@ -4550,39 +4550,6 @@ bool ChatHandler::HandleTeleDelCommand(char* args)
     return true;
 }
 
-bool ChatHandler::HandleIsInBossFightCommand(char* /*args*/)
-{
-    Unit* unit = getSelectedUnit();
-   
-    if (unit->IsInBossfight())
-    {
-        SendSysMessage("Infight");
-    }
-    else
-    {
-        SendSysMessage("Outfight");
-    }
-
-    return true;
-};
-
-
-bool ChatHandler::HandleIsTaxiFlyingCommand(char* /*args*/)
-{
-    Unit* unit = getSelectedUnit();
-
-    if (unit->IsTaxiFlying())
-    {
-        SendSysMessage("Infight");
-    }
-    else
-    {
-        SendSysMessage("Outfight");
-    }
-
-    return true;
-};
-
 bool ChatHandler::HandleListAurasCommand(char* /*args*/)
 {
     Unit* unit = getSelectedUnit();
@@ -7091,3 +7058,35 @@ bool ChatHandler::HandlePlayerStatsCommand(char* args)
     
 
 }
+bool ChatHandler::HandleIsInBossFightCommand(char* /*args*/)
+{
+    Unit* unit = getSelectedUnit();
+   
+    if (unit->IsInBossfight())
+    {
+        SendSysMessage("Infight");
+    }
+    else
+    {
+        SendSysMessage("Outfight");
+    }
+
+    return true;
+};
+
+
+bool ChatHandler::HandleIsTaxiFlyingCommand(char* /*args*/)
+{
+    Unit* unit = getSelectedUnit();
+
+    if (unit->IsTaxiFlying())
+    {
+        SendSysMessage("Infight");
+    }
+    else
+    {
+        SendSysMessage("Outfight");
+    }
+
+    return true;
+};

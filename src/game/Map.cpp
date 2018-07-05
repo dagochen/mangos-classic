@@ -28,6 +28,7 @@
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
 #include "World.h"
+#include "BattleGround\BattleGroundMgr.h"
 #include "Group.h"
 #include "MapRefManager.h"
 #include "DBCEnums.h"
@@ -1406,6 +1407,8 @@ bool DungeonMap::Add(Player* player)
     // for normal instances cancel the reset schedule when the
     // first player enters (no players yet)
     SetResetSchedule(false);
+    if (player->InBattleGroundQueue())
+        sBattleGroundMgr.KickPlayerFromAllQueues(player);
 
     DETAIL_LOG("MAP: Player '%s' is entering instance '%u' of map '%s'", player->GetName(), GetInstanceId(), GetMapName());
     // initialize unload state

@@ -948,6 +948,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint32 GetTotalPlayedTime() { return m_Played_time[PLAYED_TIME_TOTAL]; }
         uint32 GetLevelPlayedTime() { return m_Played_time[PLAYED_TIME_LEVEL]; }
 
+        void UpdateBGInformation(uint32 diff);
+
         void SetDeathState(DeathState s) override;          // overwrite Unit::SetDeathState
 
         float GetRestBonus() const { return m_rest_bonus; }
@@ -1808,10 +1810,20 @@ class MANGOS_DLL_SPEC Player : public Unit
         static uint32 GetMaxLevelForBattleGroundBracketId(BattleGroundBracketId bracket_id, BattleGroundTypeId bgTypeId);
         BattleGroundBracketId GetBattleGroundBracketIdFromLevel(BattleGroundTypeId bgTypeId) const;
 
+        uint32 m_infoTimer = 60000;
+
         bool InBattleGroundQueue() const
         {
             for (int i = 0; i < PLAYER_MAX_BATTLEGROUND_QUEUES; ++i)
                 if (m_bgBattleGroundQueueID[i].bgQueueTypeId != BATTLEGROUND_QUEUE_NONE)
+                    return true;
+            return false;
+        }
+
+        bool InBattleGroundQueue(uint32 queue) const
+        {
+            for (int i = 0; i < PLAYER_MAX_BATTLEGROUND_QUEUES; ++i)
+                if (m_bgBattleGroundQueueID[i].bgQueueTypeId == queue)
                     return true;
             return false;
         }

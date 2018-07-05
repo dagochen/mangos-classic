@@ -41,11 +41,37 @@ bool On_ItemUse_battleCom(Player* pPlayer, Item* pItem, SpellCastTargets const& 
         return false;
     }
 
-    if (pPlayer->InBattleGroundQueue())
+    if (!pPlayer->GetMap()->IsContinent())
     {
-        ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_IN_QUEUE);
+        ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_DUNGEON);
         return false;
     }
+
+    if (pPlayer->getLevel() < 20)
+    {
+        if (pPlayer->InBattleGroundQueue(BATTLEGROUND_WS))
+        {
+            ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_IN_QUEUE);
+            return false;
+        }
+    }
+    else if (pPlayer->getLevel() < 50)
+    {
+        if (pPlayer->InBattleGroundQueue(BATTLEGROUND_WS) && pPlayer->InBattleGroundQueue(BATTLEGROUND_AB))
+        {
+            ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_IN_QUEUE);
+            return false;
+        }
+    }
+    else
+    {
+        if (pPlayer->InBattleGroundQueue(BATTLEGROUND_WS) && pPlayer->InBattleGroundQueue(BATTLEGROUND_AB) && pPlayer->InBattleGroundQueue(BATTLEGROUND_AV))
+        {
+            ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_IN_QUEUE);
+            return false;
+        }
+    }
+ 
     
     if (pPlayer->isInCombat())
     {
@@ -74,17 +100,43 @@ bool On_ItemUse_battleCom(Player* pPlayer, Item* pItem, SpellCastTargets const& 
 
     for (uint32 i = 0; i < 3; ++i)
     {
-       pPlayer->GetSession()->HackBattlemasterJoinOpcode(bgs[i], pPlayer);
+        BattleGroundTypeId bgTypeId = BATTLEGROUND_TYPE_NONE;
+        uint32 minlevel = 50;
+        switch (bgs[i])
+        {
+            case 489:
+            {
+                bgTypeId = BATTLEGROUND_WS;
+                minlevel = 10;
+                break;
+            }
+            case 30:
+            {
+                bgTypeId = BATTLEGROUND_AV;
+                minlevel = 50;
+                break;
+            }
+            case 529:
+            {
+                bgTypeId = BATTLEGROUND_AB;
+                minlevel = 20;
+                break;
+            }
+            default:
+                break;
+        }
+        if (pPlayer->getLevel() >= minlevel && !pPlayer->InBattleGroundQueue(bgTypeId))
+            pPlayer->GetSession()->HackBattlemasterJoinOpcode(bgs[i], pPlayer);
     }
     ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_ESTABLISHED);
     ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_QUEUES_JOINED);
-    ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_FEE, pPlayer->getLevel() / 10);
+    ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_FEE, float(pPlayer->getLevel() / 10.0f));
     pPlayer->ModifyMoney(pPlayer->getLevel() * -10);
     ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_PVP_STATUS);
     pPlayer->UpdatePvP(true, true);
     ChatHandler(pPlayer).PSendSysMessage(LANG_BATTLECOM_SHUTDOWN);
     
-    pPlayer->AddSpellCooldown(29154, pItem->GetEntry(), 120);
+    pPlayer->AddSpellCooldown(29154, pItem->GetEntry(), 30);
     
     return true;
 }
