@@ -99,7 +99,7 @@ void LootStore::LoadLootTable()
     Clear();
 
     //                                                 0      1     2                    3        4              5         6
-    QueryResult* result = WorldDatabase.PQuery("SELECT entry, item, ChanceOrQuestChance, groupid, mincountOrRef, maxcount, condition_id FROM %s", GetName());
+    QueryResult* result = WorldDatabase.PQuery("SELECT entry, item, ChanceOrQuestChance, groupid, mincountOrRef, maxcount, condition_id, duplicateChance FROM %s", GetName());
 
     if (result)
     {
@@ -117,6 +117,7 @@ void LootStore::LoadLootTable()
             int32  mincountOrRef       = fields[4].GetInt32();
             uint32 maxcount            = fields[5].GetUInt32();
             uint16 conditionId         = fields[6].GetUInt16();
+            float duplicateChance      = fields[7].GetFloat();
 
             if (maxcount > std::numeric_limits<uint8>::max())
             {
@@ -140,7 +141,7 @@ void LootStore::LoadLootTable()
                 }
             }
 
-            LootStoreItem storeitem = LootStoreItem(item, chanceOrQuestChance, group, conditionId, mincountOrRef, maxcount);
+            LootStoreItem storeitem = LootStoreItem(item, chanceOrQuestChance, group, conditionId, mincountOrRef, maxcount, duplicateChance);
 
             if (!storeitem.IsValid(*this, entry))           // Validity checks
                 continue;
@@ -316,6 +317,11 @@ bool LootStoreItem::IsValid(LootStore const& store, uint32 entry) const
         else if (chance == 0)                               // no chance for the reference
         {
             sLog.outErrorDb("Table '%s' entry %d item %d: zero chance is given for a reference, reference will never be used, skipped", store.GetName(), entry, itemid);
+            return false;
+        }
+        else if (duplicateChance != 100.0f)
+        {
+            sLog.outErrorDb("Table '%s' entry %d item %d: Not 100% duplicateChance is given for a reference, reference may not be used, skipped", store.GetName(), entry, itemid);
             return false;
         }
     }
@@ -2190,6 +2196,7 @@ void LootTemplate::LootGroup::AddEntry(LootStoreItem& item)
 // Rolls an item from the group, returns nullptr if all miss their chances
 LootStoreItem const* LootTemplate::LootGroup::Roll(Loot const& loot, Player const* lootOwner) const
 {
+    uint32 rollCount = 0;
     if (!ExplicitlyChanced.empty())                         // First explicitly chanced entries are checked
     {
         std::vector <LootStoreItem const*> lootStoreItemVector; // we'll use new vector to make easy the randomization
@@ -2206,6 +2213,7 @@ LootStoreItem const* LootTemplate::LootGroup::Roll(Loot const& loot, Player cons
         // as the new vector is randomized we can start from first element and stop at first one that meet the condition
         for (std::vector <LootStoreItem const*>::const_iterator itr = lootStoreItemVector.begin(); itr != lootStoreItemVector.end(); ++itr)
         {
+            rollCount++;
             LootStoreItem const* lsi = *itr;
 
             if (lsi->conditionId && !sObjectMgr.IsPlayerMeetToCondition(lsi->conditionId, lootOwner, lootOwner->GetMap(), loot.GetLootTarget(), CONDITION_FROM_REFERING_LOOT))
@@ -2218,11 +2226,23 @@ LootStoreItem const* LootTemplate::LootGroup::Roll(Loot const& loot, Player cons
                 return lsi;
 
             chance -= lsi->chance;
+
             if (chance < 0)
+            {
+                if (loot.IsItemAlreadyIn(lsi->itemid) && rollCount < 100)
+                {
+                    // item already looted, so check if its duplicateDropChance hits
+                    bool reroll = rand_chance_f() > lsi->duplicateChance;
+
+                    if (reroll)
+                        continue;                               // pass this item
+                }
+
                 return lsi;
+            }
         }
     }
-
+    rollCount = 0;
     if (!EqualChanced.empty())                              // If nothing selected yet - an item is taken from equal-chanced part
     {
         std::vector <LootStoreItem const*> lootStoreItemVector; // we'll use new vector to make easy the randomization
@@ -2238,14 +2258,14 @@ LootStoreItem const* LootTemplate::LootGroup::Roll(Loot const& loot, Player cons
         for (std::vector <LootStoreItem const*>::const_iterator itr = lootStoreItemVector.begin(); itr != lootStoreItemVector.end(); ++itr)
         {
             LootStoreItem const* lsi = *itr;
-
+            rollCount++;
             //check if we already have that item in the loot list
-            if (loot.IsItemAlreadyIn(lsi->itemid))
+            if (loot.IsItemAlreadyIn(lsi->itemid) && rollCount < 100)
             {
-                // the item is already looted, let's give a 50%  chance to pick another one
-                uint32 chance = urand(0,1);
+                // item already looted, so check if its duplicateDropChance hits
+                bool reroll = rand_chance_f() > lsi->duplicateChance;
 
-                if (chance)
+                if (reroll)
                     continue;                               // pass this item
             }
 
