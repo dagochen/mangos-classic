@@ -4165,6 +4165,8 @@ SpellCastResult Spell::CheckCast(bool strict)
                 }
                 else if (!pet->isAlive())
                     return SPELL_FAILED_TARGETS_DEAD;
+                else if (!pet->IsWithinLOSInMap(m_caster))
+                    return SPELL_FAILED_LINE_OF_SIGHT;
                 break;
             }
         }
