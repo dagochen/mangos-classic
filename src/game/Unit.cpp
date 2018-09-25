@@ -360,9 +360,18 @@ void Unit::Update(uint32 update_diff, uint32 p_time)
 
 bool Unit::UpdateMeleeAttackingState()
 {
+
+
     Unit* victim = getVictim();
     if (!victim || IsNonMeleeSpellCasted(false))
         return false;
+
+   /* if (GetTypeId() == TYPEID_PLAYER)
+    {
+        Player* pPlayer = static_cast<Player*>(this);
+        if (pPlayer)
+            victim->MonsterWhisper(std::to_string(getAttackTimer(BASE_ATTACK)).c_str(), pPlayer, true);
+    }*/
 
     if (!isAttackReady(BASE_ATTACK) && !(isAttackReady(OFF_ATTACK) && haveOffhandWeapon()))
         return false;
@@ -395,6 +404,8 @@ bool Unit::UpdateMeleeAttackingState()
             }
         }
 
+
+
         if (isAttackReady(BASE_ATTACK))
         {
             // prevent base and off attack in same time, delay attack at 0.2 sec
@@ -409,7 +420,7 @@ bool Unit::UpdateMeleeAttackingState()
         if (haveOffhandWeapon() && isAttackReady(OFF_ATTACK))
         {
             // prevent base and off attack in same time, delay attack at 0.2 sec
-            uint32 base_att = getAttackTimer(BASE_ATTACK);
+            const uint32 base_att = getAttackTimer(BASE_ATTACK);
             if (base_att < ATTACK_DISPLAY_DELAY)
                 setAttackTimer(BASE_ATTACK, ATTACK_DISPLAY_DELAY);
             // do attack
@@ -437,15 +448,9 @@ bool Unit::haveOffhandWeapon() const
         return false;
 
     if (GetTypeId() == TYPEID_PLAYER)
-        return !!((Player*)this)->GetWeaponForAttack(OFF_ATTACK, true, true);
-    else
-    {
-        uint8 itemClass = GetByteValue(UNIT_VIRTUAL_ITEM_INFO + (1 * 2) + 0, VIRTUAL_ITEM_INFO_0_OFFSET_CLASS);
-        if (itemClass == ITEM_CLASS_WEAPON)
-            return true;
-
-        return false;
-    }
+        return ((Player*)this)->GetWeaponForAttack(OFF_ATTACK, true, true) != 0;
+    const uint8 itemClass = GetByteValue(UNIT_VIRTUAL_ITEM_INFO + (1 * 2) + 0, VIRTUAL_ITEM_INFO_0_OFFSET_CLASS);
+    return itemClass == ITEM_CLASS_WEAPON;
 }
 
 void Unit::SendHeartBeat()
@@ -2346,19 +2351,19 @@ void Unit::CalculateDamageAbsorbAndResist(Unit* pCaster, SpellSchoolMask schoolM
                 ++m; // m = 4 -> 100% resist
 
 
-            std::ostringstream ss;
-            ss << "0%: " << chances[0] << " % \n";
-            ss << " 25%: " << chances[1] * (100.0f - chances[0]) / 100 << " % \n";
-            ss << " 50%: " << chances[2] * (100.0f - chances[0]) * (100.0f - chances[1]) / 10000 << " % \n";
-            ss << " 75%: " << chances[3] * (100.0f - chances[0]) * (100.0f - chances[1])  * (100.0f - chances[2]) / 1000000 << " % \n";
-            ss << " 100%: " << 100.0f - (chances[0] + chances[1] * (100.0f - chances[0]) / 100 + chances[2] * (100.0f - chances[0]) * (100.0f - chances[1]) / 10000 + chances[3] * (100.0f - chances[0]) * (100.0f - chances[1])  * (100.0f - chances[2]) / 1000000) << " % \n";
-            ss << " Dmg Reduction: " << 100.0f - (chances[0] + chances[1] * (100.0f - chances[0]) / 100 + chances[2] * (100.0f - chances[0]) * (100.0f - chances[1]) / 10000 + chances[3] * (100.0f - chances[0]) * (100.0f - chances[1])  * (100.0f - chances[2]) / 1000000) + chances[3] * (100.0f - chances[0]) * (100.0f - chances[1])  * (100.0f - chances[2]) / 1000000 * 0.75f + chances[1] * (100.0f - chances[0]) / 100 * 0.25f + chances[2] * (100.0f - chances[0]) * (100.0f - chances[1]) / 10000 * 0.5f << " % \n";
-            std::string s(ss.str());
+            //std::ostringstream ss;
+            //ss << "0%: " << chances[0] << " % \n";
+            //ss << " 25%: " << chances[1] * (100.0f - chances[0]) / 100 << " % \n";
+            //ss << " 50%: " << chances[2] * (100.0f - chances[0]) * (100.0f - chances[1]) / 10000 << " % \n";
+            //ss << " 75%: " << chances[3] * (100.0f - chances[0]) * (100.0f - chances[1])  * (100.0f - chances[2]) / 1000000 << " % \n";
+            //ss << " 100%: " << 100.0f - (chances[0] + chances[1] * (100.0f - chances[0]) / 100 + chances[2] * (100.0f - chances[0]) * (100.0f - chances[1]) / 10000 + chances[3] * (100.0f - chances[0]) * (100.0f - chances[1])  * (100.0f - chances[2]) / 1000000) << " % \n";
+            //ss << " Dmg Reduction: " << 100.0f - (chances[0] + chances[1] * (100.0f - chances[0]) / 100 + chances[2] * (100.0f - chances[0]) * (100.0f - chances[1]) / 10000 + chances[3] * (100.0f - chances[0]) * (100.0f - chances[1])  * (100.0f - chances[2]) / 1000000) + chances[3] * (100.0f - chances[0]) * (100.0f - chances[1])  * (100.0f - chances[2]) / 1000000 * 0.75f + chances[1] * (100.0f - chances[0]) / 100 * 0.25f + chances[2] * (100.0f - chances[0]) * (100.0f - chances[1]) / 10000 * 0.5f << " % \n";
+            //std::string s(ss.str());
 
-            if (pCaster->GetTypeId() == TYPEID_PLAYER)
-                MonsterWhisper(s.c_str(), pCaster, true);
-            else
-                pCaster->MonsterWhisper(s.c_str(), this, true);
+            //if (pCaster->GetTypeId() == TYPEID_PLAYER)
+            //    MonsterWhisper(s.c_str(), pCaster, true);
+            //else
+            //    pCaster->MonsterWhisper(s.c_str(), this, true);
 
 
 
@@ -2424,7 +2429,7 @@ void Unit::CalculateDamageAbsorbAndResist(Unit* pCaster, SpellSchoolMask schoolM
             else if (ran < resist100 + resist75 + resist50 + resist25)
                 resistCnt = 0.25f;
 
-            std::ostringstream ss;
+           /* std::ostringstream ss;
             ss << "0%: " << resist0 << " % \n";
             ss << " 25%: " << resist25 << " % \n";
             ss << " 50%: " << resist50 << " % \n";
@@ -2437,7 +2442,7 @@ void Unit::CalculateDamageAbsorbAndResist(Unit* pCaster, SpellSchoolMask schoolM
                 MonsterWhisper(s.c_str(), pCaster, true);
             else
                 pCaster->MonsterWhisper(s.c_str(), this, true);
-
+*/
 
         
             *resist += uint32(damage * resistCnt);
@@ -2496,7 +2501,7 @@ void Unit::CalculateDamageAbsorbAndResist(Unit* pCaster, SpellSchoolMask schoolM
             else if (ran < resist100 + resist75 + resist50 + resist25)
                 resistCnt = 0.25f;
 
-            std::ostringstream ss;
+           /* std::ostringstream ss;
             ss << "0%: " << float(resist0 / 100.0f) << " % \n";
             ss << " 25%: " << float(resist25 / 100.0f) << " % \n";
             ss << " 50%: " << float(resist50 / 100.0f) << " % \n";
@@ -2508,7 +2513,7 @@ void Unit::CalculateDamageAbsorbAndResist(Unit* pCaster, SpellSchoolMask schoolM
             if (pCaster->GetTypeId() == TYPEID_PLAYER)
                 MonsterWhisper(s.c_str(), pCaster, true);
             else
-                pCaster->MonsterWhisper(s.c_str(), this, true);
+                pCaster->MonsterWhisper(s.c_str(), this, true);*/
 
 
       
@@ -2813,6 +2818,8 @@ void Unit::AttackerStateUpdate(Unit* pVictim, WeaponAttackType attType, bool ext
                 --m_extraAttacks;
         }
     }
+    if (extra)
+        resetAttackTimer(BASE_ATTACK);
 }
 
 MeleeHitOutcome Unit::RollMeleeOutcomeAgainst(const Unit* pVictim, WeaponAttackType attType) const
