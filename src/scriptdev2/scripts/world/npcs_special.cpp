@@ -929,6 +929,270 @@ bool EffectDummyCreature_npc_redemption_target(Unit* pCaster, uint32 uiSpellId, 
     return false;
 }
 
+
+enum
+{
+    NPC_DEMON                   = 14101,
+
+    SAY_AGGRO                   = -1700000,
+    SAY_EXPLOSION               = -1700001,
+    SAY_BANISH                  = -1700002,
+    SAY_PORTALS                 = -1700003,
+    SAY_FAIL                    = -1700004,
+
+    SPELL_FEAR                  = 22686,
+    SPELL_MORTAL_WOUND          = 25646,    // immer
+    SPELL_MANA_DETONATION       = 27819,    // immer
+    SPELL_METEOR                = 24340,    // immer
+    SPELL_DETONATION_SELF       = 9435,     // immer
+    SPELL_UNBALANCING_STRIKE    = 26613,    // 75%
+    SPELL_RAIN_OF_FIRE          = 28794,    // 50%
+    SPELL_BANISH                = 8994,     // 25%
+    SPELL_DEMON_PORTAL          = 22372,    // 25%
+};
+
+
+
+struct mob_antheronAI : public ScriptedAI
+{
+    uint32 m_uiDemonPortalTimer;
+    int32 m_uiRainOfFireTimer;
+    uint32 m_uiMortalWoundTimer;
+    uint32 m_uiUnbalancingStrikeTimer;
+    uint32 m_uiMeteorTimer;
+    uint32 m_uiManaBombTimer;
+    uint32 m_uiDetonationTimer;
+    uint32 m_uiBanishTimer;
+    uint32 m_uiFearTimer;
+
+    Unit* pRandomTarget;
+    Unit* pLastBanishTarget;
+
+    uint32 MAX_PORTAL_SPAWN_COUNT = 3;
+
+
+
+    mob_antheronAI(Creature* pCreature) : ScriptedAI(pCreature) { Reset(); }
+
+    void KilledUnit(Unit* pUnit) override
+    {
+        if (pUnit && pUnit->GetTypeId() == TYPEID_PLAYER)
+        {
+            DoCastSpellIfCan(pUnit, SPELL_DEMON_PORTAL, CAST_TRIGGERED);
+            DoScriptText(SAY_FAIL, m_creature, pUnit);
+        }
+    }
+
+    void EnterEvadeMode() override
+    {
+        std::list<Creature*> demonList;
+        GetCreatureListWithEntryInGrid(demonList, m_creature, NPC_DEMON, 100.0f);
+
+        if (!demonList.empty())
+        {
+            for (Creature* demon : demonList)
+            {
+                demon->ForcedDespawn(0);
+            }
+        }
+        ScriptedAI::EnterEvadeMode();
+
+    }
+
+    void Reset() override
+    {
+        m_uiFearTimer = 45000;
+        m_uiUnbalancingStrikeTimer = 5000;
+        m_uiMortalWoundTimer = 6000;
+        m_uiMeteorTimer = 30000;
+        m_uiDetonationTimer = 5000;
+        m_uiManaBombTimer = 0;
+        m_uiRainOfFireTimer = 5000;
+        m_uiDemonPortalTimer = 5000;
+        m_uiBanishTimer = 5000;
+
+        pLastBanishTarget = nullptr;
+        pRandomTarget = nullptr;
+    }
+
+
+    //void DamageTaken(Unit* pDealer, uint32& uiDamage) override
+    //{
+    //    if (pDealer->HasAura(SPELL_AURA_DURABILITY) && urand(1,100) < 50)
+    //    {
+    //        if (pDealer->GetTypeId() == TYPEID_PLAYER)
+    //        {
+    //            ((Player*)pDealer)->DurabilityPointsLossAll(25, false);
+    //        }
+    //    }
+    //}
+
+    void Aggro(Unit*) override
+    {
+        DoScriptText(SAY_AGGRO, m_creature);
+    }
+
+    void UpdateAI(const uint32 uiDiff) override
+    {
+        if (!m_creature->SelectHostileTarget() || !m_creature->getVictim())
+            return;
+
+        // Mortal Wound (stackable)
+        if (m_uiMortalWoundTimer <= uiDiff)
+        {
+                if (DoCastSpellIfCan(m_creature->getVictim(), SPELL_MORTAL_WOUND) == CAST_OK)
+                    m_uiMortalWoundTimer = 6000;
+        }
+        else
+            m_uiMortalWoundTimer -= uiDiff;
+
+
+        // Meteor
+        if (m_uiMeteorTimer <= uiDiff)
+        {
+            if (pRandomTarget = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 1, SPELL_MANA_DETONATION, SELECT_FLAG_PLAYER | SELECT_FLAG_POWER_MANA))
+            {
+                if (pRandomTarget != pLastBanishTarget)
+                {
+                    int damage = m_creature->getThreatManager().getThreatList().size() * 700;
+                    m_creature->CastCustomSpell(pRandomTarget, SPELL_METEOR, &damage, 0, 0, true);
+                    m_uiMeteorTimer = 30000;
+                    m_uiManaBombTimer = 1000;
+                    m_uiRainOfFireTimer = urand(8000,16000);
+                }
+            }
+        }
+        else 
+            m_uiMeteorTimer -= uiDiff;
+
+        // Mana Detonation
+        if (m_uiManaBombTimer && pRandomTarget && pRandomTarget->isAlive())
+        {
+            if (m_uiManaBombTimer <= uiDiff)
+            {
+                DoCastSpellIfCan(pRandomTarget, SPELL_MANA_DETONATION, CAST_TRIGGERED);
+                m_uiManaBombTimer = 0;
+            }
+            else
+                m_uiManaBombTimer -= uiDiff;
+        }
+
+        // 75% spells
+        if (m_creature->GetHealthPercent() <= 75.0f)
+        {
+
+            // Unbalancing Strike
+            if (m_uiUnbalancingStrikeTimer <= uiDiff)
+            {
+                if (DoCastSpellIfCan(m_creature->getVictim(), SPELL_UNBALANCING_STRIKE) == CAST_OK)
+                    m_uiUnbalancingStrikeTimer = urand(8000, 12000);
+            }
+            else
+                m_uiUnbalancingStrikeTimer -= uiDiff;
+      
+            // AOE Detonation Self
+            if (m_uiDetonationTimer <= uiDiff)
+            {
+                int damage = 5000;
+                m_creature->CastCustomSpell(m_creature->getVictim(), SPELL_DETONATION_SELF, &damage, 0, 0, false);
+                DoScriptText(SAY_EXPLOSION, m_creature);
+                m_uiFearTimer = 5000;
+                m_uiDetonationTimer = urand(20000, 25000);
+            }
+            else
+                m_uiDetonationTimer -= uiDiff;
+
+            // Fear
+            if (m_uiFearTimer <= uiDiff)
+            {
+                DoCastSpellIfCan(m_creature, SPELL_FEAR, CAST_TRIGGERED);
+                m_uiFearTimer = 45000;
+            }
+            else
+                m_uiFearTimer -= uiDiff;
+        }
+
+
+        // 50% spells
+        if (m_creature->GetHealthPercent() <= 50.0f)
+        {   
+            if (m_uiRainOfFireTimer)
+            {
+                if (m_uiRainOfFireTimer <= uiDiff)
+                {
+                    if (Unit* pRandom = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 1, SPELL_RAIN_OF_FIRE))
+                    {
+                        if (pRandom != pLastBanishTarget)
+                            if (DoCastSpellIfCan(pRandom, SPELL_RAIN_OF_FIRE) == CAST_OK)
+                                m_uiRainOfFireTimer = 0;
+                    }
+                }
+                else
+                    m_uiRainOfFireTimer -= uiDiff;
+            }
+        }
+
+        // 25% spells
+
+        if (m_creature->GetHealthPercent() <= 25.0f)
+        {
+            if (m_uiBanishTimer <= uiDiff)
+            {
+                if (Unit* pRandom = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 1, SPELL_BANISH, SELECT_FLAG_PLAYER | SELECT_FLAG_POWER_MANA))
+                {
+                    if (pRandom->GetTypeId() == TYPEID_PLAYER && pLastBanishTarget != pRandom)
+                    {
+                        uint8 charClass = ((Player*)pRandom)->getClass();
+                        if (charClass == CLASS_DRUID || charClass == CLASS_PALADIN || charClass == CLASS_PRIEST || charClass == CLASS_SHAMAN)
+
+                            if (DoCastSpellIfCan(pRandom, SPELL_BANISH) == CAST_OK)
+                            {
+                                m_uiBanishTimer = 15000;
+                                pLastBanishTarget = pRandom;
+                                DoScriptText(SAY_BANISH, m_creature, pRandom);
+                            }
+                    }
+                }
+            }
+            else
+                m_uiBanishTimer -= uiDiff;
+
+            // Demon Portals
+            if (m_uiDemonPortalTimer <= uiDiff)
+            {
+                uint32 randomCount = urand(1, MAX_PORTAL_SPAWN_COUNT);
+                for (uint32 i = 0; i < randomCount; i++)
+                {
+                    if (Unit* pRandom = m_creature->SelectAttackingTarget(ATTACKING_TARGET_RANDOM, 0, SPELL_DEMON_PORTAL))
+                    {
+                        if (pRandom->GetTypeId() == TYPEID_PLAYER)
+                        {
+                            DoCastSpellIfCan(pRandom, SPELL_DEMON_PORTAL, CAST_TRIGGERED);
+                            DoScriptText(SAY_PORTALS, m_creature);
+                        }
+                    }
+                }
+                m_uiDemonPortalTimer = randomCount * 20000;
+
+            }
+            else
+                m_uiDemonPortalTimer -= uiDiff;
+        }
+
+ 
+        DoMeleeAttackIfReady();
+    }
+
+
+};
+
+
+CreatureAI* GetAI_mob_anetheron(Creature* pCreature)
+{
+    return new mob_antheronAI(pCreature);
+}
+
+
 void AddSC_npcs_special()
 {
     Script* pNewScript;
@@ -971,5 +1235,10 @@ void AddSC_npcs_special()
     pNewScript->Name = "npc_redemption_target";
     pNewScript->GetAI = &GetAI_npc_redemption_target;
     pNewScript->pEffectDummyNPC = &EffectDummyCreature_npc_redemption_target;
+    pNewScript->RegisterSelf();
+
+    pNewScript = new Script;
+    pNewScript->Name = "mob_anetheron";
+    pNewScript->GetAI = &GetAI_mob_anetheron;
     pNewScript->RegisterSelf();
 }
