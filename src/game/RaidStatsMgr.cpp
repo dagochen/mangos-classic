@@ -296,6 +296,8 @@ bool RaidStatsMgr::CanTrackThis(Unit* a, Unit* b)
 
 bool RaidStatsMgr::IsTrackingEnabled(RaidStatsEvent e, Unit* a, WorldObject* b)
 {
+    // TODO: remove
+    return false; 
     switch (e)
     {
         case RaidStatsEvent::AUTOATTACK:
