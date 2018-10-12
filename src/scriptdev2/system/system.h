@@ -5,6 +5,7 @@
 #ifndef SC_SYSTEM_H
 #define SC_SYSTEM_H
 
+extern DatabaseType CharacterDatabase;
 extern DatabaseType SD2Database;
 extern std::string  strSD2Version;                          // version info: database entry and revision
 

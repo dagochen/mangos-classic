@@ -26,10 +26,14 @@ go_andorhal_tower
 EndContentData */
 
 #include "precompiled.h"
+#include "../system/system.h"
+#include "Database/DatabaseEnv.h"
+
 
 /*######
 ## go_andorhal_tower
 ######*/
+
 
 enum
 {
@@ -82,7 +86,62 @@ bool GOUse_go_apple_bob(Player* pPlayer, GameObject* pGO)
     return true;
 }
 
+/*######
+## go_elo
+######*/
 
+bool TextUpdate_mob_elo(Player* pPlayer, Creature* pCreature)
+{
+    if (pPlayer && pCreature)
+    {
+        uint32 gossipMenuId = pPlayer->GetCustomId();
+
+        // 
+        // guess size
+        std::string Text;
+        WorldPacket data(SMSG_NPC_TEXT_UPDATE, 50);
+        data << gossipMenuId;
+        SYSTEMTIME time;
+        GetLocalTime(&time);
+        // '2014-09-08 17:51:04.777'
+        std::stringstream zeit;
+        std::stringstream ss;
+
+        zeit << time.wYear << "-" << time.wMonth << "-" << time.wDay << " " << time.wHour << ":" << time.wMinute << ":" << time.wSecond << "." << time.wMilliseconds;
+
+        
+        QueryResult* result = CharacterDatabase.Query("SELECT elorating, NAME FROM characters ORDER BY elorating DESC LIMIT 10;");
+        if (!result)
+        {
+            Text = "Keine Platzierungen vorhanden!";
+        }
+        else
+        {
+            uint32 index = 1;
+            do
+            {
+                Field* fields = result->Fetch();
+                ss << index << ".  - " << fields[1].GetString() << " - " << fields[0].GetFloat() << "$b$b";
+                index++;
+            } while (result->NextRow());
+        }
+        Text = "Hallo Welt!$b$bEs ist folgende Uhrzeit:$b " + zeit.str() + "$b$b" + ss.str();
+        
+        data << float(0);
+        data << Text;
+        data << Text;
+        data << uint32(0);
+        data << uint32(0);
+        data << uint32(0);
+        data << uint32(0);
+        data << uint32(0);
+        data << uint32(0);
+        data << uint32(0);
+
+        pPlayer->GetSession()->SendPacket(&data);
+        return true;
+    }
+};
 
 void AddSC_go_scripts()
 {
@@ -96,5 +155,12 @@ void AddSC_go_scripts()
     pNewScript = new Script;
     pNewScript->Name = "go_apple_bob";
     pNewScript->pGOUse = &GOUse_go_apple_bob;
+    pNewScript->RegisterSelf();
+
+
+
+    pNewScript = new Script;
+    pNewScript->Name = "mob_elo";
+    pNewScript->pTextUpdate = &TextUpdate_mob_elo;
     pNewScript->RegisterSelf();
 }

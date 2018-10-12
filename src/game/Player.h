@@ -275,13 +275,18 @@ struct PvPInfo
 
 struct DuelInfo
 {
-    DuelInfo() : initiator(nullptr), opponent(nullptr), startTimer(0), startTime(0), outOfBound(0) {}
+    DuelInfo() : initiator(nullptr), opponent(nullptr), startTimer(0), startTime(0), outOfBound(0),
+    initiatorGear(0.0f), opponentGear(0.0f), initiatorHP(0.0f), opponentHP(0.0f) {}
 
     Player* initiator;
     Player* opponent;
     time_t startTimer;
     time_t startTime;
     time_t outOfBound;
+    float initiatorGear;
+    float opponentGear;
+    float initiatorHP;
+    float opponentHP;
 };
 
 struct Areas
@@ -849,6 +854,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         ~Player();
 
         void CleanupsBeforeDelete() override;
+        uint32 GetCustomId() { return m_customId; }
 
         static UpdateMask updateVisualBits;
         static void InitVisibleBits();
@@ -899,6 +905,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool isDND() const { return HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_DND); }
         ChatTagFlags GetChatTag() const;
         std::string autoReplyMsg;
+    uint32 m_customId;
 
         PlayerSocial* GetSocial() { return m_social; }
 
@@ -1039,6 +1046,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         InventoryResult CanEquipUniqueItem(Item* pItem, uint8 except_slot = NULL_SLOT) const;
         InventoryResult CanEquipUniqueItem(ItemPrototype const* itemProto, uint8 except_slot = NULL_SLOT) const;
         InventoryResult CanUnequipItems(uint32 item, uint32 count) const;
+        bool IsInDuel() const { return duel != nullptr; };
         InventoryResult CanUnequipItem(uint16 src, bool swap) const;
         InventoryResult CanBankItem(uint8 bag, uint8 slot, ItemPosCountVec& dest, Item* pItem, bool swap, bool not_loading = true) const;
         InventoryResult CanUseItem(Item* pItem, bool direct_action = true) const;
@@ -1498,6 +1506,12 @@ class MANGOS_DLL_SPEC Player : public Unit
         void CheckDuelDistance(time_t currTime);
         void DuelComplete(DuelCompleteType type);
         void SendDuelCountdown(uint32 counter);
+        void ChangeEloRating(float elo) { m_elorating += elo; }
+        void SetEloRating(float elo) { m_elorating = elo; }
+
+        float GetEloRating() { return m_elorating; }
+        float GetAverageItemLevel();
+        void UpdateEloRating(Player* winner, Player* loser);
 
         bool IsGroupVisibleFor(Player* p) const;
         bool IsInSameGroupWith(Player const* p) const;
@@ -2365,6 +2379,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint32 m_temporaryUnsummonedPetNumber;
 
         ReputationMgr  m_reputationMgr;
+        float m_elorating;
 };
 
 void AddItemsSetItem(Player* player, Item* item);

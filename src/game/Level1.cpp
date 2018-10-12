@@ -686,6 +686,39 @@ bool ChatHandler::HandleModifyHPCommand(char* args)
     return true;
 }
 
+// Edit Player Elo
+bool ChatHandler::HandleModifyEloCommand(char* args)
+{
+    if (!*args)
+        return false;
+
+    float elo = atof(args);
+    
+
+    if (elo <= 0.0f || elo > 10000.0f)
+    {
+        SendSysMessage(LANG_BAD_VALUE);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    Player* chr = getSelectedPlayer();
+    if (chr == nullptr)
+    {
+        SendSysMessage(LANG_NO_CHAR_SELECTED);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    PSendSysMessage(LANG_YOU_CHANGE_ELO, GetNameLink(chr).c_str(), elo, chr->GetEloRating());
+    if (needReportToTarget(chr))
+        ChatHandler(chr).PSendSysMessage(LANG_YOURS_ELO_CHANGED, GetNameLink(chr).c_str(), elo, chr->GetEloRating());
+
+
+    chr->SetEloRating(elo);
+    return true;
+}
+
 // Edit Player Mana
 bool ChatHandler::HandleModifyManaCommand(char* args)
 {
@@ -1639,6 +1672,23 @@ bool ChatHandler::HandleSaveAllCommand(char* /*args*/)
     SendSysMessage(LANG_PLAYERS_SAVED);
     return true;
 }
+
+bool ChatHandler::HandleEloCommand(char* args)
+{
+    Player* plr = getSelectedPlayer();
+    PSendSysMessage(LANG_ELO_STATUS, plr->GetName(), plr->GetEloRating());
+
+    return true;
+}
+
+bool ChatHandler::HandleEloGearCommand(char* args)
+{
+    Player* plr = getSelectedPlayer();
+    PSendSysMessage(LANG_ELO_GEAR, plr->GetName(), plr->GetAverageItemLevel());
+
+    return true;
+}
+
 
 // Send mail by command
 bool ChatHandler::HandleSendMailCommand(char* args)

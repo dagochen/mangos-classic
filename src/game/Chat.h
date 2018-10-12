@@ -612,6 +612,9 @@ class MANGOS_DLL_SPEC ChatHandler
         //! Development Commands
         bool HandleSaveAllCommand(char* args);
 
+        bool HandleEloCommand(char* args);
+        bool HandleModifyEloCommand(char* args);
+        bool HandleEloGearCommand(char* args);
         Player*   getSelectedPlayer();
         Creature* getSelectedCreature();
         Unit*     getSelectedUnit();

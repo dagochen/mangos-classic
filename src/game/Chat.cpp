@@ -381,6 +381,7 @@ ChatCommand* ChatHandler::getCommandTable()
     static ChatCommand modifyCommandTable[] =
     {
         { "hp",             SEC_MODERATOR,      false, &ChatHandler::HandleModifyHPCommand,            "", nullptr },
+        { "elo",            SEC_MODERATOR,      false, &ChatHandler::HandleModifyEloCommand,            "", nullptr },
         { "mana",           SEC_MODERATOR,      false, &ChatHandler::HandleModifyManaCommand,          "", nullptr },
         { "rage",           SEC_MODERATOR,      false, &ChatHandler::HandleModifyRageCommand,          "", nullptr },
         { "energy",         SEC_MODERATOR,      false, &ChatHandler::HandleModifyEnergyCommand,        "", nullptr },
@@ -793,6 +794,8 @@ ChatCommand* ChatHandler::getCommandTable()
         { "resistmode",     SEC_GAMEMASTER,     false, &ChatHandler::HandleResistanceModeCommand,        "", nullptr },
         { "bossfight",      SEC_PLAYER,         false, &ChatHandler::HandleIsInBossFightCommand,        "", nullptr },
         { "taxiflight",     SEC_PLAYER,         false, &ChatHandler::HandleIsTaxiFlyingCommand,        "", nullptr },
+        { "elo",            SEC_PLAYER,         false, &ChatHandler::HandleEloCommand,                 "", nullptr },
+        { "gearscore",      SEC_PLAYER,         false, &ChatHandler::HandleEloGearCommand,             "", nullptr },
         { nullptr,          0,                  false, nullptr,                                        "", nullptr }
     };
 

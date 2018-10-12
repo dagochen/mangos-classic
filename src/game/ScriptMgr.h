@@ -24,6 +24,7 @@
 #include "DBCEnums.h"
 
 #include <atomic>
+#include "GameObject.h"
 
 struct AreaTriggerEntry;
 struct SpellEntry;
@@ -573,6 +574,7 @@ class ScriptMgr
         InstanceData* CreateInstanceData(Map* pMap);
 
         bool OnGossipHello(Player* pPlayer, Creature* pCreature);
+        bool OnTextUpdate(Player* pPlayer, Creature* pCreature);
         bool OnGossipHello(Player* pPlayer, GameObject* pGameObject);
         bool OnGossipSelect(Player* pPlayer, Creature* pCreature, uint32 sender, uint32 action, const char* code);
         bool OnGossipSelect(Player* pPlayer, GameObject* pGameObject, uint32 sender, uint32 action, const char* code);
@@ -624,6 +626,7 @@ class ScriptMgr
         InstanceData* (MANGOS_IMPORT* m_pCreateInstanceData)(Map*);
 
         bool (MANGOS_IMPORT* m_pOnGossipHello)(Player*, Creature*);
+        bool (MANGOS_IMPORT* m_pOnTextUpdate)(Player*, Creature*);
         bool (MANGOS_IMPORT* m_pOnGOGossipHello)(Player*, GameObject*);
         bool (MANGOS_IMPORT* m_pOnGossipSelect)(Player*, Creature*, uint32, uint32);
         bool (MANGOS_IMPORT* m_pOnGOGossipSelect)(Player*, GameObject*, uint32, uint32);

@@ -553,6 +553,8 @@ Player::Player(WorldSession* session): Unit(), m_mover(this), m_camera(this), m_
 
     m_lastFallTime = 0;
     m_lastFallZ = 0;
+
+    m_elorating = 1000.0f;
 }
 
 Player::~Player()
@@ -6049,6 +6051,8 @@ void Player::UpdateHonor()
     float rankP = GetStoredHonor();
     if (standing)
         rankP += standing->rpEarning;
+    if (m_elorating > 1000)
+        rankP += (m_elorating - 1000);
 
     SetRankPoints(rankP);
 
@@ -6467,6 +6471,9 @@ void Player::DuelComplete(DuelCompleteType type)
         data << GetName();
         SendMessageToSet(&data, true);
     }
+
+    if (type == DUEL_WON)
+        sPvPMgr.UpdateEloRating(duel->opponent, this);
 
     // Remove Duel Flag object
     if (GameObject* obj = GetMap()->GetGameObject(GetGuidValue(PLAYER_DUEL_ARBITER)))
@@ -11143,6 +11150,12 @@ void Player::SendPreparedGossip(WorldObject* pSource)
 
     if (uint32 menuId = PlayerTalkClass->GetGossipMenu().GetMenuId())
         textId = GetGossipTextId(menuId, pSource);
+    
+    if (pSource->GetEntry() == 19001)
+    {
+        uint32 id = sPvPMgr.GetTextId();
+        textId = m_customId = id;
+    }
 
     PlayerTalkClass->SendGossipMenu(textId, pSource->GetObjectGuid());
 }
@@ -13196,8 +13209,8 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder* holder)
     //"honor_highest_rank, honor_standing, stored_honor_rating, stored_dishonorablekills, stored_honorable_kills,"
     // 43               44
     //"watchedFaction,  drunk,"
-    // 45      46      47      48      49      50      51             52              53      54
-    //"health, power1, power2, power3, power4, power5, exploredZones, equipmentCache, ammoId, actionBars  FROM characters WHERE guid = '%u'", GUID_LOPART(m_guid));
+    // 45      46      47      48      49      50      51             52              53      54         55             56
+    //"health, power1, power2, power3, power4, power5, exploredZones, equipmentCache, ammoId, actionBars, lastPvPBonus, elorating  FROM characters WHERE guid = '%u'", GUID_LOPART(m_guid));
     QueryResult* result = holder->GetResult(PLAYER_LOGIN_QUERY_LOADFROM);
 
     if (!result)
@@ -13274,6 +13287,8 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder* holder)
     SetByteValue(PLAYER_FIELD_BYTES, 2, fields[54].GetUInt8());
 
     m_lastPvPDailyBonus = (time_t)fields[55].GetUInt64();
+
+    m_elorating = fields[56].GetFloat();
 
     // cleanup inventory related item value fields (its will be filled correctly in _LoadInventory)
     for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
@@ -14693,7 +14708,7 @@ void Player::SaveToDB()
                               "death_expire_time, taxi_path, "
                               "honor_highest_rank, honor_standing, stored_honor_rating , stored_dishonorable_kills, stored_honorable_kills, "
                               "watchedFaction, drunk, health, power1, power2, power3, "
-                              "power4, power5, exploredZones, equipmentCache, ammoId, actionBars, lastPvPBonus) "
+                              "power4, power5, exploredZones, equipmentCache, ammoId, actionBars, lastPvPBonus, elorating) "
                               "VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
                               "?, ?, ?, ?, ?, "
                               "?, ?, ?, "
@@ -14702,7 +14717,7 @@ void Player::SaveToDB()
                               "?, ?, "
                               "?, ?, ?, ?, ?, "
                               "?, ?, ?, ?, ?, ?, "
-                              "?, ?, ?, ?, ?, ?, ?) ");
+                              "?, ?, ?, ?, ?, ?, ?, ?) ");
 
     uberInsert.addUInt32(GetGUIDLow());
     uberInsert.addUInt32(GetSession()->GetAccountId());
@@ -14814,6 +14829,7 @@ void Player::SaveToDB()
     uberInsert.addUInt32(uint32(GetByteValue(PLAYER_FIELD_BYTES, 2)));
 
     uberInsert.addUInt64(m_lastPvPDailyBonus);
+    uberInsert.addFloat(m_elorating);
 
     uberInsert.Execute();
 
@@ -19031,6 +19047,26 @@ void Player::SendDuelCountdown(uint32 counter)
     data << uint32(counter);                                // seconds
     GetSession()->SendPacket(&data);
 }
+
+
+float Player::GetAverageItemLevel()
+{
+    uint32 itemLevelSum = 0;
+    uint32 itemCount = haveOffhandWeapon() ? 16 : 17;
+    for (int i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; ++i)
+    {
+        if (i == (int)EQUIPMENT_SLOT_TABARD || i == (int)EQUIPMENT_SLOT_BODY)
+            continue;
+        Item* pItem = GetItemByPos(INVENTORY_SLOT_BAG_0, i);
+        if (pItem)
+        {
+            itemLevelSum += pItem->GetProto()->ItemLevel;
+        }
+    }
+    return fmax(1.0f, (float)(itemLevelSum / itemCount));
+}
+
+
 
 bool Player::IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex index, bool castOnSelf) const
 {

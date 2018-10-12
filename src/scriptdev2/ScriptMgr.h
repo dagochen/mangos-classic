@@ -7,6 +7,7 @@
 
 #include "Common.h"
 #include "DBCStructure.h"
+#include "GameObject.h"
 
 class Player;
 class Creature;
@@ -59,7 +60,7 @@ enum EscortFaction
 struct Script
 {
     Script() :
-        pGossipHello(nullptr), pGossipHelloGO(nullptr), pGossipSelect(nullptr), pGossipSelectGO(nullptr),
+        pGossipHello(nullptr), pTextUpdate(nullptr), pGossipHelloGO(nullptr), pGossipSelect(nullptr), pGossipSelectGO(nullptr),
         pGossipSelectWithCode(nullptr), pGossipSelectGOWithCode(nullptr),
         pDialogStatusNPC(nullptr), pDialogStatusGO(nullptr),
         pQuestAcceptNPC(nullptr), pQuestAcceptGO(nullptr), pQuestAcceptItem(nullptr),
@@ -72,6 +73,7 @@ struct Script
     std::string Name;
 
     bool (*pGossipHello)(Player*, Creature*);
+    bool (*pTextUpdate)(Player*, Creature*);
     bool (*pGossipHelloGO)(Player*, GameObject*);
     bool (*pGossipSelect)(Player*, Creature*, uint32, uint32);
     bool (*pGossipSelectGO)(Player*, GameObject*, uint32, uint32);

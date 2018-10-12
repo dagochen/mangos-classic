@@ -278,6 +278,12 @@ void WorldSession::HandleNpcTextQueryOpcode(WorldPacket& recv_data)
 
     _player->SetTargetGuid(guid);
 
+    if (Creature* pCreature = _player->GetMap()->GetCreature(guid))
+    {
+        if (pCreature->GetCreatureInfo()->ScriptID && sScriptMgr.OnTextUpdate(_player, pCreature))
+            return;
+    }
+
     GossipText const* pGossip = sObjectMgr.GetGossipText(textID);
 
     WorldPacket data(SMSG_NPC_TEXT_UPDATE, 100);            // guess size

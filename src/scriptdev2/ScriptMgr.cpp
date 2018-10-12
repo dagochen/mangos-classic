@@ -61,6 +61,27 @@ void LoadDatabase()
     }
 
     SD2Database.HaltDelayThread();
+
+    std::string strCharDBinfo = SD2Config.GetStringDefault("CharacterDatabaseInfo");
+
+    if (strCharDBinfo.empty())
+    {
+        script_error_log("Missing Scriptdev2-CharDB database info from configuration file. Load database aborted.");
+        return;
+    }
+
+    // Initialize connection to DB
+    if (CharacterDatabase.Initialize(strCharDBinfo.c_str()))
+    {
+        outstring_log("SD2: Char database initialized.");
+    }
+    else
+    {
+        script_error_log("Unable to connect to Database. Load database aborted.");
+        return;
+    }
+
+    SD2Database.HaltDelayThread();
 }
 
 struct TSpellSummary
@@ -260,6 +281,20 @@ bool GossipHello(Player* pPlayer, Creature* pCreature)
 
     return pTempScript->pGossipHello(pPlayer, pCreature);
 }
+
+MANGOS_DLL_EXPORT
+bool TextUpdate(Player* pPlayer, Creature* pCreature)
+{
+    Script* pTempScript = m_scripts[pCreature->GetScriptId()];
+
+    if (!pTempScript || !pTempScript->pTextUpdate)
+        return false;
+
+    pPlayer->PlayerTalkClass->ClearMenus();
+
+    return pTempScript->pTextUpdate(pPlayer, pCreature);
+}
+
 
 MANGOS_DLL_EXPORT
 bool GOGossipHello(Player* pPlayer, GameObject* pGo)

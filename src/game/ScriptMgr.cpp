@@ -54,6 +54,7 @@ ScriptMgr::ScriptMgr() :
     m_pCreateInstanceData(nullptr),
 
     m_pOnGossipHello(nullptr),
+    m_pOnTextUpdate(nullptr),
     m_pOnGOGossipHello(nullptr),
     m_pOnGossipSelect(nullptr),
     m_pOnGOGossipSelect(nullptr),
@@ -2327,6 +2328,11 @@ bool ScriptMgr::OnGameObjectUse(Player* pPlayer, GameObject* pGameObject)
     return m_pOnGOUse != nullptr && m_pOnGOUse(pPlayer, pGameObject);
 }
 
+bool ScriptMgr::OnTextUpdate(Player* pPlayer, Creature* pCreature)
+{
+    return m_pOnTextUpdate != nullptr && m_pOnTextUpdate(pPlayer, pCreature);
+}
+
 bool ScriptMgr::OnItemUse(Player* pPlayer, Item* pItem, SpellCastTargets const& targets)
 {
     return m_pOnItemUse != nullptr && m_pOnItemUse(pPlayer, pItem, targets);
@@ -2396,6 +2402,7 @@ ScriptLoadResult ScriptMgr::LoadScriptLibrary(const char* libName)
     GET_SCRIPT_HOOK_PTR(m_pCreateInstanceData,         "CreateInstanceData");
 
     GET_SCRIPT_HOOK_PTR(m_pOnGossipHello,              "GossipHello");
+    GET_SCRIPT_HOOK_PTR(m_pOnTextUpdate,               "TextUpdate");
     GET_SCRIPT_HOOK_PTR(m_pOnGOGossipHello,            "GOGossipHello");
     GET_SCRIPT_HOOK_PTR(m_pOnGossipSelect,             "GossipSelect");
     GET_SCRIPT_HOOK_PTR(m_pOnGOGossipSelect,           "GOGossipSelect");
@@ -2442,6 +2449,7 @@ void ScriptMgr::UnloadScriptLibrary()
     m_pCreateInstanceData       = nullptr;
 
     m_pOnGossipHello            = nullptr;
+    m_pOnTextUpdate             = nullptr;
     m_pOnGOGossipHello          = nullptr;
     m_pOnGossipSelect           = nullptr;
     m_pOnGOGossipSelect         = nullptr;

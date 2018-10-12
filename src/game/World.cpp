@@ -68,6 +68,7 @@
 #include <algorithm>
 #include <mutex>
 #include <cstdarg>
+#include "PvPMgr.h"
 
 INSTANTIATE_SINGLETON_1(World);
 
@@ -1403,6 +1404,9 @@ void World::Update(uint32 diff)
 
     sRaidStatsMgr.Update(diff);
     QueryPerformanceCounter((LARGE_INTEGER*)&rsmgr);
+
+    sPvPMgr.Update(diff);
+
 
     sOutdoorPvPMgr.Update(diff);
     QueryPerformanceCounter((LARGE_INTEGER*)&outdoorpvpmgr);

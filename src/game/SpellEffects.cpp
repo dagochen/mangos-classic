@@ -3936,6 +3936,10 @@ void Spell::EffectDuel(SpellEffectIndex eff_idx)
     duel->opponent   = target;
     duel->startTime  = 0;
     duel->startTimer = 0;
+    duel->initiatorGear = caster->GetAverageItemLevel();
+    duel->opponentGear = target->GetAverageItemLevel();
+    duel->initiatorHP = caster->GetHealthPercent();
+    duel->opponentHP = target->GetHealthPercent();
     caster->duel     = duel;
 
     DuelInfo* duel2   = new DuelInfo;
@@ -3943,6 +3947,11 @@ void Spell::EffectDuel(SpellEffectIndex eff_idx)
     duel2->opponent   = caster;
     duel2->startTime  = 0;
     duel2->startTimer = 0;
+    duel2->initiatorGear = caster->GetAverageItemLevel();
+    duel2->opponentGear = target->GetAverageItemLevel();
+    duel2->initiatorHP = caster->GetHealthPercent();
+    duel2->opponentHP = target->GetHealthPercent();
+
     target->duel      = duel2;
 
     caster->SetGuidValue(PLAYER_DUEL_ARBITER, pGameObj->GetObjectGuid());

@@ -1083,6 +1083,12 @@ enum MangosStrings
     LANG_BG_AV_STATUS_QUEUE             = 1744,
     LANG_BG_AB_STATUS_QUEUE             = 1745,
     LANG_BG_WS_STATUS_QUEUE             = 1746,
+
+    LANG_ELO_UPDATE                     = 1850,
+    LANG_ELO_STATUS                     = 1851,
+    LANG_ELO_GEAR                       = 1852,
+    LANG_YOU_CHANGE_ELO                 = 1853,
+    LANG_YOURS_ELO_CHANGED              = 1854,
     // Use for not-in-official-sources patches
     //                                    10000-10999
 

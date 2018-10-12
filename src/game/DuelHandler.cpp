@@ -43,6 +43,14 @@ void WorldSession::HandleDuelAcceptedOpcode(WorldPacket& recvPacket)
     time_t now = time(nullptr);
     pl->duel->startTimer = now;
     plTarget->duel->startTimer = now;
+    pl->duel->initiatorGear = pl->GetAverageItemLevel();
+    pl->duel->opponentGear = plTarget->GetAverageItemLevel();
+    plTarget->duel->initiatorGear = pl->GetAverageItemLevel();
+    plTarget->duel->opponentGear = plTarget->GetAverageItemLevel();
+    pl->duel->initiatorHP = pl->GetHealthPercent();
+    pl->duel->opponentHP = plTarget->GetHealthPercent();
+    plTarget->duel->initiatorHP = pl->GetHealthPercent();
+    plTarget->duel->opponentHP = plTarget->GetHealthPercent();
 
     pl->SendDuelCountdown(3000);
     plTarget->SendDuelCountdown(3000);

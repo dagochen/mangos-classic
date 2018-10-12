@@ -9,6 +9,7 @@
 #include "ObjectMgr.h"
 #include "Database/DatabaseEnv.h"
 
+DatabaseType CharacterDatabase;
 DatabaseType SD2Database;
 std::string  strSD2Version;
 
