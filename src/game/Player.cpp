@@ -553,6 +553,8 @@ Player::Player(WorldSession* session): Unit(), m_mover(this), m_camera(this), m_
 
     m_lastFallTime = 0;
     m_lastFallZ = 0;
+    m_Resilience = 0.0f;
+
 }
 
 Player::~Player()
@@ -6622,7 +6624,16 @@ void Player::_ApplyItemBonuses(ItemPrototype const* proto, uint8 slot, bool appl
 
     if (proto->ArcaneRes)
         HandleStatModifier(UNIT_MOD_RESISTANCE_ARCANE, BASE_VALUE, float(proto->ArcaneRes), apply);
-    
+
+    if (proto->RequiredHonorRank >= 11 && proto->RequiredHonorRank <= 14 && proto->ItemSet != 0)
+    {
+        HandleResilienceModifier(2.0f, apply);
+    }
+    if (proto->RequiredHonorRank >= 16 && proto->RequiredHonorRank <= 18 && proto->ItemSet != 0)
+    {
+        HandleResilienceModifier(4.0f, apply);
+    }
+
     if (proto->IsWeapon())
     {
         WeaponAttackType attType = BASE_ATTACK;
@@ -7116,6 +7127,20 @@ void Player::_ApplyAllItemMods()
     }
 
     DEBUG_LOG("_ApplyAllItemMods complete.");
+}
+
+
+
+void Player::HandleResilienceModifier(float amount, bool apply)
+{
+    if (apply)
+    {
+        m_Resilience += amount;
+    }
+    else
+    {
+        m_Resilience -= amount;
+    }
 }
 
 void Player::_ApplyAmmoBonuses()

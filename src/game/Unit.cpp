@@ -543,6 +543,17 @@ void Unit::RemoveSpellsCausingAura(AuraType auraType, ObjectGuid casterGuid)
 
 void Unit::DealDamageMods(Unit* pVictim, uint32& damage, uint32* absorb)
 {
+    if (pVictim->GetTypeId() == TYPEID_PLAYER && this->GetTypeId() == TYPEID_PLAYER)
+    {
+        if (pVictim->GetMap()->IsBattleGround() && GetMap()->IsBattleGround())
+        {
+            float resilienceFactor =  (1.0f - (((Player*)pVictim)->getResilience() / 100.0f));
+            resilienceFactor = std::max(0.76f, resilienceFactor);
+            if (resilienceFactor < 1.0f)
+                damage *= resilienceFactor;
+        }
+    }
+
     if (!pVictim->isAlive() || pVictim->IsTaxiFlying() || (pVictim->GetTypeId() == TYPEID_UNIT && ((Creature*)pVictim)->IsInEvadeMode()))
     {
         if (absorb)

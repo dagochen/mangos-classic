@@ -1777,6 +1777,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         void _ApplyItemMods(Item* item, uint8 slot, bool apply);
         void _RemoveAllItemMods();
         void _ApplyAllItemMods();
+        float getResilience() { return m_Resilience; }
+        void HandleResilienceModifier(float amount, bool apply);
         void _ApplyItemBonuses(ItemPrototype const* proto, uint8 slot, bool apply);
         void _ApplyAmmoBonuses();
         void InitDataForForm(bool reapplyMods = false);
@@ -2365,6 +2367,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint32 m_temporaryUnsummonedPetNumber;
 
         ReputationMgr  m_reputationMgr;
+        float m_Resilience;
+
 };
 
 void AddItemsSetItem(Player* player, Item* item);
