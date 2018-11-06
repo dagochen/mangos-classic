@@ -273,7 +273,7 @@ public:
     Loot(Player* player, Item* item, LootType type);
     Loot(Player* player, uint32 id, LootType type);
     Loot(Unit* unit, Item* item);
-
+    Loot() : m_lootTarget(nullptr), m_itemTarget(nullptr), m_gold(0), m_maxSlot(0), m_lootType(), m_clientLootType(), m_lootMethod(), m_threshold(), m_maxEnchantSkill(0), m_isReleased(false), m_haveItemOverThreshold(false), m_isChecked(false), m_isChest(false), m_isChanged(false) {};
     ~Loot();
 
     // Inserts the item into the loot (called by LootTemplate processors)
@@ -298,10 +298,12 @@ public:
     WorldObject const* GetLootTarget() const { return m_lootTarget; }
     ObjectGuid const& GetLootGuid() const { return m_guidTarget; }
     ObjectGuid const& GetMasterLootGuid() const { return m_masterOwnerGuid; }
+    bool FillLoot(uint32 loot_id, LootStore const& store, Player* loot_owner, bool personal, bool noEmptyError = false);
+    LootItemList     m_lootItems;                     // store of the items contained in loot
+
 
 private:
-    Loot(): m_lootTarget(nullptr), m_itemTarget(nullptr), m_gold(0), m_maxSlot(0), m_lootType(), m_clientLootType(), m_lootMethod(), m_threshold(), m_maxEnchantSkill(0), m_isReleased(false), m_haveItemOverThreshold(false), m_isChecked(false), m_isChest(false), m_isChanged(false)
-    {}
+
     void Clear();
     bool IsLootedFor(Player const* player) const;
     bool IsLootedForAll() const;
@@ -316,7 +318,6 @@ private:
     void CheckIfRollIsNeeded(Player const* plr);
     void SetGroupLootRight(Player* player);
     void GenerateMoneyLoot(uint32 minAmount, uint32 maxAmount);
-    bool FillLoot(uint32 loot_id, LootStore const& store, Player* loot_owner, bool personal, bool noEmptyError = false);
     void ForceLootAnimationCLientUpdate();
     void SetPlayerIsLooting(Player* player);
     void SetPlayerIsNotLooting(Player* player);
@@ -328,7 +329,6 @@ private:
     Item*            m_itemTarget;
     ObjectGuid       m_guidTarget;
 
-    LootItemList     m_lootItems;                     // store of the items contained in loot
     uint32           m_gold;                          // amount of money contained in loot
     uint32           m_maxSlot;                       // used to increment slot index and get total items count
     LootType         m_lootType;                      // internal loot type

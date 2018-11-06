@@ -31,6 +31,7 @@
 #include "ObjectMgr.h"
 #include "ObjectGuid.h"
 #include "SpellMgr.h"
+#include "LootMgr.h"
 
 bool ChatHandler::HandleDebugSendSpellFailCommand(char* args)
 {
@@ -742,6 +743,86 @@ bool ChatHandler::HandleDebugSetItemValueCommand(char* args)
 
     return HandleSetValueHelper(item, field, typeStr, valStr);
 }
+
+bool ChatHandler::HandleDebugSimulateLootCommand(char* args)
+{
+    uint32 lootId = 0;
+    uint32 numIterations = 1000000;
+    uint32 itemId = 0;
+
+    ExtractUInt32(&args, lootId);
+    ExtractOptUInt32(&args, numIterations, 1000000);
+    ExtractOptUInt32(&args, itemId, 0);
+
+    LootStore& store = LootTemplates_Item;
+    if (!stricmp(args, "skinning"))
+        store = LootTemplates_Skinning;
+    if (!stricmp(args, "pickpocket"))
+        store = LootTemplates_Pickpocketing;
+    if (!stricmp(args, "mail"))
+        store = LootTemplates_Mail;
+    if (!stricmp(args, "gameobject"))
+        store = LootTemplates_Gameobject;
+    if (!stricmp(args, "fishing"))
+        store = LootTemplates_Fishing;
+    if (!stricmp(args, "disenchant"))
+        store = LootTemplates_Disenchant;
+    if (!stricmp(args, "npc"))
+        store = LootTemplates_Creature;
+
+
+
+    std::map<uint32, uint32> liste;
+
+    for (uint32 i = 0; i < numIterations; ++i)
+    {
+        Loot loot;
+        loot.FillLoot(lootId, store, m_session->GetPlayer(), false);
+        for (LootItem* item : loot.m_lootItems)
+            liste[item->itemId] += 1;
+    }
+
+    
+
+    auto items = liste;
+
+    if (itemId)
+    {
+        auto item = items.find(itemId);
+        if (item == items.end())
+            PSendSysMessage("item %u has not been found!", itemId);
+        else
+        {
+            auto itemProto = sItemStorage.LookupEntry<ItemPrototype>(itemId);
+            PSendSysMessage("|cffffffff|Hitem:%d:0:0:0:0:0:0:0|h[%s]|h|r: %u %f", item->first, itemProto->Name1, item->second, (100.f / numIterations * item->second));
+        }
+
+        return true;
+    }
+
+    for (auto& entry : items)
+    {
+        auto itemProto = sItemStorage.LookupEntry<ItemPrototype>(entry.first);
+        PSendSysMessage("|cffffffff|Hitem:%d:0:0:0:0:0:0:0|h[%s]|h|r: %u %f", itemId, itemProto->Name1, entry.second, (100.f / numIterations * entry.second));
+    }
+
+    return true;
+}
+
+//std::map<uint32, uint32> simulate(LootStore& store, uint32 lootId, uint32 numIterations, uint32 itemId, Player* looter)
+//{
+//    std::map<uint32, uint32> items;
+//
+//    for (uint32 i = 0; i < numIterations; ++i)
+//    {
+//        Loot loot;
+//        loot.FillLoot(lootId, store, looter, false);
+//        for (auto& item : loot.items)
+//            items[item.itemid] += 1;
+//    }
+//
+//    return items;
+//}
 
 bool ChatHandler::HandleDebugSetValueCommand(char* args)
 {
