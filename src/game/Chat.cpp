@@ -225,6 +225,7 @@ ChatCommand* ChatHandler::getCommandTable()
         { "spellcoefs",     SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleDebugSpellCoefsCommand,          "", nullptr },
         { "spellmods",      SEC_ADMINISTRATOR,  false, &ChatHandler::HandleDebugSpellModsCommand,           "", nullptr },
         { "uws",            SEC_ADMINISTRATOR,  false, &ChatHandler::HandleDebugUpdateWorldStateCommand,    "", nullptr },
+        { "simulateloot",   SEC_ADMINISTRATOR,  false, &ChatHandler::HandleDebugSimulateLootCommand ,       "", nullptr },
         { nullptr,          0,                  false, nullptr,                                             "", nullptr }
     };
 
