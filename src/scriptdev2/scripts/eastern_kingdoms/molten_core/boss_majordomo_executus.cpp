@@ -56,6 +56,7 @@ enum
     SPELL_BLASTWAVE         = 20229,
     SPELL_AEGIS             = 20620,
     SPELL_TELEPORT          = 20618,
+    SPELL_POLYMORPH_IMMUNE  = 29183,
 
     SPELL_TELEPORT_SELF     = 19484,
     SPELL_SUMMON_RAGNAROS   = 19774,
@@ -219,6 +220,21 @@ struct boss_majordomoAI : public ScriptedAI
             // Yell if only one Add alive
             if (m_uiAddsKilled == m_luiMajordomoAddsGUIDs.size() - 1)
                 DoScriptText(SAY_LAST_ADD, m_creature);
+
+
+            if (m_uiAddsKilled == 4)
+            {
+                for (GuidList::const_iterator itr = m_luiMajordomoAddsGUIDs.begin(); itr != m_luiMajordomoAddsGUIDs.end(); ++itr)
+                {
+                    if (Creature* pCreature = m_creature->GetMap()->GetCreature(*itr))
+                    {
+                        if (pCreature->isAlive() && pCreature->GetEntry() == NPC_FLAMEWAKER_HEALER)
+                        {
+                            pCreature->CastSpell(pCreature, SPELL_POLYMORPH_IMMUNE, true);
+                        }
+                    }
+                }
+            }
 
             // All adds are killed, retreat
             else if (m_uiAddsKilled == m_luiMajordomoAddsGUIDs.size())
