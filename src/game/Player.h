@@ -877,6 +877,8 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         bool Create(uint32 guidlow, const std::string& name, uint8 race, uint8 class_, uint8 gender, uint8 skin, uint8 face, uint8 hairStyle, uint8 hairColor, uint8 facialHair, uint8 outfitId);
 
+        void DeleteQuest(uint32 questId);
+        void UpdateDailyQuests();   
         void Update(uint32 update_diff, uint32 time) override;
 
         static bool BuildEnumData(QueryResult* result,  WorldPacket* p_data);
@@ -899,6 +901,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool isDND() const { return HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_DND); }
         ChatTagFlags GetChatTag() const;
         std::string autoReplyMsg;
+        uint32 m_dailyQuestTimer = 5 * MINUTE * IN_MILLISECONDS;
 
         PlayerSocial* GetSocial() { return m_social; }
 
@@ -1153,6 +1156,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint32 GetQuestLevelForPlayer(Quest const* pQuest) const { return pQuest && (pQuest->GetQuestLevel() > 0) ? pQuest->GetQuestLevel() : getLevel(); }
 
         void PrepareQuestMenu(ObjectGuid guid);
+        bool IsQuestCooldownOver(uint32 quest_id);
         void SendPreparedQuest(ObjectGuid guid);
         bool IsActiveQuest(uint32 quest_id) const;          // can be taken or taken
 

@@ -126,6 +126,7 @@ Quest::Quest(Field* questRecord)
 
     QuestStartScript = questRecord[123].GetUInt32();
     QuestCompleteScript = questRecord[124].GetUInt32();
+    Cooldown = questRecord[125].GetUInt32();
 
     m_isActive = true;
 

@@ -235,6 +235,7 @@ class Quest
         uint32 GetQuestCompleteScript() const { return QuestCompleteScript; }
 
         bool   IsRepeatable() const { return m_SpecialFlags & QUEST_SPECIAL_FLAG_REPEATABLE; }
+        bool   IsDaily() const { return Cooldown > 0; }
         bool   IsAutoComplete() const { return QuestMethod ? false : true; }
         bool   IsAllowedInRaid() const;
 
@@ -272,6 +273,8 @@ class Quest
         typedef std::vector<uint32> PrevChainQuests;
         PrevChainQuests prevChainQuests;
 
+        uint32 getCooldown() const { return Cooldown; }
+
         // cached data
     private:
         uint32 m_reqitemscount;
@@ -280,7 +283,6 @@ class Quest
         uint32 m_rewitemscount;
 
         bool m_isActive;
-
         // table data
     protected:
         uint32 QuestId;
@@ -330,6 +332,7 @@ class Quest
         uint32 CompleteEmote;
         uint32 QuestStartScript;
         uint32 QuestCompleteScript;
+        uint32 Cooldown;
 };
 
 enum QuestUpdateState
@@ -359,6 +362,8 @@ struct QuestStatusData
     QuestUpdateState uState;
     bool m_wasRefunded;
     bool m_updated;
+    uint32 m_finishTime;
+
 
     uint32 m_itemcount[ QUEST_ITEM_OBJECTIVES_COUNT ];
     uint32 m_creatureOrGOcount[ QUEST_OBJECTIVES_COUNT ];

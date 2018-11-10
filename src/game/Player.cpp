@@ -808,6 +808,74 @@ bool Player::Create(uint32 guidlow, const std::string& name, uint8 race, uint8 c
     return true;
 }
 
+void Player::DeleteQuest(uint32 questId)
+{
+    CharacterDatabase.PExecute("DELETE from character_queststatus where guid = '%u' and quest = '%u'", GetGUIDLow(), questId);
+}
+
+void Player::UpdateDailyQuests()
+{
+    bool questDeleted = false;
+    for (QuestStatusMap::const_iterator itr = mQuestStatus.begin(); itr != mQuestStatus.end(); ++itr)
+    {
+        if (IsQuestCooldownOver(itr->first))
+        {
+            DeleteQuest(itr->first);
+            mQuestStatus.erase(itr);
+            itr = mQuestStatus.begin();
+            questDeleted = true;
+        }
+    }
+
+    if (!questDeleted)
+        return;
+
+    for (GuidSet::const_iterator itr = m_clientGUIDs.begin(); itr != m_clientGUIDs.end(); ++itr)
+    {
+        ObjectGuid guid = (*itr);
+       
+        uint8 dialogStatus = DIALOG_STATUS_NONE;
+
+        Object* questgiver = GetObjectByTypeMask(guid, TYPEMASK_CREATURE_OR_GAMEOBJECT);
+        if (!questgiver)
+            return;
+
+
+        switch (questgiver->GetTypeId())
+        {
+        case TYPEID_UNIT:
+        {
+            Creature* cr_questgiver = (Creature*)questgiver;
+
+            if (!cr_questgiver->IsHostileTo(this))       // not show quest status to enemies
+            {
+                dialogStatus = sScriptMgr.GetDialogStatus(this, cr_questgiver);
+
+                if (dialogStatus == DIALOG_STATUS_UNDEFINED)
+                    dialogStatus = GetSession()->getDialogStatus(this, cr_questgiver, DIALOG_STATUS_NONE);
+            }
+            break;
+        }
+        case TYPEID_GAMEOBJECT:
+        {
+            GameObject* go_questgiver = (GameObject*)questgiver;
+            dialogStatus = sScriptMgr.GetDialogStatus(this, go_questgiver);
+
+            if (dialogStatus == DIALOG_STATUS_UNDEFINED)
+                dialogStatus = GetSession()->getDialogStatus(this, go_questgiver, DIALOG_STATUS_NONE);
+
+            break;
+        }
+        default:
+            break;
+        }
+
+        // inform client about status of quest
+        PlayerTalkClass->SendQuestGiverStatus(dialogStatus, guid);
+    }
+
+}
+
 bool Player::StoreNewItemInBestSlots(uint32 titem_id, uint32 titem_amount)
 {
     DEBUG_LOG("STORAGE: Creating initial item, itemId = %u, count = %u", titem_id, titem_amount);
@@ -1150,6 +1218,14 @@ void Player::Update(uint32 update_diff, uint32 p_time)
     UpdateDuelFlag(now);
 
     CheckDuelDistance(now);
+
+    if (m_dailyQuestTimer <= update_diff)
+    {
+        UpdateDailyQuests();
+        m_dailyQuestTimer = 5 * MINUTE * IN_MILLISECONDS;
+    }
+    else
+        m_dailyQuestTimer -= update_diff;
 
     // Update items that have just a limited lifetime
     if (now > m_Last_tick)
@@ -11390,6 +11466,20 @@ void Player::PrepareQuestMenu(ObjectGuid guid)
     }
 }
 
+bool Player::IsQuestCooldownOver(uint32 quest_id)
+{
+    
+    Quest const* pQuest = sObjectMgr.GetQuestTemplate(quest_id);
+    if (!pQuest->IsDaily())
+        return false;
+
+    QuestStatusMap::const_iterator itr = mQuestStatus.find(quest_id);
+    if (itr != mQuestStatus.end())
+        return (time(nullptr) > itr->second.m_finishTime);
+    else
+        return false;
+}
+
 void Player::SendPreparedQuest(ObjectGuid guid)
 {
     QuestMenu& questMenu = PlayerTalkClass->GetQuestMenu();
@@ -11963,6 +12053,9 @@ void Player::RewardQuest(Quest const* pQuest, uint32 reward, Object* questGiver,
         SetQuestStatus(quest_id, QUEST_STATUS_NONE);
 
     q_status.m_rewarded = true;
+    
+    q_status.m_finishTime = pQuest->IsDaily() ? time(nullptr) + pQuest->getCooldown() : 0;
+
     if (q_status.uState != QUEST_NEW)
         q_status.uState = QUEST_CHANGED;
 
@@ -14197,7 +14290,7 @@ void Player::_LoadQuestStatus(QueryResult* result)
     uint32 slot = 0;
 
     ////                                                     0      1       2         3         4      5          6          7          8          9           10          11          12           13          14           15             16          17          18          19
-    // QueryResult *result = CharacterDatabase.PQuery("SELECT quest, status, rewarded, explored, timer, mobcount1, mobcount2, mobcount3, mobcount4, itemcount1, itemcount2, itemcount3, itemcount4, choiceItem, rewardItem1, rewardItem2, rewardItem3, rewardItem4, refunded, updated FROM character_queststatus WHERE guid = '%u'", GetGUIDLow());
+    // QueryResult *result = CharacterDatabase.PQuery("SELECT quest, status, rewarded, explored, timer, mobcount1, mobcount2, mobcount3, mobcount4, itemcount1, itemcount2, itemcount3, itemcount4, choiceItem, rewardItem1, rewardItem2, rewardItem3, rewardItem4, refunded, updated, finishtime FROM character_queststatus WHERE guid = '%u'", GetGUIDLow());
 
     if (result)
     {
@@ -14254,6 +14347,7 @@ void Player::_LoadQuestStatus(QueryResult* result)
                 questStatusData.m_rewardItems[3] = fields[17].GetUInt32();
                 questStatusData.m_wasRefunded = (fields[18].GetUInt8() > 0);
                 questStatusData.m_updated = (fields[19].GetUInt8() > 0);
+                questStatusData.m_finishTime = (fields[20].GetUInt32());
 
     
                 questStatusData.uState = QUEST_UNCHANGED;
@@ -15211,8 +15305,8 @@ void Player::_SaveQuestStatus()
         {
             case QUEST_NEW :
             {
-                SqlStatement stmt = CharacterDatabase.CreateStatement(insertQuestStatus, "INSERT INTO character_queststatus (guid,quest,status,rewarded,explored,timer,mobcount1,mobcount2,mobcount3,mobcount4,itemcount1,itemcount2,itemcount3,itemcount4,choiceItem,rewardItem1,rewardItem2,rewardItem3,rewardItem4, refunded, updated) "
-                                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                SqlStatement stmt = CharacterDatabase.CreateStatement(insertQuestStatus, "INSERT INTO character_queststatus (guid,quest,status,rewarded,explored,timer,mobcount1,mobcount2,mobcount3,mobcount4,itemcount1,itemcount2,itemcount3,itemcount4,choiceItem,rewardItem1,rewardItem2,rewardItem3,rewardItem4, refunded, updated, finishTime) "
+                                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
                 stmt.addUInt32(GetGUIDLow());
                 stmt.addUInt32(i->first);
@@ -15231,6 +15325,7 @@ void Player::_SaveQuestStatus()
                 stmt.addUInt32(questStatus.m_rewardItems[3]);
                 stmt.addUInt8(questStatus.m_wasRefunded);
                 stmt.addUInt8(questStatus.m_updated);
+                stmt.addUInt64(uint64(questStatus.m_finishTime));
                 stmt.Execute();
             }
             break;
@@ -15238,7 +15333,7 @@ void Player::_SaveQuestStatus()
             {
                 SqlStatement stmt = CharacterDatabase.CreateStatement(updateQuestStatus, "UPDATE character_queststatus SET status = ?,rewarded = ?,explored = ?,timer = ?,"
                                     "mobcount1 = ?,mobcount2 = ?,mobcount3 = ?,mobcount4 = ?,itemcount1 = ?,itemcount2 = ?,itemcount3 = ?,itemcount4 = ?, choiceItem = ?,"
-                                    "rewardItem1 = ?,rewardItem2 = ?,rewardItem3 = ?,rewardItem4 = ?, refunded = ?, updated = ? WHERE guid = ? AND quest = ?");
+                                    "rewardItem1 = ?,rewardItem2 = ?,rewardItem3 = ?,rewardItem4 = ?, refunded = ?, updated = ?, finishTime = ? WHERE guid = ? AND quest = ?");
 
                 stmt.addUInt8(questStatus.m_status);
                 stmt.addUInt8(questStatus.m_rewarded);
@@ -15255,6 +15350,7 @@ void Player::_SaveQuestStatus()
                 stmt.addUInt32(questStatus.m_rewardItems[3]);
                 stmt.addUInt8(questStatus.m_wasRefunded);
                 stmt.addUInt8(questStatus.m_updated);
+                stmt.addUInt64(uint64(questStatus.m_finishTime));
                 stmt.addUInt32(GetGUIDLow());
                 stmt.addUInt32(i->first);
                 stmt.Execute();

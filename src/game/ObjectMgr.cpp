@@ -3171,7 +3171,7 @@ void ObjectMgr::LoadQuests()
                           //   119                     120                     121                     122
                           "OfferRewardEmoteDelay1, OfferRewardEmoteDelay2, OfferRewardEmoteDelay3, OfferRewardEmoteDelay4,"
                           //   123          124
-                          "StartScript, CompleteScript"
+                          "StartScript, CompleteScript, Cooldown"
                           " FROM quest_template");
     if (!result)
     {
