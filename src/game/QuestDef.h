@@ -362,7 +362,7 @@ struct QuestStatusData
     QuestUpdateState uState;
     bool m_wasRefunded;
     bool m_updated;
-    uint32 m_finishTime;
+    uint64 m_finishTime;
 
 
     uint32 m_itemcount[ QUEST_ITEM_OBJECTIVES_COUNT ];

@@ -14347,7 +14347,7 @@ void Player::_LoadQuestStatus(QueryResult* result)
                 questStatusData.m_rewardItems[3] = fields[17].GetUInt32();
                 questStatusData.m_wasRefunded = (fields[18].GetUInt8() > 0);
                 questStatusData.m_updated = (fields[19].GetUInt8() > 0);
-                questStatusData.m_finishTime = (fields[20].GetUInt32());
+                questStatusData.m_finishTime = (fields[20].GetUInt64());
 
     
                 questStatusData.uState = QUEST_UNCHANGED;
