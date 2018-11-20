@@ -6936,7 +6936,7 @@ void Player::CastItemCombatSpell(Unit* Target, WeaponAttackType attType)
         for (int s = 0; s < 3; ++s)
         {
             uint32 proc_spell_id = pEnchant->spellid[s];
-
+            Unit* enchantCaster = item->GetEnchantCaster();
             if (pEnchant->type[s] != ITEM_ENCHANTMENT_TYPE_COMBAT_SPELL)
                 continue;
 
@@ -6960,7 +6960,7 @@ void Player::CastItemCombatSpell(Unit* Target, WeaponAttackType attType)
             if (roll_chance_f(chance))
             {
                 if (IsPositiveSpell(spellInfo->Id))
-                    CastSpell(this, spellInfo->Id, true, item);
+                    CastSpell(this, spellInfo->Id, true, item, nullptr, enchantCaster->GetObjectGuid());
                 else
                     CastSpell(Target, spellInfo->Id, true, item);
                 
