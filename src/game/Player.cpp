@@ -14303,6 +14303,11 @@ void Player::_LoadQuestStatus(QueryResult* result)
             Quest const* pQuest = sObjectMgr.GetQuestTemplate(quest_id);
             if (pQuest)
             {
+                if (pQuest->IsDaily() && fields[20].GetUInt64() < time(nullptr))
+                {
+                    DeleteQuest(quest_id);
+                    continue;
+                }
                 // find or create
                 QuestStatusData& questStatusData = mQuestStatus[quest_id];
 
