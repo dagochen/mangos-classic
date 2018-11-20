@@ -788,6 +788,9 @@ bool IsPositiveEffect(SpellEntry const* spellproto, SpellEffectIndex effIndex)
                     if (spellproto->Id == 24740)            // Wisp Costume
                         return true;
                     return false;
+                case SPELL_AURA_CHANNEL_DEATH_ITEM:
+                    if (spellproto->SpellFamilyFlags & 0x0000000000004000 && effIndex == EFFECT_INDEX_0)
+                        return true;
                 case SPELL_AURA_MOD_ROOT:
                 case SPELL_AURA_MOD_SILENCE:
                 case SPELL_AURA_GHOST:
@@ -797,6 +800,8 @@ bool IsPositiveEffect(SpellEntry const* spellproto, SpellEffectIndex effIndex)
                     return false;
                 case SPELL_AURA_PERIODIC_DAMAGE:            // used in positive spells also.
                     // part of negative spell if casted at self (prevent cancel)
+                    if (spellproto->SpellFamilyFlags & 0x0000000000000040)
+                        return true;
                     if (spellproto->EffectImplicitTargetA[effIndex] == TARGET_SELF)
                         return false;
                     break;
