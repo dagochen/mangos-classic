@@ -818,7 +818,7 @@ void Player::UpdateDailyQuests()
     bool questDeleted = false;
     for (QuestStatusMap::const_iterator itr = mQuestStatus.begin(); itr != mQuestStatus.end(); ++itr)
     {
-        if (IsQuestCooldownOver(itr->first))
+        if (IsQuestCooldownOver(itr->first) && itr->second.m_rewarded)
         {
             DeleteQuest(itr->first);
             mQuestStatus.erase(itr);
@@ -14303,7 +14303,7 @@ void Player::_LoadQuestStatus(QueryResult* result)
             Quest const* pQuest = sObjectMgr.GetQuestTemplate(quest_id);
             if (pQuest)
             {
-                if (pQuest->IsDaily() && fields[20].GetUInt64() < time(nullptr))
+                if (pQuest->IsDaily() && fields[20].GetUInt64() < time(nullptr) && (fields[2].GetUInt8() > 0))
                 {
                     DeleteQuest(quest_id);
                     continue;
