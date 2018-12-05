@@ -971,6 +971,17 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
         {
             switch (m_spellInfo->Id)
             {
+                case 11094:                     // Improved Fire Ward (Rank 1)
+                case 13043:                     // Improved Fire Ward (Rank 2)
+                {
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    // increase reflection chance (effect 1) of Frost Ward, removed in aura boosts
+                    SpellModifier* mod = new SpellModifier(SPELLMOD_RESIST_MISS_CHANCE, SPELLMOD_FLAT, damage, m_spellInfo->Id, uint64(0x0000000000000008));
+                    ((Player*)unitTarget)->AddSpellMod(mod, true);
+                    break;
+                }
                 case 11189:                                 // Frost Warding
                 case 28332:
                 {
