@@ -4280,12 +4280,15 @@ void Spell::EffectEnchantHeldItem(SpellEffectIndex eff_idx)
         if (item->GetEnchantmentId(slot) && item->GetEnchantmentId(slot) != enchant_id)
             return;
 
-        Unit* totemCaster = nullptr;
-        if (m_spellInfo->SpellFamilyName == SPELLFAMILY_SHAMAN)
-            totemCaster = m_caster->GetOwner();
+        if (m_spellInfo->SpellFamilyFlags & 0x0000000004000000)
+        {
+            ObjectGuid totemCaster = ObjectGuid();
+            totemCaster = m_caster->GetCharmerOrOwnerPlayerOrPlayerItself()->GetObjectGuid();
+            item->SetEnchantment(slot, enchant_id, duration * IN_MILLISECONDS, 0, totemCaster);
+        }
 
         // Apply the temporary enchantment
-        item->SetEnchantment(slot, enchant_id, duration * IN_MILLISECONDS, 0, totemCaster);
+        item->SetEnchantment(slot, enchant_id, duration * IN_MILLISECONDS,0);
         item_owner->ApplyEnchantment(item, slot, true);
     }
 }

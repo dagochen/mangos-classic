@@ -853,7 +853,7 @@ bool Item::IsTargetValidForItemUse(Unit* pUnitTarget)
     return false;
 }
 
-void Item::SetEnchantment(EnchantmentSlot slot, uint32 id, uint32 duration, uint32 charges, Unit* enchantCaster)
+void Item::SetEnchantment(EnchantmentSlot slot, uint32 id, uint32 duration, uint32 charges, ObjectGuid enchantCaster)
 {
     // Better lost small time at check in comparison lost time at item save to DB.
     if ((GetEnchantmentId(slot) == id) && (GetEnchantmentDuration(slot) == duration) && (GetEnchantmentCharges(slot) == charges))
