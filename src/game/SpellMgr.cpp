@@ -4065,7 +4065,12 @@ void SpellMgr::LoadDbcDataCorrections()
 
         switch (spellInfo->Id)
         {
-
+        case 26157: 
+        case 26272: 
+        case 26273:
+        case 26274:
+            spellInfo->DurationIndex = 367; // 2h
+            break;
         case 29183:
             spellInfo->AttributesEx |= SPELL_ATTR_EX_DISPEL_AURAS_ON_IMMUNITY;
             break;

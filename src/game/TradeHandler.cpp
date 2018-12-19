@@ -436,11 +436,23 @@ void WorldSession::HandleAcceptTradeOpcode(WorldPacket& recvPacket)
             {
                 item->SetGuidValue(ITEM_FIELD_GIFTCREATOR, _player->GetObjectGuid());
                 _player->MoveItemFromInventory(item->GetBagSlot(), item->GetSlot(), true);
+                if (item->GetProto()->Flags & ITEM_FLAG_WRAPPER && _player->GetQuestStatus(99991) == QUEST_STATUS_INCOMPLETE &&
+                    trader->GetSession()->GetRemoteAddress() != _player->GetSession()->GetRemoteAddress() &&
+                    (item->GetProto()->ItemId == 5044 || item->GetProto()->ItemId == 5043 || item->GetProto()->ItemId == 17302 || item->GetProto()->ItemId == 17305 || item->GetProto()->ItemId == 17308))
+                {
+                    _player->CompleteQuest(99991);
+                }
             }
             if (Item* item = hisItems[i])
             {
                 item->SetGuidValue(ITEM_FIELD_GIFTCREATOR, trader->GetObjectGuid());
                 trader->MoveItemFromInventory(item->GetBagSlot(), item->GetSlot(), true);
+                if (item->GetProto()->Flags & ITEM_FLAG_WRAPPER  && trader->GetQuestStatus(99991) == QUEST_STATUS_INCOMPLETE &&
+                    trader->GetSession()->GetRemoteAddress() != _player->GetSession()->GetRemoteAddress() &&
+                    (item->GetProto()->ItemId == 5044 || item->GetProto()->ItemId == 5043 || item->GetProto()->ItemId == 17302 || item->GetProto()->ItemId == 17305 || item->GetProto()->ItemId == 17308))
+                {
+                    trader->CompleteQuest(99991);
+                }
             }
         }
 

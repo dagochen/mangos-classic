@@ -2302,6 +2302,9 @@ void Player::GiveXP(uint32 xp, Unit* victim)
     if (level >= sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
         return;
 
+    if ((HasAura(26272) || HasAura(26157) || HasAura(26273) || HasAura(26274)) && GetQuestRewardStatus(99991))
+        xp *= 2;
+
     // XP resting bonus for kill
     uint32 rested_bonus_xp = victim ? GetXPRestBonus(xp) : 0;
 
