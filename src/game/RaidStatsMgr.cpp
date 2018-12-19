@@ -33,7 +33,7 @@ void RaidStatsMgr::WriteAll()
         {
             case RaidStatsEvent::AUTOATTACK:
             {
-                SqlStatement stmt = CharacterDatabase.CreateStatement(insAutoattack, "INSERT INTO raidstats_autoattack (raidId,zoneId,timestamp,attackerGUID,targetGUID,damage,attackType,hitoutcome,attackerType,targetType) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                SqlStatement stmt = CharacterDatabase.CreateStatement(insAutoattack, "INSERT INTO raidstats_autoattack (raidId,zone,timestamp,attackerGUID,targetGUID,damage,attackType,hitoutcome,attackerType,targetType) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?)");
                 stmt.addUInt32(current.raidId);
                 stmt.addUInt32(current.zone);
                 stmt.addString(current.timestamp);
@@ -49,7 +49,7 @@ void RaidStatsMgr::WriteAll()
             }
             case RaidStatsEvent::SPELL:
             {
-                SqlStatement stmt = CharacterDatabase.CreateStatement(insSpell, "INSERT INTO raidstats_spell (raidId,zoneId,timestamp,casterGUID,targetGUID,spellId,damage,absorb,resist,blocked,casterType,targetType, hitresult, missinfo, resistance, school, isOverTime) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                SqlStatement stmt = CharacterDatabase.CreateStatement(insSpell, "INSERT INTO raidstats_spell (raidId,zone,timestamp,casterGUID,targetGUID,spellId,damage,absorb,resist,blocked,casterType,targetType, hitresult, missinfo, resistance, school, isOverTime) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
                 stmt.addUInt32(current.raidId);
                 stmt.addUInt32(current.zone);
                 stmt.addString(current.timestamp);
