@@ -3621,8 +3621,12 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     for (int j = 0; j < 4; ++j)
                         if (unitTarget->HasAura(spells[j], EFFECT_INDEX_0))
                             return;
-
-                    unitTarget->CastSpell(unitTarget, spells[urand(0, 3)], true);
+                    if (m_caster->GetTypeId() == TYPEID_PLAYER)
+                    {
+                        m_caster->CastSpell(m_caster, spells[urand(0, 3)], true);
+                    }
+                    else
+                        unitTarget->CastSpell(unitTarget, spells[urand(0, 3)], true);
                     return;
                 }
                 case 26465:                                 // Mercurial Shield - need remove one 26464 Mercurial Shield aura
