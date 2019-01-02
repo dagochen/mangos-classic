@@ -694,6 +694,8 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
 
         GameObjectModel* m_model;
 
+        uint32 GetPlayerGroupId() { return m_playerGroupId; }
+        void AddGroupId(uint32 id) { m_playerGroupId = id; }
     protected:
         uint32      m_spellId;
         time_t      m_respawnTime;                          // (secs) time of next respawn (or despawn if GO have owner()),
@@ -734,6 +736,7 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         void UpdateCollisionState() const;                  // updates state in Map's dynamic collision tree
 
         GridReference<GameObject> m_gridRef;
+        uint32 m_playerGroupId;
 };
 
 #endif

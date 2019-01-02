@@ -193,6 +193,8 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map* map, float x, float
     if (InstanceData* iData = map->GetInstanceData())
         iData->OnObjectCreate(this);
 
+    m_playerGroupId = 0;
+
     return true;
 }
 
@@ -1511,11 +1513,23 @@ void GameObject::Use(Unit* user)
 
             if (info->spellcaster.partyOnly)
             {
-                Unit* caster = GetOwner();
-                if (!caster || caster->GetTypeId() != TYPEID_PLAYER)
-                    return;
+                bool canUsePortal = false;
 
-                if (user->GetTypeId() != TYPEID_PLAYER || !((Player*)user)->IsInSameRaidWith((Player*)caster))
+                if (user->GetTypeId() == TYPEID_PLAYER)
+                {
+                    Player* pPlayer = ((Player*)user);
+
+                    if (pPlayer->GetGroup() && pPlayer->GetGroup()->GetId() == GetPlayerGroupId())
+                        canUsePortal =  true;
+                    else if (!pPlayer->GetGroup() && GetOwner() && GetOwner() == pPlayer)
+                        canUsePortal =  true;
+
+                    Unit* caster = GetOwner();
+                    if (caster && pPlayer->IsInSameRaidWith((Player*)caster))
+                        canUsePortal = true;
+                }
+            
+                if (!canUsePortal)
                     return;
             }
 

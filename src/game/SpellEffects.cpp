@@ -5147,7 +5147,13 @@ void Spell::EffectTransmitted(SpellEffectIndex eff_idx)
         }
         case GAMEOBJECT_TYPE_SPELLCASTER:
         {
-            m_caster->AddGameObject(pGameObj);
+            m_caster->AddWildGameObject(pGameObj);
+            if (m_caster->GetTypeId() == TYPEID_PLAYER)
+            {
+                Player* pPlayer = ((Player*)m_caster);
+                if (pPlayer->GetGroup())
+                    pGameObj->AddGroupId(pPlayer->GetGroup()->GetId());
+            }
             break;
         }
         case GAMEOBJECT_TYPE_FISHINGHOLE:
