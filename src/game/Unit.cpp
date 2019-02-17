@@ -255,6 +255,7 @@ Unit::Unit() :
     m_isCreatureLinkingTrigger = false;
     m_isSpawningLinked = false;
     m_dummyCombatState = false;
+    m_flexEnemyCount = 40;
 }
 
 Unit::~Unit()
@@ -1376,6 +1377,15 @@ void Unit::CalculateSpellDamage(SpellNonMeleeDamage* damageInfo, int32 damage, S
     }
     else
         damage = 0;
+
+
+    if (GetTypeId() == TYPEID_UNIT && pVictim->GetTypeId() == TYPEID_PLAYER && sWorld.GetFlex(GetMapId()))
+    {
+        int32 playerCount = GetFlexEnemyCount();
+        playerCount = playerCount >= 30 ? playerCount : 30;
+        damage = damage - ((1.0f - (playerCount / 40)) / 2.5f *  damage*pow(damage, 0.02f));
+    }
+
     damageInfo->damage = damage;
 }
 
@@ -1478,6 +1488,13 @@ void Unit::CalculateMeleeDamage(Unit* pVictim, CalcDamageInfo* damageInfo, Weapo
         }
 
         damageInfo->totalDamage += subDamage->damage;
+    }
+
+    if (GetTypeId() == TYPEID_UNIT && pVictim->GetTypeId() == TYPEID_PLAYER && sWorld.GetFlex(GetMapId()))
+    {
+        int32 playerCount = GetFlexEnemyCount();
+        playerCount = playerCount >= 30 ? playerCount : 30;
+        damageInfo->totalDamage = damageInfo->totalDamage - ((1.0f - (playerCount / 40)) / 2.5f * damageInfo->totalDamage*pow(damageInfo->totalDamage, 0.02f));
     }
 
     // Physical Immune check
@@ -2659,6 +2676,7 @@ void Unit::CalculateDamageAbsorbAndResist(Unit* pCaster, SpellSchoolMask schoolM
             uint32 splitted = currentAbsorb;
             uint32 splitted_absorb = 0;
             pCaster->DealDamageMods(caster, splitted, &splitted_absorb);
+
 
             pCaster->SendSpellNonMeleeDamageLog(caster, (*i)->GetSpellProto()->Id, splitted, schoolMask, splitted_absorb, 0, false, 0, false);
 
@@ -7222,6 +7240,9 @@ void Unit::SetInCombatState(bool PvP, Unit* enemy)
         if (pCreature->AI())
             pCreature->AI()->EnterCombat(enemy);
 
+        if (sWorld.GetFlex(GetMapId()))
+            SetFlexEnemyCount();
+
         // Some bosses are set into combat with zone
         if (GetMap()->IsDungeon() && (pCreature->GetCreatureInfo()->ExtraFlags & CREATURE_EXTRA_FLAG_AGGRO_ZONE) && enemy && enemy->IsControlledByPlayer())
             pCreature->SetInCombatWithZone();
@@ -7307,16 +7328,33 @@ int32 Unit::ModifyHealth(int32 dVal)
     if (dVal == 0)
         return 0;
 
+    int m_resilience = 100;
     int32 curHealth = (int32)GetHealth();
+    int32 maxHealth = (int32)GetMaxHealth();
 
-    int32 val = dVal + curHealth;
+    int32 val;
+
+    if (m_resilience && dVal < 0 && curHealth != maxHealth)
+    {
+        dVal = ((dVal * m_resilience) / 100);
+        
+        // Flexraid
+        if (sWorld.GetFlex(GetMapId()))
+        {
+            int32 playerCount = GetFlexEnemyCount();
+            playerCount =  20 > (playerCount - 10) ? 20 : (playerCount - 10);
+            dVal = (1.0f / (playerCount / 30.0f)) * dVal;
+        }
+    }
+
+    val = dVal + curHealth;
+    
     if (val <= 0)
     {
         SetHealth(0);
         return -curHealth;
     }
 
-    int32 maxHealth = (int32)GetMaxHealth();
 
     int32 gain;
     if (val < maxHealth)

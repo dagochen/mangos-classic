@@ -32,6 +32,7 @@
 #include "ObjectGuid.h"
 #include "SpellMgr.h"
 #include "LootMgr.h"
+#include "World.h"
 
 bool ChatHandler::HandleDebugSendSpellFailCommand(char* args)
 {
@@ -805,6 +806,23 @@ bool ChatHandler::HandleDebugSimulateLootCommand(char* args)
         auto itemProto = sItemStorage.LookupEntry<ItemPrototype>(entry.first);
         PSendSysMessage("|cffffffff|Hitem:%d:0:0:0:0:0:0:0|h[%s]|h|r: %u %f", itemId, itemProto->Name1, entry.second, (100.f / numIterations * entry.second));
     }
+
+    return true;
+}
+
+bool ChatHandler::HandleDebugFlexraidCommand(char* args)
+{
+    Unit* target = getSelectedUnit();
+
+    if (target && sWorld.GetFlex(target->GetMapId()))
+    {
+        int32 playerCount = target->GetFlexEnemyCount();
+        playerCount = 20 > (playerCount - 10) ? 20 : (playerCount - 10);
+        float flexdmg = (1.0f / (playerCount / 30.0f));
+        PSendSysMessage("FlexdamageMultiplier: %f - Playercount: %u - Used Playercount: %u", flexdmg, target->GetFlexEnemyCount(), playerCount);
+    }
+    else
+        PSendSysMessage("Flexdamage: %f", 0.0f);
 
     return true;
 }

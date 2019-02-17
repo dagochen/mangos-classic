@@ -183,6 +183,24 @@ bool ChatHandler::HandleGMCommand(char* args)
     return true;
 }
 
+bool ChatHandler::HandleFlexCommand(char* args)
+{
+    if (args)
+    {
+        uint32 mapid = atoi(args);
+        bool value;
+        if (!ExtractOnOff(&args, value))
+        {
+            sWorld.SetFlex(value, mapid);
+        }
+    }
+    else return false;
+
+    
+
+    return true;
+}
+
 // Enables or disables hiding of the staff badge
 bool ChatHandler::HandleGMChatCommand(char* args)
 {

@@ -2162,6 +2162,38 @@ void World::InvalidatePlayerDataToAllClient(ObjectGuid guid)
     WorldPacket data(SMSG_INVALIDATE_PLAYER, 8);
     data << guid;
     SendGlobalMessage(&data);
-};
+}
+void World::SetFlex(bool value, uint32 mapid)
+{
+    if (mapid == 533)
+    {
+        flexNaxx = value;
+    }
+    else if (mapid == 531)
+    {
+        flexAQ = value;
+    }
+    else if (mapid == 469)
+    {
+        flexBWL = value;
+    }
+    else if (mapid = 409)
+    {
+        flexMC = value;
+    }
+}
+bool World::GetFlex(uint32 mapid)
+{
+    switch (mapid)
+    {
+    case 409: return flexMC;
+    case 469: return flexBWL;
+    case 531: return flexAQ;
+    case 533: return flexNaxx;
+    default:
+        return false;
+    }
+}
+;
 
 

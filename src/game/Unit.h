@@ -1900,6 +1900,9 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
             m_bossList.erase(guid);
          }
 
+        void SetFlexEnemyCount() { m_flexEnemyCount = (int32)(GetMap()->GetPlayersCountExceptGMs()); }
+        int32 GetFlexEnemyCount() { return m_flexEnemyCount; }
+
     protected:
         explicit Unit();
 
@@ -1955,6 +1958,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void DisableSpline();
         bool m_isCreatureLinkingTrigger;
         bool m_isSpawningLinked;
+
+        int32 m_flexEnemyCount;
 
     private:
         void CleanupDeletedAuras();

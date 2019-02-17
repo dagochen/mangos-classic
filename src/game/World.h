@@ -581,6 +581,8 @@ class World
         void SetResistMode(uint32 value) { m_resistMode = value; }
         uint32 GetResistMode() { return m_resistMode; }
 
+        void SetFlex(bool value, uint32 mapid);
+        bool GetFlex(uint32 mapid);
        
 
     protected:
@@ -670,7 +672,10 @@ class World
         std::set<uint32> m_configForceLoadMapIds;
 
         uint32 m_resistMode = 0;
-
+        bool flexMC = true;
+        bool flexBWL = true;
+        bool flexAQ = true;
+        bool flexNaxx = true;
 };
 
 extern uint32 realmID;
